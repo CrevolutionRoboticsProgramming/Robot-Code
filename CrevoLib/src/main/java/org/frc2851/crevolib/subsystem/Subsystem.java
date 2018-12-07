@@ -1,13 +1,12 @@
 package org.frc2851.crevolib.subsystem;
 
 import edu.wpi.first.wpilibj.Timer;
-import org.frc2851.crevolib.logging.CSVWritable;
 
 /**
  * Abstract class that defines subsystem behavior. An example of the subsystem may be a drivetrain or a shooter.
  * A subsystem subclass should contain all code that manipulates physical subsystems.
  */
-public abstract class Subsystem extends Thread implements CSVWritable
+public abstract class Subsystem extends Thread
 {
     private Thread _thread;
     private String _name;
