@@ -8,7 +8,6 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -36,12 +35,11 @@ public class DriveTrain extends Subsystem
 
     // Members
     private WPI_TalonSRX _talonLeftA, _talonLeftB, _talonRightA, _talonRightB;
-    private Controller _controller;
+    private Controller _controller = Robot.driver;
 
-    public DriveTrain(Controller driveController)
+    public DriveTrain()
     {
         super("DriveTrain");
-        _controller = driveController;
     }
 
     @Override
@@ -63,10 +61,10 @@ public class DriveTrain extends Subsystem
         _talonLeftB.set(ControlMode.Follower, _talonLeftA.getDeviceID());
         _talonRightB.set(ControlMode.Follower, _talonRightA.getDeviceID());
 
-        // Controller Config
-        _controller.Config(Axis.AxisID.LEFT_Y, Axis.AxisMode.RAW); // Throttle
-        _controller.Config(Axis.AxisID.RIGHT_X, Axis.AxisMode.RAW); // Turn
-        _controller.Config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature Toggle
+        // Controller config
+        _controller.config(Axis.AxisID.LEFT_Y, Axis.AxisMode.RAW); // Throttle
+        _controller.config(Axis.AxisID.RIGHT_X, Axis.AxisMode.RAW); // Turn
+        _controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature Toggle
 
         reset(); // Probably unnecessary. Worth the lost cycles for certainty.
     }
@@ -81,7 +79,7 @@ public class DriveTrain extends Subsystem
         _talonRightB.setNeutralMode(TALON_NEUTRAL_MODE);
     }
 
-    public void zeroSensors()
+    private void zeroSensors()
     {
         _talonLeftA.setSelectedSensorPosition(0, 0, 0);
         _talonRightA.setSelectedSensorPosition(0, 0, 0);

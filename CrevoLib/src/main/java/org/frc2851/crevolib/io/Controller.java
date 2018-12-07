@@ -71,7 +71,7 @@ public class Controller
      * @param id The ButtonID
      * @param mode The ButtonMode
      */
-    public void Config(Button.ButtonID id, Button.ButtonMode mode)
+    public void config(Button.ButtonID id, Button.ButtonMode mode)
     {
         if (!_buttons.containsKey(id)) _buttons.put(id, new Button(channel, id, mode));
     }
@@ -81,7 +81,7 @@ public class Controller
      * @param id The AxisID
      * @param mode The AxisMode
      */
-    public void Config(Axis.AxisID id, Axis.AxisMode mode)
+    public void config(Axis.AxisID id, Axis.AxisMode mode)
     {
         if (!_axis.containsKey(id)) _axis.put(id, new Axis(channel, id, mode));
     }

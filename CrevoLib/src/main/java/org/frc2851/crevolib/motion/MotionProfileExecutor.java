@@ -27,7 +27,6 @@ public class MotionProfileExecutor
 
     private enum State { DISABLED, LOADING, RUNNING, COMPLETE }
 
-    Vector<MotionProfilePoint> _points = new Vector<>();
     private TalonSRX _talon;
     private boolean _start = false, _profileComplete = false;
     private Notifier _notifier;
@@ -138,8 +137,6 @@ public class MotionProfileExecutor
             DriverStation.reportError("Motion Profile Size Exceeds 2048 Points", false);
             throw new InvalidMotionProfileException();
         }
-
-//        System.out.println("Fill buffer");
 
         for (int i = 0; i < points.size(); i++)
         {
