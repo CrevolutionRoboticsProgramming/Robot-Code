@@ -1,9 +1,9 @@
 package org.frc2851.crevolib;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import org.frc2851.crevolib.autonomous.Auton;
+import org.frc2851.crevolib.auton.Auton;
+import org.frc2851.crevolib.auton.AutonExecutor;
 import org.frc2851.crevolib.logging.Logger;
 import org.frc2851.crevolib.motion.BadMotionProfileException;
 import org.frc2851.crevolib.motion.MotionProfile;
@@ -18,11 +18,11 @@ public class CrevoRobot extends IterativeRobot
 {
     private static final String MOTION_PROFILE_DIR = "/home/lvuser/motion/";
 
+    private AutonExecutor _executor = new AutonExecutor();
+    private SendableChooser<Auton> _autonSelector = new SendableChooser<>();
+
     private Logger _logger = Logger.getInstance();
     private Vector<Subsystem> _subs = new Vector<>();
-    private Vector<Auton> _autons = new Vector<>();
-    private SendableChooser<Auton> _autonSelector = new SendableChooser<>();
-    private Auton _selectedAuton = null;
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
@@ -37,11 +37,7 @@ public class CrevoRobot extends IterativeRobot
         _logger.addWritable(subsystem);
     }
 
-    /**
-     * Adds an auton to the list of autons pushed to the SmartDashboard
-     * @param auton Auton to be added
-     */
-    protected void addAuton(Auton auton) { _autons.add(auton); }
+    protected void addAuton(Auton auton) { _autonSelector.addObject(auton.getName(), auton); }
 
     @Override
     public final void robotInit()
@@ -52,8 +48,6 @@ public class CrevoRobot extends IterativeRobot
             s.setCommand(null);
         }
 
-        if (!_autons.isEmpty())
-            for (Auton a : _autons) _autonSelector.addObject(a.getName(), a);
 
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)
@@ -69,11 +63,7 @@ public class CrevoRobot extends IterativeRobot
     @Override
     public final void autonomousInit()
     {
-        if (!_autons.isEmpty())
-        {
-            _selectedAuton = _autonSelector.getSelected();
-            _selectedAuton.start();
-        }
+        _executor.setAuton(_autonSelector.getSelected());
     }
 
     @Override
@@ -85,8 +75,7 @@ public class CrevoRobot extends IterativeRobot
     @Override
     public final void disabledInit()
     {
-        if (_selectedAuton != null)
-            _selectedAuton.stopAuton();
+        _executor.stop();
         for (Subsystem s :  _subs) s.setCommand(null);
     }
 
