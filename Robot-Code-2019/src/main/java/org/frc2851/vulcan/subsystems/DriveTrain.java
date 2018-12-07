@@ -390,31 +390,4 @@ public class DriveTrain extends Subsystem
     {
         return (int)(distance / (CPR * WHEEL_DIAMETER * Math.PI));
     }
-
-    @Override
-    public String getFileName() { return "DriveTrain"; }
-
-    @Override
-    public String getHeader() {
-        return "time,leftVoltageA,leftVoltageB,leftCurrentA,leftCurrentB,rightVoltageA,rightVoltageB,rightCurrentA," +
-                "rightCurrentB,leftEnc,rightEnc,gyroAng";
-    }
-
-    @Override
-    public String getCSV() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(Timer.getFPGATimestamp()).append(",");
-        builder.append(_talonLeftA.getBusVoltage()).append(",");
-        builder.append(_talonLeftB.getBusVoltage()).append(",");
-        builder.append(_talonLeftA.getOutputCurrent()).append(",");
-        builder.append(_talonLeftB.getOutputCurrent()).append(",");
-        builder.append(_talonRightA.getBusVoltage()).append(",");
-        builder.append(_talonRightB.getBusVoltage()).append(",");
-        builder.append(_talonRightA.getOutputCurrent()).append(",");
-        builder.append(_talonRightB.getOutputCurrent()).append(",");
-        builder.append(_talonLeftA.getSelectedSensorPosition(0)).append(",");
-        builder.append(_talonRightA.getSelectedSensorPosition(0)).append(",");
-        builder.append("no gyro");
-        return builder.toString();
-    }
 }
