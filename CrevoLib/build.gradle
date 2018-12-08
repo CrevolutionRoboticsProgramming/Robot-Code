@@ -7,4 +7,5 @@ plugins {
 dependencies {
     compile wpilib()
     compile ctre()
+    compile fileTree(dir: '/Users/jason/Downloads/', include: ['*.jar'])
 }
