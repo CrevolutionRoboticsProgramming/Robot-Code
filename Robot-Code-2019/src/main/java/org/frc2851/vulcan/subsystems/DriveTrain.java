@@ -21,6 +21,7 @@ public class DriveTrain extends Subsystem
     // Constants
     private final double CPR = 4096;
     private final double WHEEL_DIAMETER = 1.0d / 3.0d;
+    private final double DRIVE_WIDTH = 2.5;
     private final double DEFAULT_PEAK_OUT = 1;
     private final double DEFAULT_NOMINAL_OUT = 0;
     private final int TALON_TIMEOUT = 0;
@@ -167,27 +168,31 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
+            int counts = (int)(((Math.toRadians(angle) * DRIVE_WIDTH) * 0.5) / (WHEEL_DIAMETER * Math.PI) * CPR);
+
             @Override
             public String getName() { return "TurnAngle[" + angle + "]"; }
 
             @Override
             public boolean isFinished() {
-                return false;
+                return _talonLeftA.getClosedLoopError(0) < 512;
             }
 
             @Override
             public void init() {
-
+                int targetPos = _talonLeftA.getSelectedSensorPosition(0) + counts;
+                setPID(0, 0, 0, 0);
+                _talonLeftA.set(ControlMode.Position, targetPos);
             }
 
             @Override
             public void update() {
-
+                _talonRightA.set(ControlMode.PercentOutput, -_talonLeftA.getMotorOutputPercent());
             }
 
             @Override
             public void stop() {
-
+                reset();
             }
         };
     }
