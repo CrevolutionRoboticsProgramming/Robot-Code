@@ -62,8 +62,8 @@ public class DriveTrain extends Subsystem
         _talonRightB.set(ControlMode.Follower, _talonRightA.getDeviceID());
 
         // Controller config
-        _controller.config(Axis.AxisID.LEFT_Y, Axis.AxisMode.RAW); // Throttle
-        _controller.config(Axis.AxisID.RIGHT_X, Axis.AxisMode.RAW); // Turn
+        _controller.config(Axis.AxisID.LEFT_Y); // Throttle
+        _controller.config(Axis.AxisID.RIGHT_X); // Turn
         _controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature Toggle
 
         reset(); // Probably unnecessary. Worth the lost cycles for certainty.
@@ -95,6 +95,9 @@ public class DriveTrain extends Subsystem
                     new SpeedControllerGroup(_talonRightA, _talonRightB)
             );
 
+            final double TURN_MULT = 0.9;
+            final double DEADBAND = 0.15;
+
             @Override
             public String getName() { return "Teleop"; }
 
@@ -102,16 +105,26 @@ public class DriveTrain extends Subsystem
             public boolean isFinished() { return false; }
 
             @Override
-            public void init() { }
+            public void init()
+            {
+                reset();
+                robotDrive.tankDrive(0, 0);
+                robotDrive.setSafetyEnabled(false);
+            }
 
             @Override
             public void update()
             {
                 double throttle = _controller.get(Axis.AxisID.LEFT_Y, null);
-                double turn = _controller.get(Axis.AxisID.RIGHT_X, null);
+                double turn = _controller.get(Axis.AxisID.RIGHT_X, null) * TURN_MULT;
                 boolean curvatureToggle = _controller.get(Button.ButtonID.RIGHT_BUMPER);
 
                 robotDrive.curvatureDrive(throttle, turn, curvatureToggle);
+
+                // Encoder Test
+                System.out.println("[DT]: EncL(" + _talonLeftA.getSelectedSensorPosition(0) + ", " +
+                        _talonLeftA.getSelectedSensorVelocity(0) + "), EncR(" + _talonRightA.getSelectedSensorPosition(0) +
+                        ", " + _talonRightA.getSelectedSensorVelocity(0) + ")");
             }
 
             @Override

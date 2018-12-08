@@ -51,7 +51,7 @@ public class Button
      * @param id The ID of the button
      * @param mode The behavior of the button
      */
-    public Button(int channel, ButtonID id, ButtonMode mode)
+    Button(int channel, ButtonID id, ButtonMode mode)
     {
         _joy = new Joystick(channel);
         _id = id;
@@ -62,7 +62,7 @@ public class Button
      * Returns the adjusted state of the button
      * @return button state
      */
-    public boolean get()
+    boolean get()
     {
         boolean state = _joy.getRawButton(_id.getID());
         switch (_mode)

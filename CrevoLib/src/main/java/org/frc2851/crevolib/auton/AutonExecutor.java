@@ -1,5 +1,7 @@
 package org.frc2851.crevolib.auton;
 
+import org.frc2851.crevolib.Logger;
+
 public class AutonExecutor
 {
     private Auton mAuton;
@@ -7,6 +9,7 @@ public class AutonExecutor
 
     public void setAuton(Auton auton)
     {
+        Logger.println("Auton Set: " + auton.getName(), Logger.LogLevel.DEBUG);
         mAuton = auton;
     }
 
@@ -14,15 +17,11 @@ public class AutonExecutor
     {
         if (mThread == null)
         {
-            mThread = new Thread()
-            {
-                @Override
-                public void run()
-                {
-                    if (mAuton != null)
-                        mAuton.run();
-                }
-            };
+            mThread = new Thread(() -> {
+                if (mAuton != null)
+                    mAuton.run();
+            });
+
             mThread.start();
         }
     }

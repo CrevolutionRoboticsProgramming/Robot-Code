@@ -23,52 +23,64 @@ public class CrevoRobot extends IterativeRobot
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
-
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
      * @param subsystem Subsystem to be added
      */
     protected void addSubsystem(Subsystem subsystem)
     {
+        Logger.println("Registered Subsystem: " + subsystem.toString(), Logger.LogLevel.DEBUG);
         _subs.add(subsystem);
     }
 
-    protected void addAuton(Auton auton) { _autonSelector.addObject(auton.getName(), auton); }
+    protected void addAuton(Auton auton)
+    {
+        Logger.println("Registered Auton: " + auton.getName(), Logger.LogLevel.DEBUG);
+        _autonSelector.addObject(auton.getName(), auton);
+    }
 
     @Override
     public final void robotInit()
     {
+        Logger.start();
+        Logger.println("Robot Init", Logger.LogLevel.DEBUG);
+
         for (Subsystem s : _subs)
         {
             s.start();
             s.setCommand(null);
         }
 
-
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)
         {
             String name = f.getName().split("\\.")[0];
-            try { _motionProfiles.put(name, new MotionProfile(f)); }
-            catch (BadMotionProfileException ignored) { }
+            try {
+                _motionProfiles.put(name, new MotionProfile(f));
+                Logger.println("MotionProfile: " + name, Logger.LogLevel.DEBUG);
+            } catch (BadMotionProfileException ignored) { }
         }
     }
 
     @Override
     public final void autonomousInit()
     {
+        Logger.println("Autonomous Init", Logger.LogLevel.DEBUG);
         _executor.setAuton(_autonSelector.getSelected());
+        _executor.start();
     }
 
     @Override
     public final void teleopInit()
     {
+        Logger.println("Teleop Init", Logger.LogLevel.DEBUG);
         for (Subsystem s : _subs) s.setCommand(s.getTeleopCommand());
     }
 
     @Override
     public final void disabledInit()
     {
+        Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
         _executor.stop();
         for (Subsystem s :  _subs) s.setCommand(null);
     }
@@ -79,7 +91,8 @@ public class CrevoRobot extends IterativeRobot
      * @return The selected motion profile. If the motion profile specified does not exist,
      * the function returns {@code null}.
      */
-    public static MotionProfile getMotionProfile(String name) {
+    public static MotionProfile getMotionProfile(String name)
+    {
         return _motionProfiles.getOrDefault(name, null);
     }
 }

@@ -1,6 +1,7 @@
 package org.frc2851.crevolib.subsystem;
 
 import edu.wpi.first.wpilibj.Timer;
+import org.frc2851.crevolib.Logger;
 
 /**
  * Abstract class that defines subsystem behavior. An example of the subsystem may be a drivetrain or a shooter.
@@ -37,6 +38,7 @@ public abstract class Subsystem extends Thread
      */
     public synchronized void setCommand(Command command)
     {
+        Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
         if (_command != null) _command.stop();
         _command = command;
         _isCommandInit = false;
@@ -68,6 +70,9 @@ public abstract class Subsystem extends Thread
     public boolean isSubsystemActive() { return _command != null; }
 
     @Override
+    public String toString() { return _name; }
+
+    @Override
     public final void run()
     {
         // Note: The only reason this is an infinite while loop is because the program stops when the robot is shut off
@@ -92,8 +97,8 @@ public abstract class Subsystem extends Thread
     {
         if (_thread == null)
         {
+            Logger.println("Starting Subsystem: " + _name, Logger.LogLevel.DEBUG);
             _thread = new Thread(this, _name);
-            System.out.println("Starting subsystem[" + _name + "]");
             init();
             _thread.start();
         }

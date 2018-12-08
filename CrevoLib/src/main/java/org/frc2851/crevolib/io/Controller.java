@@ -60,10 +60,10 @@ public class Controller
     {
         if (!_axis.containsKey(id))
         {
-            System.out.println("Axis[\" + id.name() + \"] is not configured");
+            System.out.println("Axis[" + id.name() + "] is not configured");
             return 0;
         }
-        return _axis.get(id).get(null);
+        return _axis.get(id).get();
     }
 
     /**
@@ -79,10 +79,9 @@ public class Controller
     /**
      * Configures the given button with the given mode
      * @param id The AxisID
-     * @param mode The AxisMode
      */
-    public void config(Axis.AxisID id, Axis.AxisMode mode)
+    public void config(Axis.AxisID id)
     {
-        if (!_axis.containsKey(id)) _axis.put(id, new Axis(channel, id, mode));
+        if (!_axis.containsKey(id)) _axis.put(id, new Axis(channel, id));
     }
 }

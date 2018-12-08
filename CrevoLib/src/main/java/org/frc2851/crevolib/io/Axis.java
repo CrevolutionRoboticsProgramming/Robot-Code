@@ -8,20 +8,6 @@ import edu.wpi.first.wpilibj.Joystick;
 public class Axis
 {
     /**
-     * The operation mode of the axis.
-     *
-     * <ul>
-     *     <li>Raw: Direct input from controller</li>
-     *     <li>Inverted: Raw input * -1</li>
-     *     <li>Shaped: Returns the raw value after it is passed through a shaper function</li>
-     * </ul>
-     */
-    public enum AxisMode
-    {
-        RAW, INVERTED, SHAPED
-    }
-
-    /**
      * The name of the axis
      */
     public enum AxisID
@@ -40,19 +26,16 @@ public class Axis
 
     private Joystick _joy;
     private final AxisID _id;
-    private final AxisMode _mode;
 
     /**
      * Creates an axis (analog joystick input)
      * @param channel The channel the joystick is on (defined by the Driver Station)
      * @param id The ID of the axis
-     * @param mode The behavior of the axis
      */
-    public Axis(int channel, AxisID id, AxisMode mode)
+    Axis(int channel, AxisID id)
     {
         _joy = new Joystick(channel);
         _id = id;
-        _mode = mode;
     }
 
     /**
@@ -60,30 +43,13 @@ public class Axis
      * @param shaper Shaper Function (such as return val^2).
      * @return The adjusted axis value
      */
-    public double get(InputShaper shaper)
+    double get(InputShaper shaper)
     {
-        // TODO: Remove shaped as a mode.
-        double val = _joy.getRawAxis(_id.getID());
-        switch (_mode)
-        {
-            case RAW:
-            {
-                return val;
-            }
+        return shaper.shape(_joy.getRawAxis(_id.getID()));
+    }
 
-            case INVERTED:
-            {
-                return -val;
-            }
-
-            case SHAPED:
-            {
-                if (shaper == null) return val;
-                return shaper.shape(val);
-            }
-
-            default:
-                return 0;
-        }
+    double get()
+    {
+        return _joy.getRawAxis(_id.getID());
     }
 }
