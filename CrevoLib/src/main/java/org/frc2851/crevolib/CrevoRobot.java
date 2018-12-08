@@ -7,11 +7,11 @@ import org.frc2851.crevolib.auton.AutonExecutor;
 import org.frc2851.crevolib.motion.BadMotionProfileException;
 import org.frc2851.crevolib.motion.MotionProfile;
 import org.frc2851.crevolib.subsystem.Subsystem;
+import org.frc2851.crevolib.subsystem.SubsystemManager;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 public class CrevoRobot extends IterativeRobot
 {
@@ -19,7 +19,7 @@ public class CrevoRobot extends IterativeRobot
 
     private AutonExecutor _executor = new AutonExecutor();
     private SendableChooser<Auton> _autonSelector = new SendableChooser<>();
-    private Vector<Subsystem> _subs = new Vector<>();
+    private SubsystemManager _subManager = new SubsystemManager();
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
@@ -30,7 +30,7 @@ public class CrevoRobot extends IterativeRobot
     protected void addSubsystem(Subsystem subsystem)
     {
         Logger.println("Registered Subsystem: " + subsystem.toString(), Logger.LogLevel.DEBUG);
-        _subs.add(subsystem);
+        _subManager.addSubsystem(subsystem);
     }
 
     protected void addAuton(Auton auton)
@@ -45,11 +45,7 @@ public class CrevoRobot extends IterativeRobot
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
 
-        for (Subsystem s : _subs)
-        {
-            s.start();
-            s.setCommand(null);
-        }
+        _subManager.start();
 
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)
@@ -74,7 +70,7 @@ public class CrevoRobot extends IterativeRobot
     public final void teleopInit()
     {
         Logger.println("Teleop Init", Logger.LogLevel.DEBUG);
-        for (Subsystem s : _subs) s.setCommand(s.getTeleopCommand());
+        _subManager.setTeleop();
     }
 
     @Override
@@ -82,7 +78,7 @@ public class CrevoRobot extends IterativeRobot
     {
         Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
         _executor.stop();
-        for (Subsystem s :  _subs) s.setCommand(null);
+        _subManager.setDisabled();
     }
 
     /**

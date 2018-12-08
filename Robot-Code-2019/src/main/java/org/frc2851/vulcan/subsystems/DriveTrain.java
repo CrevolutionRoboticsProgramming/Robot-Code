@@ -5,6 +5,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -37,10 +38,10 @@ public class DriveTrain extends Subsystem
     private WPI_TalonSRX _talonLeftA, _talonLeftB, _talonRightA, _talonRightB;
     private Controller _controller = Robot.driver;
 
-    public DriveTrain()
-    {
-        super("DriveTrain");
-    }
+    // Singleton
+    private static DriveTrain _instance = new DriveTrain();
+    private DriveTrain() { super("DriveTrain"); }
+    public static DriveTrain getInstance() { return _instance; }
 
     @Override
     protected void init()
