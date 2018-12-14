@@ -51,6 +51,8 @@ public class Logger
             DriverStation.reportWarning("Logger Encountered an IOException", false);
         }
 
-        System.out.println(message);
+        if (level == LogLevel.ERROR) DriverStation.reportError(message, false);
+        if (level == LogLevel.WARNING) DriverStation.reportWarning(message, false);
+        else System.out.println(message);
     }
 }

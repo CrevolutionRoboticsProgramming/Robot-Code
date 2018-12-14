@@ -1,0 +1,12 @@
+<Robot name="competition">
+    <Talon name="talonLeftA" id="6"/>
+    <Talon name="talonLeftB" id="4"/>
+    <Talon name="talonRightA" id="17"/>
+    <Talon name="talonRightB" id="10"/>
+    <PID name="MotionLeftPID" p="0.0" i="0.0" d="0.0" f="0.0"/>
+    <PID name="MotionRightPID" p="0.0" i="0.0" d="0.0" f="0.0"/>
+    <PID name="MotionAuxLeftPID" p="0.0" i="0.0" d="0.0" f="0.0"/>
+    <PID name="MotionAuxRightPID" p="0.0" i="0.0" d="0.0" f="0.0"/>
+    <Const name="MaxVelElevator" value="0"/>
+    <Const name="MaxAccElevator" value="0"/>
+</Robot>

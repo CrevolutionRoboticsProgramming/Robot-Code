@@ -11,6 +11,7 @@ public class MotionProfilePoint
     public final double pos;
     public final double vel;
     public final TrajectoryPoint.TrajectoryDuration dt;
+    public final int heading;
 
     /**
      * Creates a motion profile point
@@ -19,11 +20,13 @@ public class MotionProfilePoint
      * @param dt Change in time between each point
      * @param cpf Counts per feet (used for native unit conversion)
      */
-    public MotionProfilePoint(double pos, double vel, double dt, double cpf)
+    public MotionProfilePoint(double pos, double vel, double dt, int heading, double cpf)
     {
         this.pos = pathfinderToCTREPos(pos, cpf);
         this.vel = pathfinderToCTREVel(vel, cpf);
         this.dt = pathfinderToCTREdt(dt);
+        // TODO: Verify heading conversion
+        this.heading = (int) Math.toDegrees(heading) * 10;
         System.out.println("MotionProfile[]: " + toString());
 
     }

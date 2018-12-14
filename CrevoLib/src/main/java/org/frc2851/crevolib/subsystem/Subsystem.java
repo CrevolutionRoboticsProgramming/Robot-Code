@@ -1,5 +1,6 @@
 package org.frc2851.crevolib.subsystem;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 
@@ -17,7 +18,7 @@ public abstract class Subsystem extends Thread
     /**
      * Runs once when the subsystem first starts
      */
-    protected abstract void init();
+    protected abstract boolean init();
 
     /**
      * Returns the default teleop command for the subsystem
@@ -50,7 +51,12 @@ public abstract class Subsystem extends Thread
         {
             if (!_isCommandInit)
             {
-                _command.init();
+                if (!_command.init())
+                {
+                    Logger.println("Could not initialize command: " + _command.getName(), Logger.LogLevel.ERROR);
+                    _command = null;
+                    return;
+                }
                 _isCommandInit = true;
             }
 
@@ -99,7 +105,11 @@ public abstract class Subsystem extends Thread
         {
             Logger.println("Starting Subsystem: " + _name, Logger.LogLevel.DEBUG);
             _thread = new Thread(this, _name);
-            init();
+            if (!init()) {
+                Logger.println("Could not initialize " + _name, Logger.LogLevel.ERROR);
+                DriverStation.reportError("Could not initialize " + _name, false);
+                return;
+            }
             _thread.start();
         }
     }

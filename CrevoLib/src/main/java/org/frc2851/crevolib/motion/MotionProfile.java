@@ -25,7 +25,8 @@ public class MotionProfile
     {
         // Divides the name of the file by periods and reads in the last extension as its cpf
         String[] strings = file.getName().split("\\.");
-        int cpf = Integer.parseInt(strings[strings.length - 1]);
+//        int cpf = Integer.parseInt(strings[strings.length - 1]);
+        int cpf = 325;
         name = strings[0];
         try
         {
@@ -38,7 +39,7 @@ public class MotionProfile
                     System.err.println("CSV[" + file.getName() + "]: Improper element length");
                     throw new BadMotionProfileException();
                 }
-                _points.add(new MotionProfilePoint(Double.parseDouble(vals[0]), Double.parseDouble(vals[1]), Double.parseDouble(vals[2]), cpf));
+                _points.add(new MotionProfilePoint(Double.parseDouble(vals[0]), Double.parseDouble(vals[1]), Double.parseDouble(vals[2]),0, cpf));
             }
         } catch (FileNotFoundException e) {
             DriverStation.reportError("CSV[" + file.getName() + "]: File not found", false);

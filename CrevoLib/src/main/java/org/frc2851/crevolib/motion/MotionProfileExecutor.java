@@ -4,9 +4,12 @@ import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.SetValueMotionProfile;
 import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.sun.istack.internal.NotNull;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.HLUsageReporting;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Talon;
+import org.frc2851.crevolib.Logger;
 
 import java.io.File;
 import java.util.Vector;
@@ -37,18 +40,25 @@ public class MotionProfileExecutor
     private final int MIN_POINTS = 10;
 
     private MotionProfile _profile = null;
+    private boolean useArc = false;
 
     /**
      * Creates the MotionProfileExecutor from a given MotionProfile and Talon
      * @param profile The profile
      * @param talon The talon
+     * @param useArc Tells the executor to use heading correction
      */
-    public MotionProfileExecutor(MotionProfile profile, TalonSRX talon)
+    public MotionProfileExecutor(MotionProfile profile, TalonSRX talon, boolean useArc) throws NullPointerException
     {
+        if (profile == null) {
+            Logger.println("Null Motion Pointer", Logger.LogLevel.ERROR);
+            throw new NullPointerException();
+        }
         _talon = talon;
         _profile = profile;
         _notifier = new Notifier(() -> _talon.processMotionProfileBuffer());
         _notifier.startPeriodic(0.005);
+        this.useArc = useArc;
     }
 
     /**
@@ -116,7 +126,6 @@ public class MotionProfileExecutor
             case COMPLETE:
             {
                 // TODO: What if mp stuck? Needs testing.
-                if (_status.isLast) System.out.println("Status[" + _status.isLast + ", " + _status.activePointValid + "]");
                 if (_status.isLast && _status.activePointValid)
                 {
                     _setValue = SetValueMotionProfile.Hold;
@@ -146,7 +155,7 @@ public class MotionProfileExecutor
             point.timeDur = points.get(i).dt;
             point.profileSlotSelect0 = 0;
             point.profileSlotSelect1 = 0;
-            point.headingDeg = 0;
+            point.headingDeg = (useArc) ? points.get(i).heading : 0;
             point.zeroPos = i == 0;
             point.isLastPoint = (i + 1) == points.size();
             if (point.isLastPoint) System.out.println("Last Point[" + i + "]");
