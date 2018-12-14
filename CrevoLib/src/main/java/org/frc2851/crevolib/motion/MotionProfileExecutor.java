@@ -4,11 +4,8 @@ import com.ctre.phoenix.motion.MotionProfileStatus;
 import com.ctre.phoenix.motion.SetValueMotionProfile;
 import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.sun.istack.internal.NotNull;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.HLUsageReporting;
 import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.Talon;
 import org.frc2851.crevolib.Logger;
 
 import java.io.File;
