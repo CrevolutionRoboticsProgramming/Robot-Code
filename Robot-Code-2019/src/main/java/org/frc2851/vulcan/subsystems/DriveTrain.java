@@ -33,7 +33,7 @@ public class DriveTrain extends Subsystem
     private final double DRIVE_WIDTH = 2.5;
     private final double DEFAULT_PEAK_OUT = 1;
     private final double DEFAULT_NOMINAL_OUT = 0;
-    private final int TALON_TIMEOUT = 0;
+    private final int TALON_TIMEOUT = 100;
 
     private boolean USE_GYRO = false;
 
@@ -109,7 +109,13 @@ public class DriveTrain extends Subsystem
 
         // Pigeon Config
         _pigeon = new PigeonIMU(0);
-        _talonLeftA.configRemoteFeedbackFilter(0, RemoteSensorSource.Pigeon_Yaw, 1, 10);
+//        _talonLeftA.configRemoteFeedbackFilter(0, RemoteSensorSource.Pigeon_Yaw, 1, 10);
+
+        // I don't know what safety does but the messages it throws annoy me.
+        _talonLeftA.setSafetyEnabled(false);
+        _talonLeftB.setSafetyEnabled(false);
+        _talonRightA.setSafetyEnabled(false);
+        _talonRightB.setSafetyEnabled(false);
 
         reset(); // Probably unnecessary. Worth the lost cycles for certainty.
         return true;
