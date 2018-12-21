@@ -20,7 +20,7 @@ public class MotionProfilePoint
      * @param dt Change in time between each point
      * @param cpf Counts per feet (used for native unit conversion)
      */
-    public MotionProfilePoint(double pos, double vel, double dt, int heading, double cpf)
+    public MotionProfilePoint(double pos, double vel, double dt, double heading, double cpf)
     {
         this.pos = pathfinderToCTREPos(pos, cpf);
         this.vel = pathfinderToCTREVel(vel, cpf);

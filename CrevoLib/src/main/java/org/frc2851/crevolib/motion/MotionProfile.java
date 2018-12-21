@@ -31,15 +31,27 @@ public class MotionProfile
         try
         {
             BufferedReader csvReader = new BufferedReader(new FileReader(file));
+            boolean isHeader = true;
             for (String str = csvReader.readLine(); str != null; str = csvReader.readLine())
             {
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
+
                 String[] vals = str.split(",");
-                if (vals.length != 4)
+                if (vals.length != 8)
                 {
                     System.err.println("CSV[" + file.getName() + "]: Improper element length");
                     throw new BadMotionProfileException();
                 }
-                _points.add(new MotionProfilePoint(Double.parseDouble(vals[0]), Double.parseDouble(vals[1]), Double.parseDouble(vals[2]),0, cpf));
+
+                double pos = Double.parseDouble(vals[3]);
+                double vel = Double.parseDouble(vals[4]);
+                double dt = Double.parseDouble(vals[0]);
+                double heading = Double.parseDouble(vals[7]);
+                System.out.println("MP[" + pos + ", " + vel + ", " + heading + ", " + dt + "]");
+                _points.add(new MotionProfilePoint(pos, vel, dt, heading, cpf));
             }
         } catch (FileNotFoundException e) {
             DriverStation.reportError("CSV[" + file.getName() + "]: File not found", false);
