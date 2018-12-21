@@ -1,10 +1,8 @@
 package org.frc2851.vulcan.subsystems;
 
+import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motion.SetValueMotionProfile;
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.RemoteSensorSource;
+import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
@@ -34,6 +32,9 @@ public class DriveTrain extends Subsystem
     private final double DEFAULT_PEAK_OUT = 1;
     private final double DEFAULT_NOMINAL_OUT = 0;
     private final int TALON_TIMEOUT = 100;
+    private final int PID_PRIMARY = 0, PID_AUX = 1;
+    private final int PID_SLOT_DRIVE = 0, PID_SLOT_GYRO = 1, PID_SLOT_ENC_TURN = 2;
+    private final int PIGEON_REMOTE_LEFT = 0, PIGEON_REMOTE_RIGHT = 0;
 
     private boolean USE_GYRO = false;
 
@@ -55,16 +56,17 @@ public class DriveTrain extends Subsystem
     private PigeonIMU _pigeon;
     private RobotConfig _config = new RobotConfig();
 
-    public DriveTrain()
+    private static DriveTrain _instance = new DriveTrain();
+    private DriveTrain()
     {
         super("DriveTrain");
         _config.readFile("/home/lvuser/configuration/robot.xml");
     }
+    public static DriveTrain getInstance() { return _instance; }
 
     @Override
     protected boolean init()
     {
-
         try {
             _talonLeftA = _config.getWpiTalon("talonLeftA");
             _talonLeftB = _config.getWpiTalon("talonLeftB");
@@ -89,13 +91,13 @@ public class DriveTrain extends Subsystem
             Logger.println("Could not read PID values DriveTrain", Logger.LogLevel.ERROR);
         }
 
-        // Motor Controller Configuration
-        _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, TALON_TIMEOUT);
-        _talonLeftA.setSelectedSensorPosition(0, 0, TALON_TIMEOUT);
-
-        _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, TALON_TIMEOUT);
-        _talonRightA.setSelectedSensorPosition(0, 0, TALON_TIMEOUT);
-        _talonRightA.setSensorPhase(true);
+//        // Motor Controller Configuration
+//        _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, TALON_TIMEOUT);
+//        _talonLeftA.setSelectedSensorPosition(0, 0, TALON_TIMEOUT);
+//
+//        _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, TALON_TIMEOUT);
+//        _talonRightA.setSelectedSensorPosition(0, 0, TALON_TIMEOUT);
+//        _talonRightA.setSensorPhase(true);
 
         setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, DEFAULT_PEAK_OUT);
 
@@ -107,15 +109,18 @@ public class DriveTrain extends Subsystem
         _controller.config(Axis.AxisID.RIGHT_X); // Turn
         _controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature Toggle
 
-        // Pigeon Config
-        _pigeon = new PigeonIMU(0);
-//        _talonLeftA.configRemoteFeedbackFilter(0, RemoteSensorSource.Pigeon_Yaw, 1, 10);
-
         // I don't know what safety does but the messages it throws annoy me.
         _talonLeftA.setSafetyEnabled(false);
         _talonLeftB.setSafetyEnabled(false);
         _talonRightA.setSafetyEnabled(false);
         _talonRightB.setSafetyEnabled(false);
+
+        // Pigeon Configuration
+        if (USE_GYRO) {
+            _pigeon = new PigeonIMU(0); // TODO: Add to config file
+            _talonLeftA.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_LEFT, TALON_TIMEOUT);
+            _talonRightA.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_RIGHT, TALON_TIMEOUT);
+        }
 
         reset(); // Probably unnecessary. Worth the lost cycles for certainty.
         return true;
@@ -133,8 +138,10 @@ public class DriveTrain extends Subsystem
 
     private void zeroSensors()
     {
-        _talonLeftA.setSelectedSensorPosition(0, 0, 0);
-        _talonRightA.setSelectedSensorPosition(0, 0, 0);
+        ErrorCode code = _talonLeftA.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
+        _talonRightA.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
+        _pigeon.setYaw(0, TALON_TIMEOUT);
+        Logger.println("Zero Sensor Code: " + code.toString(), Logger.LogLevel.DEBUG);
     }
 
     @Override
@@ -161,6 +168,11 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 reset();
+
+                _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                _talonRightA.setSensorPhase(true);
+
                 robotDrive.tankDrive(0, 0);
                 robotDrive.setSafetyEnabled(false);
                 return true;
@@ -176,15 +188,92 @@ public class DriveTrain extends Subsystem
                 robotDrive.curvatureDrive(throttle, turn, curvatureToggle);
 
                 // Encoder Test
-                System.out.println("[DT]: EncL(" + _talonLeftA.getSelectedSensorPosition(0) + ", " +
-                        _talonLeftA.getSelectedSensorVelocity(0) + "), EncR(" + _talonRightA.getSelectedSensorPosition(0) +
-                        ", " + _talonRightA.getSelectedSensorVelocity(0) + ")");
+                String encTest = "Left(" + _talonLeftA.getSelectedSensorPosition(0) + "," + _talonLeftA.getSelectedSensorVelocity(0) +
+                        "), Right(" + _talonRightA.getSelectedSensorPosition(0) + "," + _talonRightA.getSelectedSensorVelocity(0) + ")";
+                System.out.println(encTest);
             }
 
             @Override
             public void stop() {
                 reset();
             }
+        };
+    }
+
+    public Command driveDistanceMotionProfile(double distance)
+    {
+        return new Command()
+        {
+            double targetAngle;
+            double targetPos;
+
+            final double UNITS_PER_ROTATION = 10000.0d;
+            // Scales the encoder difference reading to 3600 counts per rotation
+            final double turnCoeff = 3600.0d / UNITS_PER_ROTATION;
+
+            @Override
+            public String getName() {
+                return "DriveDistanceMotionProfile[" + distance + "]";
+            }
+
+            @Override
+            public boolean isFinished() {
+                return Math.abs(targetPos - _talonRightA.getSelectedSensorPosition(0)) < 1024;
+            }
+
+            @Override
+            public boolean init()
+            {
+                double startTime = Timer.getFPGATimestamp();
+                // Sensor Config
+                _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+
+                _talonLeftA.configRemoteFeedbackFilter(_talonRightA.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor,
+                        0, TALON_TIMEOUT);
+                _talonLeftA.configSensorTerm(SensorTerm.Sum0, FeedbackDevice.RemoteSensor0, TALON_TIMEOUT);
+                _talonLeftA.configSensorTerm(SensorTerm.Sum1, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
+                _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.SensorSum, PID_PRIMARY, TALON_TIMEOUT);
+                _talonLeftA.configSelectedFeedbackCoefficient(0.5, PID_PRIMARY, TALON_TIMEOUT);
+
+                _talonLeftA.selectProfileSlot(PID_SLOT_DRIVE, PID_PRIMARY);
+
+                if (USE_GYRO)
+                {
+                    _talonLeftA.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw,
+                            1, TALON_TIMEOUT);
+                    _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor1, 1, TALON_TIMEOUT);
+                    _talonLeftA.configSelectedFeedbackCoefficient(3600.0d / 8192.0d, 1, TALON_TIMEOUT);
+
+                    _talonLeftA.selectProfileSlot(PID_SLOT_GYRO, PID_AUX);
+                } else {
+                    _talonLeftA.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
+                    _talonLeftA.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, TALON_TIMEOUT);
+                    _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, PID_AUX, TALON_TIMEOUT);
+                    _talonLeftA.configSelectedFeedbackCoefficient(turnCoeff, 1, TALON_TIMEOUT);
+
+                    _talonLeftA.selectProfileSlot(PID_SLOT_ENC_TURN, PID_AUX);
+                }
+
+                _talonLeftA.configAuxPIDPolarity(false, TALON_TIMEOUT);
+
+                // Motion Magic Config
+                _talonLeftA.configMotionAcceleration(MOTION_MAGIC_MAX_ACC, TALON_TIMEOUT);
+                _talonLeftA.configMotionCruiseVelocity(MOTION_MAGIC_MAX_VEL, TALON_TIMEOUT);
+
+                targetAngle = _talonLeftA.getSelectedSensorPosition(1);
+                targetPos = distanceToCounts(distance) + _talonLeftA.getSelectedSensorPosition(0);
+                Logger.println("Time for MMG Init: " + (Timer.getFPGATimestamp() - startTime), Logger.LogLevel.DEBUG);
+                return true;
+            }
+
+            @Override
+            public void update() {
+                _talonLeftA.set(ControlMode.MotionMagic, targetPos, DemandType.AuxPID, targetAngle);
+                _talonRightA.follow(_talonLeftA, FollowerType.AuxOutput1);
+            }
+
+            @Override
+            public void stop() { reset(); }
         };
     }
 
@@ -326,56 +415,6 @@ public class DriveTrain extends Subsystem
             }
         };
     }
-
-//    public Command driveDistanceMotionMagic(double distance, double maxPower)
-//    {
-//        return new Command()
-//        {
-//            boolean isFinished = false;
-//            int counts = distanceToCounts(distance);
-//            final int MAX_ACC = _config.getInt(""
-//            @Override
-//            public String getName() { return "DriveDistanceMM[\" + distance + \" feet, \" + power + \"]"; }
-//
-//            @Override
-//            public boolean isFinished()
-//            {
-//                return isFinished;
-//            }
-//
-//            @Override
-//            public void init()
-//            {
-//                reset();
-//                setPID(_talonLeftA, 0, 0.2, 0, 0, 0);
-//                setPID(_talonRightA, 0, 0.2, 0, 0, 0);
-//                setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, maxPower);
-//
-//                _talonLeftA.configMotionCruiseVelocity(MOTION_MAGIC_MAX_VEL, TALON_TIMEOUT);
-//                _talonRightA.configMotionCruiseVelocity(MOTION_MAGIC_MAX_VEL, TALON_TIMEOUT);
-//                _talonLeftA.configMotionAcceleration(MOTION_MAGIC_MAX_ACC, TALON_TIMEOUT);
-//                _talonRightA.configMotionAcceleration(MOTION_MAGIC_MAX_ACC, TALON_TIMEOUT);
-//
-//                _talonLeftA.set(ControlMode.MotionMagic, counts);
-//                _talonLeftB.set(ControlMode.Follower, _talonLeftA.getDeviceID());
-//                _talonRightA.set(ControlMode.MotionMagic, counts);
-//                _talonRightB.set(ControlMode.Follower, _talonRightA.getDeviceID());
-//            }
-//
-//            @Override
-//            public void update()
-//            {
-//                // Will finish when the motor is within 1/4 of a rotation
-//                if (Math.abs(counts - _talonLeftA.getSelectedSensorPosition(0)) < 1024) isFinished = true;
-//            }
-//
-//            @Override
-//            public void stop()
-//            {
-//                reset();
-//            }
-//        };
-//    }
 
     public Command runMotionProfile(String leftProfile, String rightProfile)
     {

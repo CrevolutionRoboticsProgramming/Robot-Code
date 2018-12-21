@@ -29,27 +29,27 @@ public class Logger
 
     // TODO: Autogenerate unique log file name (timestamp-day.csv)
     static void start() {
-        try {
-            _logFile = new File(LOG_PATH + "log.csv");
-            new FileWriter(_logFile).close();
-        } catch (IOException e) {
-            System.out.println("Unable to create log file");
-        }
+//        try {
+//            _logFile = new File(LOG_PATH + "log.csv");
+//            new FileWriter(_logFile).close();
+//        } catch (IOException e) {
+//            System.out.println("Unable to create log file");
+//        }
     }
 
     public static void println(String message, LogLevel level)
     {
         if (level.LEVEL < LEVEL.LEVEL) { return; }
 
-        FileWriter fw;
-        try
-        {
-            fw = new FileWriter(_logFile, true);
-            fw.append("\n" + level.MESSAGE_PREFIX + message + ",");
-            fw.close();
-        } catch (IOException e) {
-            DriverStation.reportWarning("Logger Encountered an IOException", false);
-        }
+//        FileWriter fw;
+//        try
+//        {
+//            fw = new FileWriter(_logFile, true);
+//            fw.append("\n" + level.MESSAGE_PREFIX + message + ",");
+//            fw.close();
+//        } catch (IOException e) {
+//            DriverStation.reportWarning("Logger Encountered an IOException", false);
+//        }
 
         if (level == LogLevel.ERROR) DriverStation.reportError(message, false);
         if (level == LogLevel.WARNING) DriverStation.reportWarning(message, false);

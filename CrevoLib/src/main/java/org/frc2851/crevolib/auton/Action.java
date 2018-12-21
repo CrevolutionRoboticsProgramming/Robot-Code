@@ -5,8 +5,9 @@ package org.frc2851.crevolib.auton;
  */
 
 public interface Action {
-    boolean isFinished(); // Returns true if the action has completed
+    boolean init(); // Initialization method
     void update(); // Runs iteratively until action is complete
-    void done(); // Runs when the action is complete
-    void start(); // Initialization method
+    boolean isFinished(); // Returns true if the action has completed
+    void stop(); // Runs when the action is complete
+
 }

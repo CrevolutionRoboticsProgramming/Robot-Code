@@ -13,7 +13,7 @@ public class Robot extends CrevoRobot
     public Robot()
     {
         configControllers();
-        addSubsystem(new DriveTrain());
+        addSubsystem(DriveTrain.getInstance());
     }
 
     private static void configControllers()
