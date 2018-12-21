@@ -2,6 +2,7 @@ package org.frc2851.vulcan;
 
 
 import org.frc2851.crevolib.CrevoRobot;
+import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.vulcan.subsystems.*;
@@ -12,6 +13,7 @@ public class Robot extends CrevoRobot
 
     public Robot()
     {
+        Logger.setLogLevel(Logger.LogLevel.DEBUG);
         configControllers();
         addSubsystem(DriveTrain.getInstance());
     }
