@@ -91,14 +91,6 @@ public class DriveTrain extends Subsystem
             Logger.println("Could not read PID values DriveTrain", Logger.LogLevel.ERROR);
         }
 
-//        // Motor Controller Configuration
-//        _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, TALON_TIMEOUT);
-//        _talonLeftA.setSelectedSensorPosition(0, 0, TALON_TIMEOUT);
-//
-//        _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, TALON_TIMEOUT);
-//        _talonRightA.setSelectedSensorPosition(0, 0, TALON_TIMEOUT);
-//        _talonRightA.setSensorPhase(true);
-
         setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, DEFAULT_PEAK_OUT);
 
         _talonLeftB.set(ControlMode.Follower, _talonLeftA.getDeviceID());
@@ -449,6 +441,17 @@ public class DriveTrain extends Subsystem
 
                 setPID(_talonLeftA, 0, leftMotionPID);
                 setPID(_talonRightA, 0, rightMotionPID);
+
+                //TODO: Feedback Coeff
+                _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                if (USE_GYRO) {
+                    _talonLeftA.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
+                    _talonLeftA.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
+
+                    _talonRightA.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
+                    _talonRightA.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
+                }
 
                 left.start();
                 right.start();
