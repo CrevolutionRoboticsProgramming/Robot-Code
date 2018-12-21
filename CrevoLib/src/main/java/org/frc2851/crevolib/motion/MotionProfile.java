@@ -1,11 +1,9 @@
 package org.frc2851.crevolib.motion;
 
-import edu.wpi.first.wpilibj.DriverStation;
+import org.frc2851.crevolib.Logger;
 
 import java.io.*;
 import java.util.Vector;
-
-// Note: Non Jaci CSV file name format: name.csv.cpf (note: cpf is a number)
 
 /**
  * Motion profile data structure
@@ -13,7 +11,7 @@ import java.util.Vector;
 public class MotionProfile
 {
     private Vector<MotionProfilePoint> _points = new Vector<>();
-    private String name = "unknown";
+    private String name;
 
     /**
      * Creates a motion profile from a given file. That file has the count per feet as its file extension.
@@ -25,9 +23,9 @@ public class MotionProfile
     {
         // Divides the name of the file by periods and reads in the last extension as its cpf
         String[] strings = file.getName().split("\\.");
-//        int cpf = Integer.parseInt(strings[strings.length - 1]);
-        int cpf = 325;
+        int cpf = Integer.parseInt(strings[strings.length - 1]);
         name = strings[0];
+        Logger.println("Reading Motion Profile: " + name + "(" + cpf + ")", Logger.LogLevel.DEBUG);
         try
         {
             BufferedReader csvReader = new BufferedReader(new FileReader(file));
@@ -50,14 +48,13 @@ public class MotionProfile
                 double vel = Double.parseDouble(vals[4]);
                 double dt = Double.parseDouble(vals[0]);
                 double heading = Double.parseDouble(vals[7]);
-                System.out.println("MP[" + pos + ", " + vel + ", " + heading + ", " + dt + "]");
                 _points.add(new MotionProfilePoint(pos, vel, dt, heading, cpf));
             }
         } catch (FileNotFoundException e) {
-            DriverStation.reportError("CSV[" + file.getName() + "]: File not found", false);
+            Logger.println("Motion profile not found: " + file.getName(), Logger.LogLevel.ERROR);
             throw new BadMotionProfileException();
         } catch (IOException e) {
-            DriverStation.reportError("CSV[" + file.getName() + "]: Could not read file. Check file permissions.", false);
+            Logger.println("Motion profile could not be read: " + file.getName(), Logger.LogLevel.ERROR);
             throw new BadMotionProfileException();
         }
     }

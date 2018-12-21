@@ -27,8 +27,6 @@ public class MotionProfilePoint
         this.dt = pathfinderToCTREdt(dt);
         // TODO: Verify heading conversion
         this.heading = (int) Math.toDegrees(heading) * 10;
-        System.out.println("MotionProfile[]: " + toString());
-
     }
 
     private double pathfinderToCTREPos(double pos, double cpf) { return pos * cpf; }

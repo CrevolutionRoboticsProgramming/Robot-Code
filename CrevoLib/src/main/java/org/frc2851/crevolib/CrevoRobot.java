@@ -57,7 +57,6 @@ public class CrevoRobot extends IterativeRobot
             String name = f.getName().split("\\.")[0];
             try {
                 _motionProfiles.put(name, new MotionProfile(f));
-                Logger.println("MotionProfile: " + name, Logger.LogLevel.DEBUG);
             } catch (BadMotionProfileException ignored) { }
         }
     }
