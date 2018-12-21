@@ -35,9 +35,8 @@ public class MotionProfilePoint
     private double pathfinderToCTREVel(double vel, double cpf) { return (vel * cpf) / 10; }
     private TrajectoryPoint.TrajectoryDuration pathfinderToCTREdt(double dt)
     {
-        TrajectoryPoint.TrajectoryDuration dur = TrajectoryPoint.TrajectoryDuration.Trajectory_Duration_0ms;
-        dur = dur.valueOf((int)(dt * 1000));
-        if (dur.value != dt) DriverStation.reportError("Invalid profile dt", false);
+        TrajectoryPoint.TrajectoryDuration dur = TrajectoryPoint.TrajectoryDuration.valueOf((int)(dt * 1000));
+        if (dur.value != (dt * 1000)) DriverStation.reportError("Invalid profile dt", false);
         return dur;
     }
 
