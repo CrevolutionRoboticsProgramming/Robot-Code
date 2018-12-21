@@ -39,7 +39,7 @@ public abstract class Subsystem extends Thread
      */
     public synchronized void setCommand(Command command)
     {
-        if (_command != null) Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+        if (command != null) Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
         else Logger.println("Command set to Idle", Logger.LogLevel.DEBUG);
         if (_command != null) _command.stop();
         _command = command;

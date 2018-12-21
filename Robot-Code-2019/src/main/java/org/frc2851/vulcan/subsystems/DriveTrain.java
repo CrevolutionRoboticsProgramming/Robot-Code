@@ -181,8 +181,8 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                double throttle = applyDeadband(_controller.get(Axis.AxisID.LEFT_Y, null), DEADBAND_VERT);
-                double turn = applyDeadband(_controller.get(Axis.AxisID.RIGHT_X, null) * TURN_MULT, DEADBAND_HORZ);
+                double throttle = applyDeadband(_controller.get(Axis.AxisID.LEFT_Y), DEADBAND_VERT);
+                double turn = applyDeadband(_controller.get(Axis.AxisID.RIGHT_X) * TURN_MULT, DEADBAND_HORZ);
                 boolean curvatureToggle = _controller.get(Button.ButtonID.RIGHT_BUMPER);
 
                 robotDrive.curvatureDrive(throttle, turn, curvatureToggle);

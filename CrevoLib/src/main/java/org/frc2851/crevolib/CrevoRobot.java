@@ -81,7 +81,7 @@ public class CrevoRobot extends IterativeRobot
     {
         Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
         _executor.stop();
-        for (Subsystem s :  _subs) s.setCommand(null);
+        for (Subsystem s : _subs) s.setCommand(null);
     }
 
     /**
