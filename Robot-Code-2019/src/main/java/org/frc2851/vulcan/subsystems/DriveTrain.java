@@ -140,7 +140,7 @@ public class DriveTrain extends Subsystem
     {
         ErrorCode code = _talonLeftA.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
         _talonRightA.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
-        _pigeon.setYaw(0, TALON_TIMEOUT);
+        if (USE_GYRO) _pigeon.setYaw(0, TALON_TIMEOUT);
         Logger.println("Zero Sensor Code: " + code.toString(), Logger.LogLevel.DEBUG);
     }
 
