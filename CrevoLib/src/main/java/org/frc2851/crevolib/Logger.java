@@ -3,12 +3,10 @@ package org.frc2851.crevolib;
 import edu.wpi.first.wpilibj.DriverStation;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 public class Logger
 {
-    private static final LogLevel LEVEL = LogLevel.DEBUG;
+    private static LogLevel logLevel = LogLevel.DEBUG;
     private static final String LOG_PATH = "/home/lvuser/logs/";
 
     public enum LogLevel {
@@ -27,6 +25,8 @@ public class Logger
 
     private Logger() { }
 
+    public static void setLogLevel(LogLevel level) { logLevel = level; }
+
     // TODO: Autogenerate unique log file name (timestamp-day.csv)
     static void start() {
 //        try {
@@ -39,13 +39,14 @@ public class Logger
 
     public static void println(String message, LogLevel level)
     {
-        if (level.LEVEL < LEVEL.LEVEL) { return; }
+        if (level.LEVEL < Logger.logLevel.LEVEL) { return; }
 
+        message = level.MESSAGE_PREFIX + message;
 //        FileWriter fw;
 //        try
 //        {
 //            fw = new FileWriter(_logFile, true);
-//            fw.append("\n" + level.MESSAGE_PREFIX + message + ",");
+//            fw.append("\n" + message + ",");
 //            fw.close();
 //        } catch (IOException e) {
 //            DriverStation.reportWarning("Logger Encountered an IOException", false);
