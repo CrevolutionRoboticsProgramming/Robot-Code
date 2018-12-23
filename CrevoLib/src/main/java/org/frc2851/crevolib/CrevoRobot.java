@@ -1,5 +1,7 @@
 package org.frc2851.crevolib;
 
+import badlog.lib.BadLog;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
@@ -23,6 +25,8 @@ public class CrevoRobot extends IterativeRobot
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
+    protected BadLog badLog;
+
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
      * @param subsystem Subsystem to be added
@@ -39,11 +43,18 @@ public class CrevoRobot extends IterativeRobot
         _autonSelector.addObject(auton.getName(), auton);
     }
 
+    protected CrevoRobot()
+    {
+        badLog = BadLog.init("/home/lvuser/log.bag");
+    }
+
     @Override
     public final void robotInit()
     {
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
+
+        BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
 
         for (Subsystem s : _subs)
         {
@@ -59,6 +70,8 @@ public class CrevoRobot extends IterativeRobot
                 _motionProfiles.put(name, new MotionProfile(f));
             } catch (BadMotionProfileException ignored) { }
         }
+
+        badLog.finishInitialization();
     }
 
     @Override
@@ -84,6 +97,32 @@ public class CrevoRobot extends IterativeRobot
         for (Subsystem s : _subs) s.setCommand(null);
     }
 
+    // TODO: Move all periodic tasks into the robot manager
+
+    @Override
+    public final void robotPeriodic()
+    {
+        periodic();
+    }
+
+    @Override
+    public final void disabledPeriodic()
+    {
+        periodic();
+    }
+
+    @Override
+    public final void teleopPeriodic()
+    {
+        periodic();
+    }
+
+    @Override
+    public final void autonomousPeriodic()
+    {
+        periodic();
+    }
+
     /**
      * Returns a motion profile fetched from the motion profile directory.
      * @param name The full name of the file, excluding file extensions
@@ -93,5 +132,11 @@ public class CrevoRobot extends IterativeRobot
     public static MotionProfile getMotionProfile(String name)
     {
         return _motionProfiles.getOrDefault(name, null);
+    }
+
+    private void periodic()
+    {
+        badLog.updateTopics();
+        badLog.log();
     }
 }

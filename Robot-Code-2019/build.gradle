@@ -27,6 +27,9 @@ deploy {
 // and NavX.
 dependencies {
     compile wpilib()
+    // TODO: Replace my github with original once jitpack build passes
+//    compile "com.github.dominikWin:badlog:v0.1.0"
+    compile "com.github.jmd613:Test:v0.1.0"
     compile project(":CrevoLib")
     compile fileTree(dir: '../lib/', include: ['*.jar'])
 }
