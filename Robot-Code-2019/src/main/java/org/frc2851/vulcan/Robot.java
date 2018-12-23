@@ -12,58 +12,6 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.vulcan.subsystems.*;
 
-class Test extends Subsystem
-{
-    TalonSRX talon;
-    PigeonIMU pidgey;
-
-    public Test() {
-        super("Test");
-    }
-
-    @Override
-    protected boolean init() {
-        talon = new TalonSRX(8);
-        pidgey = new PigeonIMU(talon);
-
-        BadLog.createTopic("DriveTrain/Talon Voltage", "V", () -> talon.getBusVoltage());
-        BadLog.createTopic("DriveTrain/Talon Current", "V", () -> talon.getBusVoltage());
-        BadLog.createTopic("DriveTrain/Angle", "Deg", () -> pidgey.getFusedHeading());
-        return true;
-    }
-
-    @Override
-    public Command getTeleopCommand() {
-        return new Command() {
-            @Override
-            public String getName() {
-                return "Teleop";
-            }
-
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-
-            @Override
-            public boolean init() {
-                return true;
-            }
-
-            @Override
-            public void update() {
-                double out = Robot.driver.get(Axis.AxisID.LEFT_Y);
-                talon.set(ControlMode.PercentOutput, out);
-            }
-
-            @Override
-            public void stop() {
-
-            }
-        };
-    }
-}
-
 public class Robot extends CrevoRobot
 {
     public static Controller driver, operator;
@@ -72,8 +20,7 @@ public class Robot extends CrevoRobot
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         configControllers();
-//        addSubsystem(DriveTrain.getInstance());
-        addSubsystem(new Test());
+        addSubsystem(DriveTrain.getInstance());
     }
 
     private static void configControllers()
