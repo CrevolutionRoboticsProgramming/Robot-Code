@@ -1,6 +1,7 @@
 package org.frc2851.crevolib;
 
 import badlog.lib.BadLog;
+import badlog.lib.DataInferMode;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -25,7 +26,8 @@ public class CrevoRobot extends IterativeRobot
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
-    protected BadLog badLog;
+    private BadLog badLog;
+    private long startTimeNs;
 
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
@@ -51,10 +53,13 @@ public class CrevoRobot extends IterativeRobot
     @Override
     public final void robotInit()
     {
+        startTimeNs = System.nanoTime();
+
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
 
         BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
+        BadLog.createTopicSubscriber("Time", "s", DataInferMode.DEFAULT, "hide", "delta", "xaxis");
 
         for (Subsystem s : _subs)
         {
@@ -136,6 +141,9 @@ public class CrevoRobot extends IterativeRobot
 
     private void periodic()
     {
+        double time = ((double) (System.nanoTime() - startTimeNs) / 1000000000d);
+        BadLog.publish("Time", time);
+
         badLog.updateTopics();
         badLog.log();
     }
