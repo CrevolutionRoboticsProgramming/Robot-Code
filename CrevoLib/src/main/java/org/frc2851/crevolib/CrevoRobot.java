@@ -28,6 +28,8 @@ public class CrevoRobot extends IterativeRobot
 
     private BadLog badLog;
     private long startTimeNs;
+    private long lastLog, currentTimeMillis;
+
 
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
@@ -54,6 +56,7 @@ public class CrevoRobot extends IterativeRobot
     public final void robotInit()
     {
         startTimeNs = System.nanoTime();
+        lastLog = System.currentTimeMillis();
 
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
@@ -145,6 +148,11 @@ public class CrevoRobot extends IterativeRobot
         BadLog.publish("Time", time);
 
         badLog.updateTopics();
-        badLog.log();
+
+        currentTimeMillis = System.currentTimeMillis();
+        if (!this.isDisabled() || (currentTimeMillis - lastLog >= 1000)) {
+            lastLog = System.currentTimeMillis();
+            badLog.log();
+        }
     }
 }
