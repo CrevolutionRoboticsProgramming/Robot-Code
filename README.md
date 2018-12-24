@@ -2,8 +2,9 @@
 
 ### Compiling
 
-Windows: gradlew build
-MacOS/Linux: ./gradlew build
+**Windows:** gradlew build
+
+**MacOS/Linux:** ./gradlew build
 
 
 **Note:** On macOS and linux, gradlew does not have permission to run immediately. Run the following: sudo chmod +x gradlew
