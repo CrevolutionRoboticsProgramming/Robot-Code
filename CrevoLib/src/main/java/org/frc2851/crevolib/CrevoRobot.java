@@ -1,5 +1,8 @@
 package org.frc2851.crevolib;
 
+import badlog.lib.BadLog;
+import badlog.lib.DataInferMode;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
@@ -23,6 +26,11 @@ public class CrevoRobot extends IterativeRobot
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
+    private BadLog badLog;
+    private long startTimeNs;
+    private long lastLog, currentTimeMillis;
+
+
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
      * @param subsystem Subsystem to be added
@@ -39,13 +47,21 @@ public class CrevoRobot extends IterativeRobot
         _autonSelector.addObject(auton.getName(), auton);
     }
 
+    protected CrevoRobot()
+    {
+        badLog = BadLog.init("/home/lvuser/log.bag");
+    }
+
     @Override
     public final void robotInit()
     {
+        startTimeNs = System.nanoTime();
+        lastLog = System.currentTimeMillis();
+
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
-
-        _subManager.start();
+        BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
+        BadLog.createTopicSubscriber("Time", "s", DataInferMode.DEFAULT, "hide", "delta", "xaxis");
 
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)
@@ -53,9 +69,10 @@ public class CrevoRobot extends IterativeRobot
             String name = f.getName().split("\\.")[0];
             try {
                 _motionProfiles.put(name, new MotionProfile(f));
-                Logger.println("MotionProfile: " + name, Logger.LogLevel.DEBUG);
             } catch (BadMotionProfileException ignored) { }
         }
+
+        badLog.finishInitialization();
     }
 
     @Override
@@ -81,6 +98,32 @@ public class CrevoRobot extends IterativeRobot
         _subManager.setDisabled();
     }
 
+    // TODO: Move all periodic tasks into the robot manager
+
+    @Override
+    public final void robotPeriodic()
+    {
+        periodic();
+    }
+
+    @Override
+    public final void disabledPeriodic()
+    {
+        periodic();
+    }
+
+    @Override
+    public final void teleopPeriodic()
+    {
+        periodic();
+    }
+
+    @Override
+    public final void autonomousPeriodic()
+    {
+        periodic();
+    }
+
     /**
      * Returns a motion profile fetched from the motion profile directory.
      * @param name The full name of the file, excluding file extensions
@@ -90,5 +133,19 @@ public class CrevoRobot extends IterativeRobot
     public static MotionProfile getMotionProfile(String name)
     {
         return _motionProfiles.getOrDefault(name, null);
+    }
+
+    private void periodic()
+    {
+        double time = ((double) (System.nanoTime() - startTimeNs) / 1000000000d);
+        BadLog.publish("Time", time);
+
+        badLog.updateTopics();
+
+        currentTimeMillis = System.currentTimeMillis();
+        if (!this.isDisabled() || (currentTimeMillis - lastLog >= 1000)) {
+            lastLog = System.currentTimeMillis();
+            badLog.log();
+        }
     }
 }

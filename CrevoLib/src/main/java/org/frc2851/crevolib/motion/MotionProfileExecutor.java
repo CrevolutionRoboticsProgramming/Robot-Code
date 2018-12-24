@@ -6,9 +6,8 @@ import com.ctre.phoenix.motion.TrajectoryPoint;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.Talon;
+import org.frc2851.crevolib.Logger;
 
-import java.io.File;
 import java.util.Vector;
 
 /**
@@ -37,41 +36,29 @@ public class MotionProfileExecutor
     private final int MIN_POINTS = 10;
 
     private MotionProfile _profile = null;
+    private final boolean USE_ARC;
 
     /**
      * Creates the MotionProfileExecutor from a given MotionProfile and Talon
      * @param profile The profile
      * @param talon The talon
+     * @param useArc Tells the executor to use heading correction
      */
-    public MotionProfileExecutor(MotionProfile profile, TalonSRX talon)
+    public MotionProfileExecutor(MotionProfile profile, TalonSRX talon, boolean useArc) throws NullPointerException
     {
+        if (profile == null) {
+            Logger.println("Null Motion Pointer", Logger.LogLevel.ERROR);
+            throw new NullPointerException();
+        }
         _talon = talon;
         _profile = profile;
         _notifier = new Notifier(() -> _talon.processMotionProfileBuffer());
         _notifier.startPeriodic(0.005);
+        USE_ARC = useArc;
     }
 
     /**
-     * Creates a MotionProfileExecutor from a given file, talon, and counts per feet value. A motion profile is created
-     * from the file and cpf.
-     * @param path The path of the file
-     * @param talon The talon
-     * @param cpf The count per feet value
-     */
-    public MotionProfileExecutor(String path, TalonSRX talon, int cpf) {
-        _talon = talon;
-        try {
-            _profile = new MotionProfile(new File(path));
-        } catch (BadMotionProfileException ignored) {
-
-        }
-
-        _notifier = new Notifier(() -> _talon.processMotionProfileBuffer());
-        _notifier.startPeriodic(0.005);
-    }
-
-    /**
-     *
+     * Updates that state of the Talon and handles streaming points.
      */
     public void update()
     {
@@ -116,7 +103,6 @@ public class MotionProfileExecutor
             case COMPLETE:
             {
                 // TODO: What if mp stuck? Needs testing.
-                if (_status.isLast) System.out.println("Status[" + _status.isLast + ", " + _status.activePointValid + "]");
                 if (_status.isLast && _status.activePointValid)
                 {
                     _setValue = SetValueMotionProfile.Hold;
@@ -146,7 +132,7 @@ public class MotionProfileExecutor
             point.timeDur = points.get(i).dt;
             point.profileSlotSelect0 = 0;
             point.profileSlotSelect1 = 0;
-            point.headingDeg = 0;
+            point.headingDeg = (USE_ARC) ? points.get(i).heading : 0;
             point.zeroPos = i == 0;
             point.isLastPoint = (i + 1) == points.size();
             if (point.isLastPoint) System.out.println("Last Point[" + i + "]");

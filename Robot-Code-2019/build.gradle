@@ -3,7 +3,7 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2018.06.21"
 }
 
-def ROBOT_CLASS = "org.frc2851.vulcan.Robot"
+def ROBOT_CLASS = "org.frc2851.robot.Robot"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project EmbeddedTools.
@@ -27,8 +27,11 @@ deploy {
 // and NavX.
 dependencies {
     compile wpilib()
-    compile ctre()
+    // TODO: Replace my github with original once jitpack build passes
+//    compile "com.github.dominikWin:badlog:v0.1.0"
+    compile "com.github.jmd613:Test:v0.1.0"
     compile project(":CrevoLib")
+    compile fileTree(dir: '../lib/', include: ['*.jar'])
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')

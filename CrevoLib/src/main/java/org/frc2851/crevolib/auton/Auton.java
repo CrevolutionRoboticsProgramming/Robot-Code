@@ -1,7 +1,5 @@
 package org.frc2851.crevolib.auton;
 
-import edu.wpi.first.wpilibj.Timer;
-
 public abstract class Auton {
     private String name = "NULL Auton";
     protected Auton(String name)
@@ -43,7 +41,7 @@ public abstract class Auton {
 
     public void runAction(Action action) throws AutonEndedException {
         isAlive();
-        action.start();
+        action.init();
 
         while (isAlive() && !action.isFinished())
         {
@@ -51,14 +49,14 @@ public abstract class Auton {
             try { Thread.sleep(0, 1); }
             catch (InterruptedException e) { e.printStackTrace(); }
         }
-        action.done();
+        action.stop();
     }
 
     public void runSynchronousAction(Action a, Action b) throws AutonEndedException
     {
         isAlive();
-        a.start();
-        b.start();
+        a.init();
+        b.init();
 
         while (isAlive() && !a.isFinished() && !b.isFinished())
         {
@@ -68,7 +66,7 @@ public abstract class Auton {
             catch (InterruptedException e) { e.printStackTrace(); }
         }
 
-        a.done();
-        b.done();
+        a.stop();
+        b.stop();
     }
 }

@@ -20,7 +20,7 @@ public interface Command
     /**
      * Runs once when the command first starts
      */
-    void init();
+    boolean init();
 
     /**
      * Runs iteratively at 200hz

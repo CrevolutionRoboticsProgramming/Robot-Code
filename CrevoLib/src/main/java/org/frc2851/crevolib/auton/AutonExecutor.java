@@ -9,7 +9,7 @@ public class AutonExecutor
 
     public void setAuton(Auton auton)
     {
-        Logger.println("Auton Set: " + auton.getName(), Logger.LogLevel.DEBUG);
+        if (auton != null) Logger.println("Auton Set: " + auton.getName(), Logger.LogLevel.DEBUG);
         mAuton = auton;
     }
 

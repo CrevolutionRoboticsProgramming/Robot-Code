@@ -1,5 +1,6 @@
 package org.frc2851.crevolib.subsystem;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 
@@ -16,7 +17,7 @@ public abstract class Subsystem
     /**
      * Runs once when the subsystem first starts
      */
-    protected abstract void init();
+    protected abstract boolean init();
 
     /**
      * Returns the default teleop command for the subsystem
@@ -37,7 +38,8 @@ public abstract class Subsystem
      */
     public synchronized void setCommand(Command command)
     {
-        Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+        if (command != null) Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+        else Logger.println("Command set to Idle", Logger.LogLevel.DEBUG);
         if (_command != null) _command.stop();
         _command = command;
         _isCommandInit = false;
@@ -49,7 +51,12 @@ public abstract class Subsystem
         {
             if (!_isCommandInit)
             {
-                _command.init();
+                if (!_command.init())
+                {
+                    Logger.println("Could not initialize command: " + _command.getName(), Logger.LogLevel.ERROR);
+                    _command = null;
+                    return;
+                }
                 _isCommandInit = true;
             }
 
