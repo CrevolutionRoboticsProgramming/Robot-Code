@@ -1,5 +1,6 @@
 package org.frc2851.vulcan.subsystems;
 
+import badlog.lib.BadLog;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motion.SetValueMotionProfile;
 import com.ctre.phoenix.motorcontrol.*;
@@ -115,6 +116,22 @@ public class DriveTrain extends Subsystem
         }
 
         reset(); // Probably unnecessary. Worth the lost cycles for certainty.
+
+        BadLog.createTopic("Drivetrain/Talon Left A Voltage", "V", () -> _talonLeftA.getBusVoltage(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Talon Left B Voltage", "V", () -> _talonLeftB.getBusVoltage(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Talon Right A Voltage", "V", () -> _talonRightA.getBusVoltage(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Talon Right B Voltage", "V", () -> _talonRightB.getBusVoltage(), "hide", "Drivetrain/Outputs");
+
+        BadLog.createTopic("Drivetrain/Talon Left A Current", "A", () -> _talonLeftA.getOutputCurrent(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Talon Left B Current", "A", () -> _talonLeftB.getOutputCurrent(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Talon Right A Current", "A", () -> _talonRightA.getOutputCurrent(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Talon Right B Current", "A", () -> _talonRightB.getOutputCurrent(), "hide", "Drivetrain/Outputs");
+
+        BadLog.createTopic("Drivetrain/Left Encoder", "counts", () -> (double) _talonLeftA.getSensorCollection().getQuadraturePosition(), "hide", "Drivetrain/Sensors");
+        BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) _talonRightA.getSensorCollection().getQuadraturePosition(), "hide", "Drivetrain/Sensors");
+        BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(_talonLeftA.getSensorCollection().getQuadratureVelocity()), "hide", "Drivetrain/Sensors");
+        BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(_talonRightA.getSensorCollection().getQuadratureVelocity()), "hide", "Drivetrain/Sensors");
+        if (USE_GYRO) BadLog.createTopic("Drivetrain/Angle", "deg", () -> _pigeon.getFusedHeading(), "hide", "Drivetrain/Sensors");
         return true;
     }
 
@@ -548,5 +565,10 @@ public class DriveTrain extends Subsystem
 
     private double applyDeadband(double val, double deadband) {
         return (Math.abs(val) < deadband) ? 0 : val;
+    }
+
+    // counts / 100ms
+    private double ctreVelToFPS(int ctreVel) {
+        return ((ctreVel * 10) / CPR) * WHEEL_DIAMETER * Math.PI;
     }
 }
