@@ -117,21 +117,24 @@ public class DriveTrain extends Subsystem
 
         reset(); // Probably unnecessary. Worth the lost cycles for certainty.
 
-        BadLog.createTopic("Drivetrain/Talon Left A Voltage", "V", () -> _talonLeftA.getBusVoltage(), "hide", "Drivetrain/Outputs");
-        BadLog.createTopic("Drivetrain/Talon Left B Voltage", "V", () -> _talonLeftB.getBusVoltage(), "hide", "Drivetrain/Outputs");
-        BadLog.createTopic("Drivetrain/Talon Right A Voltage", "V", () -> _talonRightA.getBusVoltage(), "hide", "Drivetrain/Outputs");
-        BadLog.createTopic("Drivetrain/Talon Right B Voltage", "V", () -> _talonRightB.getBusVoltage(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Left Percent", BadLog.UNITLESS, () -> _talonLeftA.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
+        BadLog.createTopic("Drivetrain/Right Percent", BadLog.UNITLESS, () -> _talonRightA.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
 
-        BadLog.createTopic("Drivetrain/Talon Left A Current", "A", () -> _talonLeftA.getOutputCurrent(), "hide", "Drivetrain/Outputs");
-        BadLog.createTopic("Drivetrain/Talon Left B Current", "A", () -> _talonLeftB.getOutputCurrent(), "hide", "Drivetrain/Outputs");
-        BadLog.createTopic("Drivetrain/Talon Right A Current", "A", () -> _talonRightA.getOutputCurrent(), "hide", "Drivetrain/Outputs");
-        BadLog.createTopic("Drivetrain/Talon Right B Current", "A", () -> _talonRightB.getOutputCurrent(), "hide", "Drivetrain/Outputs");
+        BadLog.createTopic("Drivetrain/Left A Voltage", "V", () -> _talonLeftA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Left B Voltage", "V", () -> _talonLeftB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Right A Voltage", "V", () -> _talonRightA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Right B Voltage", "V", () -> _talonRightB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
 
-        BadLog.createTopic("Drivetrain/Left Encoder", "counts", () -> (double) _talonLeftA.getSensorCollection().getQuadraturePosition(), "hide", "Drivetrain/Sensors");
-        BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) _talonRightA.getSensorCollection().getQuadraturePosition(), "hide", "Drivetrain/Sensors");
-        BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(_talonLeftA.getSensorCollection().getQuadratureVelocity()), "hide", "Drivetrain/Sensors");
-        BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(_talonRightA.getSensorCollection().getQuadratureVelocity()), "hide", "Drivetrain/Sensors");
-        if (USE_GYRO) BadLog.createTopic("Drivetrain/Angle", "deg", () -> _pigeon.getFusedHeading(), "hide", "Drivetrain/Sensors");
+        BadLog.createTopic("Drivetrain/Left A Current", "A", () -> _talonLeftA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Left B Current", "A", () -> _talonLeftB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Right A Current", "A", () -> _talonRightA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Right B Current", "A", () -> _talonRightB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+
+        BadLog.createTopic("Drivetrain/Left Encoder", "counts", () -> (double) _talonLeftA.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
+        BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) _talonRightA.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
+        BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(_talonLeftA.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
+        BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(_talonRightA.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
+        if (USE_GYRO) BadLog.createTopic("Drivetrain/Angle", "deg", () -> _pigeon.getFusedHeading());
         return true;
     }
 
