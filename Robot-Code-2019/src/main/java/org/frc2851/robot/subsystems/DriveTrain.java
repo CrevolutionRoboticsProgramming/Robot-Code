@@ -1,4 +1,4 @@
-package org.frc2851.vulcan.subsystems;
+package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import com.ctre.phoenix.ErrorCode;
@@ -21,7 +21,7 @@ import org.frc2851.crevolib.motion.MotionProfileExecutor;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
-import org.frc2851.vulcan.Robot;
+import org.frc2851.robot.Robot;
 import org.jdom2.DataConversionException;
 
 public class DriveTrain extends Subsystem

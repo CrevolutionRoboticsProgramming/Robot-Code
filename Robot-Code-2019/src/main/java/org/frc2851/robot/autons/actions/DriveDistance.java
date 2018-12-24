@@ -1,7 +1,7 @@
-package org.frc2851.vulcan.autons.actions;
+package org.frc2851.robot.autons.actions;
 
 import org.frc2851.crevolib.auton.Action;
-import org.frc2851.vulcan.subsystems.DriveTrain;
+import org.frc2851.robot.subsystems.DriveTrain;
 
 public class DriveDistance implements Action
 {

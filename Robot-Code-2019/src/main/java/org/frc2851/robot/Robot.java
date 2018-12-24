@@ -1,10 +1,10 @@
-package org.frc2851.vulcan;
+package org.frc2851.robot;
 
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
-import org.frc2851.vulcan.subsystems.*;
+import org.frc2851.robot.subsystems.*;
 
 public class Robot extends CrevoRobot
 {
