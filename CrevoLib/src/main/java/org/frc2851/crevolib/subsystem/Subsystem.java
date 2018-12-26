@@ -78,22 +78,6 @@ public abstract class Subsystem
     @Override
     public String toString() { return _name; }
 
-//    public final void update()
-//    {
-//        // Note: The only reason this is an infinite while loop is because the program stops when the robot is shut off
-//        while (true)
-//        {
-//            double startTime = Timer.getFPGATimestamp();
-//            runCommand();
-//            double dt = Timer.getFPGATimestamp() - startTime;
-//            try {
-//                if (dt < 0.005) Thread.sleep(5 - (int)(dt * 1000));
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
     protected void log(String message, Logger.LogLevel level) {
         Logger.println("[" + _name + "] " + message, level);
     }
