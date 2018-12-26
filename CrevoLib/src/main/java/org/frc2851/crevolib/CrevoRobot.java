@@ -22,7 +22,7 @@ public class CrevoRobot extends IterativeRobot
 
     private AutonExecutor _executor = new AutonExecutor();
     private SendableChooser<Auton> _autonSelector = new SendableChooser<>();
-    private SubsystemManager _subManager = new SubsystemManager();
+    private SubsystemManager _subManager = SubsystemManager.getInstance();
 
     private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
 
@@ -62,6 +62,7 @@ public class CrevoRobot extends IterativeRobot
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
         BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
         BadLog.createTopicSubscriber("Time", "s", DataInferMode.DEFAULT, "hide", "delta", "xaxis");
+        badLog.finishInitialization();
 
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)
@@ -72,7 +73,7 @@ public class CrevoRobot extends IterativeRobot
             } catch (BadMotionProfileException ignored) { }
         }
 
-        badLog.finishInitialization();
+        _subManager.start();
     }
 
     @Override

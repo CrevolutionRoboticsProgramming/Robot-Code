@@ -38,8 +38,8 @@ public abstract class Subsystem
      */
     public synchronized void setCommand(Command command)
     {
-        if (command != null) Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-        else Logger.println("Command set to Idle", Logger.LogLevel.DEBUG);
+        if (command != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
         if (_command != null) _command.stop();
         _command = command;
         _isCommandInit = false;
@@ -93,4 +93,8 @@ public abstract class Subsystem
 //            }
 //        }
 //    }
+
+    protected void log(String message, Logger.LogLevel level) {
+        Logger.println("[" + _name + "] " + message, level);
+    }
 }
