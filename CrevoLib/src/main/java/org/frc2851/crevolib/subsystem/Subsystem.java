@@ -8,9 +8,8 @@ import org.frc2851.crevolib.Logger;
  * Abstract class that defines subsystem behavior. An example of the subsystem may be a drivetrain or a shooter.
  * A subsystem subclass should contain all code that manipulates physical subsystems.
  */
-public abstract class Subsystem extends Thread
+public abstract class Subsystem
 {
-    private Thread _thread;
     private String _name;
     private Command _command;
     private boolean _isCommandInit;
@@ -39,14 +38,14 @@ public abstract class Subsystem extends Thread
      */
     public synchronized void setCommand(Command command)
     {
-        if (command != null) Logger.println("SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-        else Logger.println("Command set to Idle", Logger.LogLevel.DEBUG);
+        if (command != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
         if (_command != null) _command.stop();
         _command = command;
         _isCommandInit = false;
     }
 
-    private synchronized void runCommand()
+    synchronized void runCommand()
     {
         if (_command != null)
         {
@@ -79,39 +78,23 @@ public abstract class Subsystem extends Thread
     @Override
     public String toString() { return _name; }
 
-    @Override
-    public final void run()
-    {
-        // Note: The only reason this is an infinite while loop is because the program stops when the robot is shut off
-        while (true)
-        {
-            double startTime = Timer.getFPGATimestamp();
-            runCommand();
-            double dt = Timer.getFPGATimestamp() - startTime;
-            try {
-                if (dt < 0.005) Thread.sleep(5 - (int)(dt * 1000));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+//    public final void update()
+//    {
+//        // Note: The only reason this is an infinite while loop is because the program stops when the robot is shut off
+//        while (true)
+//        {
+//            double startTime = Timer.getFPGATimestamp();
+//            runCommand();
+//            double dt = Timer.getFPGATimestamp() - startTime;
+//            try {
+//                if (dt < 0.005) Thread.sleep(5 - (int)(dt * 1000));
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 
-    /**
-     * Call this function to start the subsystem.
-     */
-    @Override
-    public final void start()
-    {
-        if (_thread == null)
-        {
-            Logger.println("Starting Subsystem: " + _name, Logger.LogLevel.DEBUG);
-            _thread = new Thread(this, _name);
-            if (!init()) {
-                Logger.println("Could not initialize " + _name, Logger.LogLevel.ERROR);
-                DriverStation.reportError("Could not initialize " + _name, false);
-                return;
-            }
-            _thread.start();
-        }
+    protected void log(String message, Logger.LogLevel level) {
+        Logger.println("[" + _name + "] " + message, level);
     }
 }
