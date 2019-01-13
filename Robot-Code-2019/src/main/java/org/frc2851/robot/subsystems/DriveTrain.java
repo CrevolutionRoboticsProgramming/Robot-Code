@@ -21,6 +21,7 @@ import org.frc2851.crevolib.motion.MotionProfileExecutor;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
+import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 import org.jdom2.DataConversionException;
 
@@ -32,7 +33,7 @@ public class DriveTrain extends Subsystem
     private final double DRIVE_WIDTH = 2.5;
     private final double DEFAULT_PEAK_OUT = 1;
     private final double DEFAULT_NOMINAL_OUT = 0;
-    private final int TALON_TIMEOUT = 100;
+    private final int TALON_TIMEOUT = Constants.getInstance().talonTimeout;
     private final int PID_PRIMARY = 0, PID_AUX = 1;
     private final int PID_SLOT_DRIVE = 0, PID_SLOT_GYRO = 1, PID_SLOT_ENC_TURN = 2;
     private final int PIGEON_REMOTE_LEFT = 0, PIGEON_REMOTE_RIGHT = 0;

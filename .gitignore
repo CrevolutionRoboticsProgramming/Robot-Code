@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 **/.idea
 **/.gradle
 **/build
-=======
-**/.idea
-**/.gradle
-**/build
->>>>>>> 291f823785993974c90dbca1d834dba43d07ee46
+**/out
+**.iml
 .DS_Store
