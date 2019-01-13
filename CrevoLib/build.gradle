@@ -1,3 +1,23 @@
+<<<<<<< HEAD
+plugins {
+    id "java"
+    id "edu.wpi.first.GradleRIO" version "2019.1.1"
+}
+
+
+dependencies {
+    compile wpi.deps.wpilib()
+    compile wpi.deps.vendor.java()
+    nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
+    nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
+    testCompile 'junit:junit:4.12'
+    // TODO: Replace my github with original once jitpack build passes
+//    compile "com.github.dominikWin:badlog:v0.1.0"
+    compile "com.github.jmd613:Test:v0.1.0"
+    compile "org.jdom:jdom2:2.0.6"
+    compile fileTree(dir: '../lib/', include: ['*.jar'])
+}
+=======
 plugins {
     id "java"
     id "edu.wpi.first.GradleRIO" version "2019.1.1"
@@ -12,3 +32,4 @@ dependencies {
     compile "org.jdom:jdom2:2.0.6"
     compile fileTree(dir: '../lib/', include: ['*.jar'])
 }
+>>>>>>> 291f823785993974c90dbca1d834dba43d07ee46
