@@ -1,6 +1,2 @@
-<<<<<<< HEAD
 include 'CrevoLib'
-=======
-include 'CrevoLib'
->>>>>>> 291f823785993974c90dbca1d834dba43d07ee46
 include 'Robot-Code-2019'
