@@ -10,7 +10,7 @@ public class MotionProfilePoint
 {
     public final double pos;
     public final double vel;
-    public final TrajectoryPoint.TrajectoryDuration dt;
+    public final int dt;
     public final int heading;
 
     /**
@@ -20,27 +20,21 @@ public class MotionProfilePoint
      * @param dt Change in time between each point
      * @param cpf Counts per feet (used for native unit conversion)
      */
-    public MotionProfilePoint(double pos, double vel, double dt, double heading, double cpf)
+    public MotionProfilePoint(double pos, double vel, int dt, double heading, double cpf)
     {
         this.pos = pathfinderToCTREPos(pos, cpf);
         this.vel = pathfinderToCTREVel(vel, cpf);
-        this.dt = pathfinderToCTREdt(dt);
+        this.dt = dt;
         // TODO: Verify heading conversion
         this.heading = (int) Math.toDegrees(heading) * 10;
     }
 
     private double pathfinderToCTREPos(double pos, double cpf) { return pos * cpf; }
     private double pathfinderToCTREVel(double vel, double cpf) { return (vel * cpf) / 10; }
-    private TrajectoryPoint.TrajectoryDuration pathfinderToCTREdt(double dt)
-    {
-        TrajectoryPoint.TrajectoryDuration dur = TrajectoryPoint.TrajectoryDuration.valueOf((int)(dt * 1000));
-        if (dur.value != (dt * 1000)) DriverStation.reportError("Invalid profile dt", false);
-        return dur;
-    }
 
     @Override
     public String toString()
     {
-        return "MotionPoint[" + pos + ", " + vel + ", " + dt.value + "]";
+        return "MotionPoint[" + pos + ", " + vel + ", " + dt + "]";
     }
 }

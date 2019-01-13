@@ -46,7 +46,7 @@ public class MotionProfile
 
                 double pos = Double.parseDouble(vals[3]);
                 double vel = Double.parseDouble(vals[4]);
-                double dt = Double.parseDouble(vals[0]);
+                int dt = Integer.parseInt(vals[0]);
                 double heading = Double.parseDouble(vals[7]);
                 _points.add(new MotionProfilePoint(pos, vel, dt, heading, cpf));
             }
