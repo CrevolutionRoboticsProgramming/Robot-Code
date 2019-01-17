@@ -1,5 +1,7 @@
 package org.frc2851.robot;
 
+import org.frc2851.robot.subsystems.DriveTrain;
+
 public class Constants
 {
     private static Constants mInstance;
@@ -19,6 +21,8 @@ public class Constants
     public final int rightDriveSlaveB = 6;
 
     public final int pigeonID = 42;
+
+    public final DriveTrain.DriveGear defaultDriveGear = DriveTrain.DriveGear.HIGH;
 
     // Elevator
     public final int elevatorMaster = 7;
