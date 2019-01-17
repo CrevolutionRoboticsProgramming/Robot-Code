@@ -6,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrame;
 import com.ctre.phoenix.motorcontrol.VelocityMeasPeriod;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import org.frc2851.crevolib.Logger;
 
 /**
@@ -73,6 +74,16 @@ public class TalonSRXFactory
     }
 
     /**
+     * Creates a standard wpi_talon with the default configuration
+     * @param id CAN bus id
+     * @return Configured talon
+     */
+    public static WPI_TalonSRX createDefaultWPI_TalonSRX(int id)
+    {
+        return createWPI_TalonSRX(id, mDefaultConfiguration);
+    }
+
+    /**
      * Creates a master talon with the default configuration
      * @param id CAN bus id
      * @return Configured talon
@@ -83,6 +94,16 @@ public class TalonSRXFactory
     }
 
     /**
+     * Creates a master wpi_talon with the default configuration
+     * @param id CAN bus id
+     * @return Configured talon
+     */
+    public static WPI_TalonSRX createDefaultMasterWPI_TalonSRX(int id)
+    {
+        return createWPI_TalonSRX(id, mDefaultMasterConfiguration);
+    }
+
+    /**
      * Creates a master talon with the fast configuration
      * @param id CAN bus id
      * @return Configured talon
@@ -90,6 +111,16 @@ public class TalonSRXFactory
     public static TalonSRX createFastMasterTalonSRX(int id)
     {
         return createTalonSRX(id, mFastMasterConfiguration);
+    }
+
+    /**
+     * Creates a master wpi_talon with the fast configuration
+     * @param id CAN bus id
+     * @return Configured talon
+     */
+    public static WPI_TalonSRX createFastMasterWPI_TalonSRX(int id)
+    {
+        return createWPI_TalonSRX(id, mFastMasterConfiguration);
     }
 
     /**
@@ -105,9 +136,29 @@ public class TalonSRXFactory
         return talon;
     }
 
+    /**
+     * Creates a slave wpi_talon with the default configuration
+     * @param id CAN bus id
+     * @param master The master talon
+     * @return Configured talon
+     */
+    public static WPI_TalonSRX createPermanentSlaveWPI_TalonSRX(int id, TalonSRX master)
+    {
+        WPI_TalonSRX talon = createWPI_TalonSRX(id, mDefaultSlaveConfiguration);
+        talon.follow(master);
+        return talon;
+    }
+
     private static TalonSRX createTalonSRX(int id, Configuration config)
     {
         TalonSRX talon = new TalonSRX(id);
+        configureTalon(talon, config);
+        return talon;
+    }
+
+    private static WPI_TalonSRX createWPI_TalonSRX(int id, Configuration config)
+    {
+        WPI_TalonSRX talon = new WPI_TalonSRX(id);
         configureTalon(talon, config);
         return talon;
     }
@@ -137,7 +188,7 @@ public class TalonSRXFactory
             setSucceeded &= talon.setSelectedSensorPosition(0, 0, talonTimeout) == ErrorCode.OK;
             setSucceeded &= talon.setSelectedSensorPosition(0, 1, talonTimeout) == ErrorCode.OK;
             setSucceeded &= talon.configVelocityMeasurementPeriod(config.VELOCITY_MEASUREMENT_PERIOD, talonTimeout) == ErrorCode.OK;
-			setSucceeded &= talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout) == ErrorCode.OK;
+            setSucceeded &= talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout) == ErrorCode.OK;
         } while (!setSucceeded && retryCounter++ < kMaxRetry);
 
         if (!setSucceeded || retryCounter >= kMaxRetry) Logger.println("Failed to initialize Talon " + talon.getDeviceID() + "!!!!", Logger.LogLevel.ERROR);
