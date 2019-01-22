@@ -12,6 +12,8 @@ public class Constants
 
     private Constants() { }
 
+    public boolean singleControllerMode = false;
+
     // Drivetrain
     public final int leftDriveMaster = 1;
     public final int leftDriveSlaveA = 2;
