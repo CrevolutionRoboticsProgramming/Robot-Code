@@ -11,8 +11,8 @@ import org.frc2851.crevolib.Logger;
 public abstract class Subsystem
 {
     private String _name;
-    private Command _command;
-    private boolean _isCommandInit;
+    private Command _command, _defaultCommand = null;
+    private boolean _isCommandInit, _isDefaultCommandInit;
 
     /**
      * Runs once when the subsystem first starts
@@ -38,27 +38,36 @@ public abstract class Subsystem
      */
     public synchronized void setCommand(Command command)
     {
-        if (command != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
-        if (_command != null) _command.stop();
-        _command = command;
+//        if (command != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+//        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
+//        if (_command != null) _command.stop();
+//        _command = command;
+        setCommand(command, _command);
         _isCommandInit = false;
+    }
+
+    public void setDefaultCommand(Command command)
+    {
+//        if (_defaultCommand != null) Logger.println("[" + _name + "] SetDefaultCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
+//        else Logger.println("[" + _name + "] Default Command set to Idle", Logger.LogLevel.DEBUG);
+//        if (_defaultCommand != null) _command.stop();
+        setCommand(command, _defaultCommand);
+        _isDefaultCommandInit = false;
+    }
+
+    private void setCommand(Command newCommand, Command oldCommand)
+    {
+        if (newCommand != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + newCommand.getName(), Logger.LogLevel.DEBUG);
+        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
+        if (oldCommand != null) _command.stop();
+        oldCommand = newCommand;
     }
 
     synchronized void runCommand()
     {
         if (_command != null)
         {
-            if (!_isCommandInit)
-            {
-                if (!_command.init())
-                {
-                    Logger.println("Could not initialize command: " + _command.getName(), Logger.LogLevel.ERROR);
-                    _command = null;
-                    return;
-                }
-                _isCommandInit = true;
-            }
+            initCommand(_command, _isCommandInit);
 
             if (!_command.isFinished()) {
                 _command.update();
@@ -67,6 +76,35 @@ public abstract class Subsystem
                 _command = null;
             }
         }
+
+        if (_defaultCommand != null)
+        {
+            initCommand(_defaultCommand, _isDefaultCommandInit);
+
+            _defaultCommand.update(); // Default command does not stop!!!
+        }
+    }
+
+    private boolean initCommand(Command command, boolean isInit)
+    {
+        boolean isDefault = command == _defaultCommand;
+        if (!isInit) {
+            if (!command.init()) {
+                if (isDefault) {
+                    Logger.println("Could not initialize default command [" + command.getName() + "], setting default command to null", Logger.LogLevel.ERROR);
+                    _defaultCommand = null;
+                    return false;
+                } else {
+                    Logger.println("Could not initialize command: " + _command.getName(), Logger.LogLevel.ERROR);
+                    _command = null;
+                    return false;
+                }
+            }
+
+            if (isDefault) _isDefaultCommandInit = true;
+            else _isCommandInit = true;
+        }
+        return true;
     }
 
     /**
@@ -80,5 +118,14 @@ public abstract class Subsystem
 
     protected void log(String message, Logger.LogLevel level) {
         Logger.println("[" + _name + "] " + message, level);
+    }
+
+    public static void runCommandGroup(Subsystem subsystem, Command... command)
+    {
+        for (Command c : command)
+        {
+            subsystem.setCommand(c);
+            while (subsystem.isSubsystemActive());
+        }
     }
 }
