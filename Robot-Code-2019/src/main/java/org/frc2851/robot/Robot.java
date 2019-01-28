@@ -16,6 +16,7 @@ public class Robot extends CrevoRobot
         configControllers();
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
+        addSubsystem(Hatcher.getInstance());
     }
 
     private static void configControllers()
@@ -26,5 +27,7 @@ public class Robot extends CrevoRobot
         driver.config(Axis.AxisID.LEFT_Y); // Throttle
         driver.config(Axis.AxisID.RIGHT_X); // Turn
         driver.config(Axis.AxisID.RIGHT_TRIGGER); // Quick Turn
+
+        //TODO: Config buttons for Hatcher
     }
 }
