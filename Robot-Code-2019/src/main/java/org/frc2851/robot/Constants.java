@@ -30,6 +30,8 @@ public class Constants
     public final int elevatorMaster = 7;
     public final int elevatorSlave = 8;
 
+    public final double elevatorRawMultiplier = 0.8;
+
     // Climber
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
