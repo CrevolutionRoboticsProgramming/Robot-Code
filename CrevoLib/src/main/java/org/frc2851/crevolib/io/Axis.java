@@ -24,8 +24,9 @@ public class Axis
         public int getID() { return id; }
     }
 
-    private Joystick _joy;
-    private final AxisID _id;
+    private Joystick mJoystick;
+    private final AxisID mId;
+    private InputShaper mShaper;
 
     /**
      * Creates an axis (analog joystick input)
@@ -34,8 +35,20 @@ public class Axis
      */
     Axis(int channel, AxisID id)
     {
-        _joy = new Joystick(channel);
-        _id = id;
+        mJoystick = new Joystick(channel);
+        mId = id;
+        mShaper = (x) -> x;
+    }
+
+    Axis(int channel, AxisID id, InputShaper shaper)
+    {
+        mJoystick = new Joystick(channel);
+        mId = id;
+        mShaper = shaper;
+    }
+
+    void setShaper(InputShaper shaper) {
+        mShaper = shaper;
     }
 
     /**
@@ -43,13 +56,14 @@ public class Axis
      * @param shaper Shaper Function (such as return val^2).
      * @return The adjusted axis value
      */
+    @Deprecated
     double get(InputShaper shaper)
     {
-        return shaper.shape(_joy.getRawAxis(_id.getID()));
+        return shaper.shape(mJoystick.getRawAxis(mId.getID()));
     }
 
     double get()
     {
-        return _joy.getRawAxis(_id.getID());
+        return mShaper.shape(mJoystick.getRawAxis(mId.getID()));
     }
 }
