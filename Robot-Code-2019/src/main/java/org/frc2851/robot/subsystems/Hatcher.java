@@ -18,10 +18,8 @@ import org.frc2851.robot.Robot;
 
 public class Hatcher extends Subsystem {
 
-    private Button.ButtonID extendOutButton = Button.ButtonID.X;
-    private Button.ButtonID extendInButton = Button.ButtonID.A;
-    private Button.ButtonID actuateOutButton = Button.ButtonID.Y;
-    private Button.ButtonID actuateInButton = Button.ButtonID.B;
+    private Button.ButtonID extendButton = Button.ButtonID.X;
+    private Button.ButtonID actuateButton = Button.ButtonID.Y;
 
     private DoubleSolenoid mExtendSol, mActuateSol;
     private Controller mController = Robot.operator;
@@ -49,10 +47,8 @@ public class Hatcher extends Subsystem {
 
         reset();
 
-        mController.config(extendOutButton, Button.ButtonMode.RAW);
-        mController.config(extendInButton, Button.ButtonMode.RAW);
-        mController.config(actuateOutButton, Button.ButtonMode.RAW);
-        mController.config(actuateInButton, Button.ButtonMode.RAW);
+        mController.config(extendButton, Button.ButtonMode.TOGGLE);
+        mController.config(actuateButton, Button.ButtonMode.TOGGLE);
 
         return true;
     }
@@ -79,20 +75,16 @@ public class Hatcher extends Subsystem {
 
             @Override
             public void update() {
-                if (mController.get(extendOutButton)) {
+                if (mController.get(extendButton)) {
                     mExtendSol.set(DoubleSolenoid.Value.kForward);
-                } else if (mController.get(extendInButton)) {
-                    mExtendSol.set(DoubleSolenoid.Value.kReverse);
                 } else {
-                    mExtendSol.set(DoubleSolenoid.Value.kOff);
+                    mExtendSol.set(DoubleSolenoid.Value.kReverse);
                 }
 
-                if (mController.get(actuateOutButton)) {
+                if (mController.get(actuateButton)) {
                     mActuateSol.set(DoubleSolenoid.Value.kReverse);
-                } else if (mController.get(actuateInButton)) {
-                    mActuateSol.set(DoubleSolenoid.Value.kForward);
                 } else {
-                    mActuateSol.set(DoubleSolenoid.Value.kOff);
+                    mActuateSol.set(DoubleSolenoid.Value.kForward);
                 }
             }
 
