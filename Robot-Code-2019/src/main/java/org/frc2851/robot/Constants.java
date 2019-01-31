@@ -29,6 +29,7 @@ public class Constants
     // Elevator
     public final int elevatorMaster = 7;
     public final int elevatorSlave = 8;
+    public final int elevatorCanifier = 11;
 
     public final double elevatorRawMultiplier = 0.8;
 

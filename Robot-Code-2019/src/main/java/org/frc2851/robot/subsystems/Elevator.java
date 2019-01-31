@@ -1,9 +1,9 @@
 package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
-import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.CANifier;
+import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
@@ -43,19 +43,19 @@ public class Elevator extends Subsystem
     }
 
     private Constants mConst = Constants.getInstance();
-
     private TalonSRX mTalonMaster, mTalonSlave;
+    private CANifier mCanifier;
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
-
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
 
-    private boolean mDefaultMotorLock;
+    private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
+    private boolean mReachdPosition = true;
 
-    private static Elevator mInstance = new Elevator();
-
+    private static Elevator mInstance;
     private Elevator() { super("Elevator"); }
-
-    public static Elevator getInstance() {
+    public static Elevator getInstance()
+    {
+        if (mInstance == null) mInstance = new Elevator();
         return mInstance;
     }
 
@@ -64,6 +64,13 @@ public class Elevator extends Subsystem
     {
         mTalonMaster = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.elevatorMaster);
         mTalonSlave = TalonSRXFactory.createPermanentSlaveTalonSRX(mConst.elevatorSlave, mTalonMaster);
+        mCanifier = new CANifier(mConst.elevatorCanifier);
+
+        mTalonMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative,0, mConst.talonTimeout);
+        mTalonMaster.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
+                mCanifier.getDeviceID(), mConst.talonTimeout);
+
+        configureController(mController);
 
         BadLog.createTopicStr("Elevator/Control Mode", BadLog.UNITLESS, () -> mControlMode.name(), "hide");
         BadLog.createTopic("Elevator/Output Percent", BadLog.UNITLESS, () -> mTalonMaster.getMotorOutputPercent(), "hide");
@@ -78,46 +85,50 @@ public class Elevator extends Subsystem
     @Override
     public Command getTeleopCommand() {
         return new Command() {
-            @Override
-            public String getName() {
-                return "Teleop";
-            }
+            ElevatorPosition desiredPosition = null;
 
             @Override
-            public boolean isFinished() {
-                return false;
-            }
+            public String getName() { return "Teleop"; }
 
             @Override
-            public boolean init() {
-                return false;
-            }
+            public boolean isFinished() { return false; }
+
+            @Override
+            public boolean init() { return true; }
 
             @Override
             public void update()
             {
-                switch (mControlMode)
-                {
-                    // TODO: Implement a hold method
-                    case DIRECT:
-                        mTalonMaster.set(ControlMode.PercentOutput, mController.get(Axis.AxisID.RIGHT_Y));
-                        break;
-                    case CURRENT:
-                        break;
-                    case POS_PID:
-                        break;
-                    case MOTION_MAGIC:
+                double rawInput = mController.get(Axis.AxisID.RIGHT_Y);
+                ElevatorPosition polledPosition = getDesiredPosition();
+                desiredPosition = (mCurrentPosition == polledPosition && rawInput == 0) ? null : polledPosition;
 
-                        break;
-                    default:
-                        log("Elevator mode is null??", Logger.LogLevel.ERROR);
-                        break;
+                if (desiredPosition != null) {
+
+                } else {
+                    mTalonMaster.set(ControlMode.PercentOutput, rawInput);
                 }
             }
 
             @Override
             public void stop() {
 
+            }
+
+            ElevatorPosition getDesiredPosition() {
+                if (mController.get(Button.ButtonID.START))
+                    return ElevatorPosition.LOW_HATCH;
+                else if (mController.get(Button.ButtonID.X))
+                    return ElevatorPosition.MID_HATCH;
+                else if (mController.get(Button.ButtonID.Y))
+                    return ElevatorPosition.HIGH_HATCH;
+                else if (mController.get(Button.ButtonID.B))
+                    return ElevatorPosition.LOW_CARGO;
+                else if (mController.get(Button.ButtonID.A))
+                    return ElevatorPosition.MID_CARGO;
+                else if (mController.get(Button.ButtonID.SELECT))
+                    return ElevatorPosition.HIGH_CARGO;
+                return null;
             }
         };
     }
@@ -182,13 +193,19 @@ public class Elevator extends Subsystem
         };
     }
 
-    public void configController(Controller controller)
+    public double applyDeadband(double input, double deadband) {
+        return (Math.abs(input) < deadband) ? 0 : input;
+    }
+
+    public void configureController(Controller controller)
     {
         /*
          * A - Move Elevator to Mid Cargo
          * B - Move Elevator to Low Cargo
          * X - Move Elevator to Mid Hatch
          * Y - Move Elevator to High Hatch
+         * Start - Move Elevator to Default Position
+         * Select - Move Elevator to High Cargo
          * Right Y - Manual elevator control
          */
 
@@ -196,6 +213,8 @@ public class Elevator extends Subsystem
         controller.config(Button.ButtonID.B, Button.ButtonMode.RAW);
         controller.config(Button.ButtonID.X, Button.ButtonMode.RAW);
         controller.config(Button.ButtonID.Y, Button.ButtonMode.RAW);
-        controller.config(Axis.AxisID.RIGHT_Y, x -> -x * mConst.elevatorRawMultiplier);
+        controller.config(Button.ButtonID.START, Button.ButtonMode.RAW);
+        controller.config(Button.ButtonID.SELECT, Button.ButtonMode.RAW);
+        controller.config(Axis.AxisID.RIGHT_Y, x -> -(applyDeadband(x, 0.15) * mConst.elevatorRawMultiplier));
     }
 }
