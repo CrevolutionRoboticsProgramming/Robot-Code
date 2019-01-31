@@ -13,6 +13,8 @@ public abstract class Subsystem
     private String _name;
     private Command _command, _defaultCommand = null;
     private boolean _isCommandInit, _isDefaultCommandInit;
+    private CommandState mPrimaryState = new CommandState(),
+            mSecondaryState = new CommandState();
 
     /**
      * Runs once when the subsystem first starts
@@ -53,6 +55,8 @@ public abstract class Subsystem
 //        if (_defaultCommand != null) _command.stop();
         setCommand(command, _defaultCommand);
         _isDefaultCommandInit = false;
+        mPrimaryState.isInit = false;
+        mPrimaryState.isFinished = false;
     }
 
     private void setCommand(Command newCommand, Command oldCommand)
@@ -72,9 +76,13 @@ public abstract class Subsystem
             if (!_command.isFinished()) {
                 _command.update();
             } else {
+                mSecondaryState.isFinished = true;
                 _command.stop();
                 _command = null;
             }
+        } else {
+            mSecondaryState.isFinished = true;
+            mSecondaryState.isInit = true;
         }
 
         if (_defaultCommand != null)
@@ -99,6 +107,9 @@ public abstract class Subsystem
                     _command = null;
                     return false;
                 }
+            } else {
+                if (isDefault) mPrimaryState.isInit = true;
+                else mSecondaryState.isInit = true;
             }
 
             if (isDefault) _isDefaultCommandInit = true;
@@ -128,4 +139,7 @@ public abstract class Subsystem
             while (subsystem.isSubsystemActive());
         }
     }
+
+    public CommandState getDefaultCommandState() { return mPrimaryState; }
+    public CommandState getSecondaryCommandState() { return mSecondaryState; }
 }
