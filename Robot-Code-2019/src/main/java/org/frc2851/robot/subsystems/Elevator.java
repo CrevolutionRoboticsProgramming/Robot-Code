@@ -4,11 +4,13 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.CANifier;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
+import org.frc2851.crevolib.subsystem.CommandState;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
@@ -39,7 +41,13 @@ public class Elevator extends Subsystem
         ElevatorPosition(int pos) {
             this.pos = pos;
         }
+
         public int getPos() { return pos; }
+
+        @Override
+        public String toString() {
+            return "[" + this.name() + ", " + pos + "]";
+        }
     }
 
     private Constants mConst = Constants.getInstance();
@@ -47,9 +55,9 @@ public class Elevator extends Subsystem
     private CANifier mCanifier;
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
+    private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.POS_PID;
 
     private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
-    private boolean mReachdPosition = true;
 
     private static Elevator mInstance;
     private Elevator() { super("Elevator"); }
@@ -86,6 +94,7 @@ public class Elevator extends Subsystem
     public Command getTeleopCommand() {
         return new Command() {
             ElevatorPosition desiredPosition = null;
+            CommandState positionCommandState = getSecondaryCommandState();
 
             @Override
             public String getName() { return "Teleop"; }
@@ -96,6 +105,10 @@ public class Elevator extends Subsystem
             @Override
             public boolean init() { return true; }
 
+            /*
+             *  Desired Operation:
+             *      The elevator should al
+             */
             @Override
             public void update()
             {
@@ -104,8 +117,12 @@ public class Elevator extends Subsystem
                 desiredPosition = (mCurrentPosition == polledPosition && rawInput == 0) ? null : polledPosition;
 
                 if (desiredPosition != null) {
-
+                    setCommand(setPosition(desiredPosition.getPos()));
+                    // If the command finishes but the init failed, the current position does not change. Otherwise it is set to the desired position
+                    if (positionCommandState.isFinished)
+                        mCurrentPosition = (positionCommandState.isInit) ? desiredPosition : mCurrentPosition;
                 } else {
+                    if (!positionCommandState.isFinished) setCommand(null); // Cancels setPosition command. If command is null is finished should be true.
                     mTalonMaster.set(ControlMode.PercentOutput, rawInput);
                 }
             }
@@ -133,12 +150,12 @@ public class Elevator extends Subsystem
         };
     }
 
-    public Command moveToPosition(ElevatorControlMode controlMode)
+    public Command setPosition(ElevatorPosition pos)
     {
         return new Command() {
             @Override
             public String getName() {
-                return null;
+                return "SetPosition(strat: " + mClosedLoopStategy.name() + ", pos: " + pos.name() + ")";
             }
 
             @Override
@@ -147,13 +164,16 @@ public class Elevator extends Subsystem
             }
 
             @Override
-            public boolean init() {
-                return false;
+            public boolean init()
+            {
+                mTalonMaster.configMotionCruiseVelocity(mConst.elevatorMaximumVelocity, mConst.talonTimeout);
+                mTalonMaster.configMotionAcceleration(mConst.elevatorMaximumAcceleration, mConst.talonTimeout);
+                return true;
             }
 
             @Override
-            public void update() {
-
+            public void update()
+            {
             }
 
             @Override
