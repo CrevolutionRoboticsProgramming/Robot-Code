@@ -8,6 +8,14 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
+/**
+ * TODO: Make buttons toggled instead of raw
+ * Moving the mechanism forward should be controlled by one button and
+ * actuation of the end should also be controlled by one. Driving the
+ * solenoid backwards will close it, driving it forward will open it.
+ * Change the binds in Constants, too
+ */
+
 public class Hatcher extends Subsystem {
 
     private Button.ButtonID extendOutButton = Button.ButtonID.X;
