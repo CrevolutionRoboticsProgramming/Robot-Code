@@ -8,13 +8,17 @@ import java.net.InetSocketAddress;
 
 public class JetsonCommunicator implements Runnable {
 
-    static private int port = 9000;
-    static private int bufferSize = 128;
-    static private byte[] buffer = new byte[bufferSize];
-    static private String message = "";
+    private int sendPort = 9001;
+    private int receivePort = 9000;
+    private int bufferSize = 128;
+    private byte[] buffer = new byte[bufferSize];
+    private String message = "";
 
-    static private DatagramSocket jetsonSocket;
-    static private DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
+    private String sendIP = "10.0.0.116";
+
+    private DatagramSocket serverSocket;
+    private DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
+    private DatagramSocket sendingSocket;
 
     private static JetsonCommunicator _instance = new JetsonCommunicator();
     private static Thread _thread = new Thread(_instance);
@@ -24,7 +28,8 @@ public class JetsonCommunicator implements Runnable {
 
     public void start() {
         try {
-            jetsonSocket = new DatagramSocket(new InetSocketAddress(port));
+            serverSocket = new DatagramSocket(new InetSocketAddress(receivePort));
+            sendingSocket = new DatagramSocket();
         } catch (java.net.SocketException e) {
             System.out.println("Error: Cannot instantiate server socket!");
             e.printStackTrace();
@@ -37,18 +42,19 @@ public class JetsonCommunicator implements Runnable {
     public void run() {
         while (true) {
             try {
-                jetsonSocket.receive(packet);
+                serverSocket.receive(packet);
                 message = new String(packet.getData(), 0, packet.getLength());
+                System.out.println("Received!");
             } catch (java.io.IOException e) {
-                System.out.println("Error: Cannot receive packet!");
+                System.out.println("Error: Could not receive packet!");
                 e.printStackTrace();
             }
         }
     }
 
-    public static void sendMessage(String message) {
+    public void sendMessage(String message) {
         try {
-            jetsonSocket.send(new DatagramPacket(message.getBytes(), message.length()));
+            sendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(sendIP), sendPort));
         } catch (IOException e) {
             System.out.println("Error: Cannot send message!");
             e.printStackTrace();
@@ -77,7 +83,7 @@ public class JetsonCommunicator implements Runnable {
     }
 
     public int getThisPort() {
-        return port;
+        return receivePort;
     }
 
 }
