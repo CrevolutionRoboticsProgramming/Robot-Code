@@ -1,5 +1,7 @@
 package org.frc2851.crevolib.drivers;
 
+import org.frc2851.crevolib.Logger;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -31,7 +33,7 @@ public class JetsonCommunicator implements Runnable {
             serverSocket = new DatagramSocket(new InetSocketAddress(receivePort));
             sendingSocket = new DatagramSocket();
         } catch (java.net.SocketException e) {
-            System.out.println("Error: Cannot instantiate server socket!");
+            Logger.println("Cannot instantiate server socket", Logger.LogLevel.ERROR);
             e.printStackTrace();
         }
 
@@ -44,9 +46,9 @@ public class JetsonCommunicator implements Runnable {
             try {
                 serverSocket.receive(packet);
                 message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Received!");
+                System.out.println("Received");
             } catch (java.io.IOException e) {
-                System.out.println("Error: Could not receive packet!");
+                Logger.println("Cannot receive message", Logger.LogLevel.ERROR);
                 e.printStackTrace();
             }
         }
@@ -56,7 +58,7 @@ public class JetsonCommunicator implements Runnable {
         try {
             sendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(sendIP), sendPort));
         } catch (IOException e) {
-            System.out.println("Error: Cannot send message!");
+            Logger.println("Cannot send message", Logger.LogLevel.ERROR);
             e.printStackTrace();
         }
     }
@@ -70,12 +72,12 @@ public class JetsonCommunicator implements Runnable {
     }
 
     public String getThisIP() {
-        String returnString = "Cannot get this IP!";
+        String returnString = "Cannot get this IP";
 
         try {
             returnString = InetAddress.getLocalHost().getHostAddress();
         } catch (java.net.UnknownHostException e) {
-            System.out.println("Error: Cannot get this IP!");
+            Logger.println("Cannot get this IP", Logger.LogLevel.ERROR);
             e.printStackTrace();
         }
 
