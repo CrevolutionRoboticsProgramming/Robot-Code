@@ -1,5 +1,6 @@
 package org.frc2851.robot.subsystems;
 
+import badlog.lib.BadLog;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -70,6 +71,9 @@ public class Hatcher extends Subsystem {
             @Override
             public boolean init() {
                 reset();
+                BadLog.createTopic("hatcher/actuate", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0,"hide", "join:hatcher/actuate Outputs");
+                BadLog.createTopic("hatcher/extend", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
+
                 return true;
             }
 
@@ -90,7 +94,7 @@ public class Hatcher extends Subsystem {
 
             @Override
             public void stop() {
-                reset();
+reset();
             }
 
         };
