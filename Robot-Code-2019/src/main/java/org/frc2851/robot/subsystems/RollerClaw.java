@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
@@ -19,6 +20,7 @@ public class RollerClaw extends Subsystem {
     private WPI_TalonSRX _motor;
 
     static RollerClaw mInstance = new RollerClaw();
+
     private RollerClaw() {
         super("RollerClaw");
     }
@@ -64,6 +66,12 @@ public class RollerClaw extends Subsystem {
             public void update() {
                 _motor.set(ControlMode.PercentOutput, .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER));
                 _motor.set(ControlMode.PercentOutput, -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER));
+                if (_motor.get() > 0.0) {
+                    Logger.println("RollerClaw intake", Logger.LogLevel.DEBUG);
+                }
+                if (_motor.get() < 0.0) {
+                    Logger.println("RollerClaw outtake", Logger.LogLevel.DEBUG);
+                }
             }
 
             @Override
