@@ -1,8 +1,9 @@
 package org.frc2851.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.Joystick;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
-import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
@@ -11,11 +12,15 @@ import org.frc2851.robot.Robot;
 
 public class RollerClaw extends Subsystem {
     private Controller mController = Robot.operator;
+    Joystick stick = new Joystick(0);
 
-    private Button.ButtonID roller = Button.ButtonID.B;
+
     private WPI_TalonSRX _Motor;
+
     RollerClaw mInstance = new RollerClaw();
+
     Constants mConstants = Constants.getInstance();
+
 
     private RollerClaw() {
         super("RollerClaw");
@@ -25,7 +30,6 @@ public class RollerClaw extends Subsystem {
     protected boolean init() {
 
         _Motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
-        mController.config(roller, Button.ButtonMode.RAW);
 
         return true;
     }
@@ -47,16 +51,15 @@ public class RollerClaw extends Subsystem {
 
             @Override
             public boolean init() {
-              return false;
+              _Motor.set(ControlMode.PercentOutput,(0));
+              return true;
             }
 
             @Override
             public void update() {
-                if (mController.get(roller)) {
-                    _Motor.set(.5);
-                } else {
-                    _Motor.set(0);
-                }
+                _Motor.set(ControlMode.PercentOutput,.5 * stick.getRawAxis(2));
+                _Motor.set(ControlMode.PercentOutput,.5 * -stick.getRawAxis(3));
+
 
             }
 
