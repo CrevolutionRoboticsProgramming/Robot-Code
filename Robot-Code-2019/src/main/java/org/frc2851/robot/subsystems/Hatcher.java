@@ -11,8 +11,8 @@ import org.frc2851.robot.Robot;
 
 public class Hatcher extends Subsystem {
 
-    private Button.ButtonID hatcherExtend = Button.ButtonID.A;
-    private Button.ButtonID hatcherActuate = Button.ButtonID.X;
+    private Button.ButtonID hatcherExtend = Button.ButtonID.RIGHT_BUMPER;
+    private Button.ButtonID hatcherActuate = Button.ButtonID.LEFT_BUMPER;
     //I got rid of the extra buttons so that one extends and one actuates
     private DoubleSolenoid mExtendSol, mActuateSol;
     private Controller mController = Robot.operator;
