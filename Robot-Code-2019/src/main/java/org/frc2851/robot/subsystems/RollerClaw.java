@@ -3,8 +3,8 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import edu.wpi.first.wpilibj.Joystick;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
+import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
@@ -12,41 +12,41 @@ import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
 public class RollerClaw extends Subsystem {
-    private Controller mController = Robot.operator;
-    Joystick stick = new Joystick(0);
-
-
-    private WPI_TalonSRX _Motor;
-
-    RollerClaw mInstance = new RollerClaw();
 
     Constants mConstants = Constants.getInstance();
+    private Controller mController = Robot.operator;
 
+    private WPI_TalonSRX _motor;
 
+    static RollerClaw mInstance = new RollerClaw();
     private RollerClaw() {
         super("RollerClaw");
     }
 
-    @Override
-    protected boolean init() {
-
-        _Motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
-        BadLog.createTopic("Roller-Claw Percent", BadLog.UNITLESS, () -> _Motor.getMotorOutputPercent(), "hide", "join:Roller-Claw/Percent Outputs");
-
-        BadLog.createTopic("Roller-Claw Voltage", "V", () -> _Motor.getBusVoltage(), "hide", "join:Roller-Claw/Voltage Outputs");
-
-        BadLog.createTopic("Roller-Claw Current", "A", () -> _Motor.getOutputCurrent(), "hide", "join:Roller-Claw/Current Outputs");
-        return true;
+    public static RollerClaw getInstance() {
+        return mInstance;
     }
 
+    @Override
+    protected boolean init() {
+        _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
+
+        mController.config(Axis.AxisID.RIGHT_TRIGGER);
+        mController.config(Axis.AxisID.LEFT_TRIGGER);
+
+        BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> _motor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
+        BadLog.createTopic("Roller Claw Voltage", "V", () -> _motor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
+        BadLog.createTopic("Roller Claw Current", "A", () -> _motor.getOutputCurrent(), "hide", "join:Roller Claw/Current Outputs");
+
+        return true;
+    }
 
     @Override
     public Command getTeleopCommand() {
         return new Command() {
-
             @Override
             public String getName() {
-                return null;
+                return "Teleop";
             }
 
             @Override
@@ -56,22 +56,21 @@ public class RollerClaw extends Subsystem {
 
             @Override
             public boolean init() {
-              _Motor.set(ControlMode.PercentOutput,(0));
-              return true;
+                _motor.set(ControlMode.PercentOutput, 0);
+                return true;
             }
 
             @Override
             public void update() {
-                _Motor.set(ControlMode.PercentOutput,.5 * stick.getRawAxis(2));
-                _Motor.set(ControlMode.PercentOutput,.5 * -stick.getRawAxis(3));
-
-
+                _motor.set(ControlMode.PercentOutput, .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER));
+                _motor.set(ControlMode.PercentOutput, -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER));
             }
 
             @Override
             public void stop() {
-
+                _motor.set(ControlMode.PercentOutput, 0);
             }
         };
     }
+
 }
