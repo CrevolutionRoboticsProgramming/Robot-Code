@@ -4,6 +4,7 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -66,12 +67,12 @@ public class Intake extends Subsystem {
             @Override
             public boolean init() {
                 reset();
-                BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
-                BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Hatcher Extended  ");
+              //  BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
+              //  BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
 
-                BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+              //  BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
 
-                BadLog.createTopic(" Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+              //  BadLog.createTopic(" Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
 
                 return true;
             }
@@ -81,6 +82,7 @@ public class Intake extends Subsystem {
                 // Solenoid
                 if (mController.get(Button.ButtonID.Y)) {
                     intakeSol.set(DoubleSolenoid.Value.kForward);
+                    Logger.println("Intake Deployed", Logger.LogLevel.DEBUG);
                 } else {
                     intakeSol.set(DoubleSolenoid.Value.kReverse);
                 }
@@ -88,10 +90,12 @@ public class Intake extends Subsystem {
                 // Intake
                 if (mController.get(Button.ButtonID.RIGHT_BUMPER)) {
                     intakeTalon.set(ControlMode.PercentOutput, .25);
+                    Logger.println("Intake In ", Logger.LogLevel.DEBUG);
                 }
                 // OutTake
                 else if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
                     intakeTalon.set(ControlMode.PercentOutput, -.25);
+                    Logger.println("Intake Out", Logger.LogLevel.DEBUG);
                 }
                 else {
                     intakeTalon.set(ControlMode.PercentOutput, 0);
