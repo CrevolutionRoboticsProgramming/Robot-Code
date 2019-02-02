@@ -2,6 +2,8 @@ package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Timer;
+import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
@@ -64,9 +66,8 @@ public class Hatcher extends Subsystem {
             public boolean init() {
                 reset();
 
-                BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:Hatcher Actuated ");
-                BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Hatcher Extended  ");
-
+            //    BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:Hatcher Actuated ");
+            //    BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Hatcher Extended  ");
                 return true;
             }
 
@@ -74,12 +75,14 @@ public class Hatcher extends Subsystem {
             public void update() {
                 if (mController.get(hatcherExtend)) {
                     mExtendSol.set(DoubleSolenoid.Value.kForward);
+                    Logger.println("Hatcher Actuated", Logger.LogLevel.DEBUG);
                 } else {
                     mExtendSol.set(DoubleSolenoid.Value.kReverse);
                 }
 
                 if (mController.get(hatcherActuate)) {
                     mActuateSol.set(DoubleSolenoid.Value.kReverse);
+                    Logger.println("Hatcher Extended", Logger.LogLevel.DEBUG);
                 } else {
                     mActuateSol.set(DoubleSolenoid.Value.kForward);
                 }
