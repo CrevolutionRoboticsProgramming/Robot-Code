@@ -21,6 +21,11 @@ public class Climber extends Subsystem {
     private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.driver;
 
+    private static Climber mInstance = new Climber();
+
+    public static Climber getInstance() {
+        return mInstance;
+    }
     private Climber() {
         super("Climber");
     }
