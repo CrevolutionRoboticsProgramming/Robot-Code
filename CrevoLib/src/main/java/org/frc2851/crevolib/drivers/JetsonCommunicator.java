@@ -16,7 +16,7 @@ public class JetsonCommunicator implements Runnable {
     private byte[] buffer = new byte[bufferSize];
     private String message = "";
 
-    private String sendIP = "10.0.0.116";
+    private String sendIP = "10.28.51.204";
 
     private DatagramSocket serverSocket;
     private DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
@@ -54,7 +54,7 @@ public class JetsonCommunicator implements Runnable {
         }
     }
 
-    public void sendMessage(String message) {
+    public void send(String message) {
         try {
             sendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(sendIP), sendPort));
         } catch (IOException e) {
