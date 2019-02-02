@@ -1,5 +1,6 @@
 package org.frc2851.robot.subsystems;
 
+import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.Joystick;
@@ -30,7 +31,11 @@ public class RollerClaw extends Subsystem {
     protected boolean init() {
 
         _Motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
+        BadLog.createTopic("Roller-Claw Percent", BadLog.UNITLESS, () -> _Motor.getMotorOutputPercent(), "hide", "join:Roller-Claw/Percent Outputs");
 
+        BadLog.createTopic("Roller-Claw Voltage", "V", () -> _Motor.getBusVoltage(), "hide", "join:Roller-Claw/Voltage Outputs");
+
+        BadLog.createTopic("Roller-Claw Current", "A", () -> _Motor.getOutputCurrent(), "hide", "join:Roller-Claw/Current Outputs");
         return true;
     }
 
