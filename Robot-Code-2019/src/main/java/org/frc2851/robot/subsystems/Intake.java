@@ -21,6 +21,11 @@ public class Intake extends Subsystem {
     int reverseChannel = -1;
     DoubleSolenoid solenoid;
 
+    private static Intake mInstance = new Intake();
+
+    public static Intake getInstance() {
+        return mInstance;
+    }
     private Intake() {
         super("Intake");
     }
