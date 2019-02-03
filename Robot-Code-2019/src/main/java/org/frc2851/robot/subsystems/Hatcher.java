@@ -75,14 +75,14 @@ public class Hatcher extends Subsystem {
             public void update() {
                 if (mController.get(hatcherExtend)) {
                     mExtendSol.set(DoubleSolenoid.Value.kForward);
-                    Logger.println("Hatcher Actuated", Logger.LogLevel.DEBUG);
+                    log("Hatcher Actuated", Logger.LogLevel.DEBUG);
                 } else {
                     mExtendSol.set(DoubleSolenoid.Value.kReverse);
                 }
 
                 if (mController.get(hatcherActuate)) {
                     mActuateSol.set(DoubleSolenoid.Value.kReverse);
-                    Logger.println("Hatcher Extended", Logger.LogLevel.DEBUG);
+                    log("Hatcher Extended", Logger.LogLevel.DEBUG);
                 } else {
                     mActuateSol.set(DoubleSolenoid.Value.kForward);
                 }
