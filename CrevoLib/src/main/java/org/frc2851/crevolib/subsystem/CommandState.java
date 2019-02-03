@@ -4,4 +4,5 @@ public class CommandState
 {
     public boolean isFinished = false;
     public boolean isInit = false;
+    public boolean isNull = false;
 }

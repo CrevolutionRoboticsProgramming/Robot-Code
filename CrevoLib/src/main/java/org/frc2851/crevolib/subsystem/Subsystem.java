@@ -11,7 +11,8 @@ import org.frc2851.crevolib.Logger;
 public abstract class Subsystem
 {
     private String _name;
-    private Command _command, _defaultCommand = null;
+    private Command _command,
+            _defaultCommand = getDefaultCommand();
     private boolean _isCommandInit, _isDefaultCommandInit;
     private CommandState mPrimaryState = new CommandState(),
             mSecondaryState = new CommandState();
@@ -48,17 +49,6 @@ public abstract class Subsystem
         _isCommandInit = false;
     }
 
-    public void setDefaultCommand(Command command)
-    {
-//        if (_defaultCommand != null) Logger.println("[" + _name + "] SetDefaultCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-//        else Logger.println("[" + _name + "] Default Command set to Idle", Logger.LogLevel.DEBUG);
-//        if (_defaultCommand != null) _command.stop();
-        setCommand(command, _defaultCommand);
-        _isDefaultCommandInit = false;
-        mPrimaryState.isInit = false;
-        mPrimaryState.isFinished = false;
-    }
-
     private void setCommand(Command newCommand, Command oldCommand)
     {
         if (newCommand != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + newCommand.getName(), Logger.LogLevel.DEBUG);
@@ -69,10 +59,8 @@ public abstract class Subsystem
 
     synchronized void runCommand()
     {
-        if (_command != null)
+        if (_command != null && initCommand(_command, mSecondaryState.isInit))
         {
-            initCommand(_command, _isCommandInit);
-
             if (!_command.isFinished()) {
                 _command.update();
             } else {
@@ -81,16 +69,13 @@ public abstract class Subsystem
                 _command = null;
             }
         } else {
-            mSecondaryState.isFinished = true;
-            mSecondaryState.isInit = true;
+            mSecondaryState.isFinished = false;
+            mSecondaryState.isInit = false;
+            mSecondaryState.isNull = true;
         }
 
-        if (_defaultCommand != null)
-        {
-            initCommand(_defaultCommand, _isDefaultCommandInit);
-
-            _defaultCommand.update(); // Default command does not stop!!!
-        }
+        if (_defaultCommand != null && initCommand(_defaultCommand, _isDefaultCommandInit))
+                _defaultCommand.update(); // Default command does not stop!!!
     }
 
     private boolean initCommand(Command command, boolean isInit)
@@ -112,8 +97,8 @@ public abstract class Subsystem
                 else mSecondaryState.isInit = true;
             }
 
-            if (isDefault) _isDefaultCommandInit = true;
-            else _isCommandInit = true;
+            if (isDefault) mPrimaryState.isInit = true;
+            else mSecondaryState.isInit = true;
         }
         return true;
     }
