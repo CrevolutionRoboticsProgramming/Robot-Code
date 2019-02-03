@@ -4,7 +4,6 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.CANifier;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
@@ -19,17 +18,20 @@ public class Elevator extends Subsystem
 {
     public enum ElevatorControlMode
     {
-        DIRECT(ControlMode.PercentOutput),
-        MOTION_MAGIC(ControlMode.MotionMagic),
-        POS_PID(ControlMode.Position),
-        CURRENT(ControlMode.Current);
+        DIRECT(ControlMode.PercentOutput, -1),
+        MOTION_MAGIC(ControlMode.MotionMagic, 0),
+        POS_PID(ControlMode.Position, 1),
+        CURRENT(ControlMode.Current, 2);
 
         private final ControlMode controlMode;
-        ElevatorControlMode(ControlMode controlMode) {
+        private final int slotID;
+        ElevatorControlMode(ControlMode controlMode, int slotID) {
             this.controlMode = controlMode;
+            this.slotID = slotID;
         }
 
         ControlMode getMode() { return controlMode; }
+        int getSlotID() { return slotID; }
     }
 
     public enum ElevatorPosition
@@ -55,7 +57,7 @@ public class Elevator extends Subsystem
     private CANifier mCanifier;
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
-    private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.POS_PID;
+    private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
 
     private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
 
@@ -77,6 +79,17 @@ public class Elevator extends Subsystem
         mTalonMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative,0, mConst.talonTimeout);
         mTalonMaster.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
                 mCanifier.getDeviceID(), mConst.talonTimeout);
+
+        TalonSRXFactory.configurePIDF(mTalonMaster, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                mConst.elevatorMotionP,
+                mConst.elevatorMotionI,
+                mConst.elevatorMotionD,
+                mConst.elevatorMotionF);
+        TalonSRXFactory.configurePIDF(mTalonMaster, ElevatorControlMode.POS_PID.getSlotID(),
+                mConst.elevatorPosP,
+                mConst.elevatorPosI,
+                mConst.elevatorPosD,
+                mConst.elevatorPosF);
 
         configureController(mController);
 
@@ -107,7 +120,7 @@ public class Elevator extends Subsystem
 
             /*
              *  Desired Operation:
-             *      The elevator should al
+             *      The elevator should always respond to manual input (may need to scale the 
              */
             @Override
             public void update()
@@ -117,7 +130,7 @@ public class Elevator extends Subsystem
                 desiredPosition = (mCurrentPosition == polledPosition && rawInput == 0) ? null : polledPosition;
 
                 if (desiredPosition != null) {
-                    setCommand(setPosition(desiredPosition.getPos()));
+                    setCommand(setPosition(desiredPosition));
                     // If the command finishes but the init failed, the current position does not change. Otherwise it is set to the desired position
                     if (positionCommandState.isFinished)
                         mCurrentPosition = (positionCommandState.isInit) ? desiredPosition : mCurrentPosition;
@@ -155,7 +168,7 @@ public class Elevator extends Subsystem
         return new Command() {
             @Override
             public String getName() {
-                return "SetPosition(strat: " + mClosedLoopStategy.name() + ", pos: " + pos.name() + ")";
+                return "SetPosition(pos: " + pos.name() + ")";
             }
 
             @Override
@@ -166,8 +179,15 @@ public class Elevator extends Subsystem
             @Override
             public boolean init()
             {
-                mTalonMaster.configMotionCruiseVelocity(mConst.elevatorMaximumVelocity, mConst.talonTimeout);
-                mTalonMaster.configMotionAcceleration(mConst.elevatorMaximumAcceleration, mConst.talonTimeout);
+                boolean setsSucceeded = true;
+                int maxRetrys = 5;
+                int count = 0;
+
+                do {
+                    mTalonMaster.configMotionCruiseVelocity(mConst.elevatorMaximumVelocity, mConst.talonTimeout);
+                    mTalonMaster.configMotionAcceleration(mConst.elevatorMaximumAcceleration, mConst.talonTimeout);
+                } while (!setsSucceeded || count++ < maxRetrys);
+                mTalonMaster.selectProfileSlot(mClosedLoopStategy.getSlotID(), 0);
                 return true;
             }
 

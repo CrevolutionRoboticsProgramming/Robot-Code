@@ -37,6 +37,16 @@ public class Constants
     public final int elevatorMaximumAcceleration = 0;
     public final int elevatorAllowedClosedLoopError = 128;
 
+    public final double elevatorMotionP = 0;
+    public final double elevatorMotionI = 0;
+    public final double elevatorMotionD = 0;
+    public final double elevatorMotionF = 0;
+
+    public final double elevatorPosP = 0;
+    public final double elevatorPosI = 0;
+    public final double elevatorPosD = 0;
+    public final double elevatorPosF = 0;
+
     // Climber
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
