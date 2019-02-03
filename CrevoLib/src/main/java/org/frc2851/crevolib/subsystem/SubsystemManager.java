@@ -1,7 +1,6 @@
 package org.frc2851.crevolib.subsystem;
 
 import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 
 import java.util.Vector;
@@ -24,7 +23,7 @@ public class SubsystemManager
         _subsystems.add(s);
     }
 
-    public synchronized void setTeleop() { for (Subsystem s : _subsystems) s.setCommand(s.getTeleopCommand()); }
+    public synchronized void setTeleop() { for (Subsystem s : _subsystems) s.setCommand(s.getDefaultCommand()); }
     public synchronized void setDisabled() { for (Subsystem s : _subsystems) s.setCommand(null); }
 
     private synchronized void run()

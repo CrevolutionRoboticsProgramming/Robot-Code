@@ -25,7 +25,7 @@ public abstract class Subsystem
      * Returns the default teleop command for the subsystem
      * @return The teleop command
      */
-    public abstract Command getTeleopCommand();
+    public abstract Command getDefaultCommand();
 
     /**
      * Creates the subsystem and sets the name of the subsystem (this is used in logging). Note that this is an
