@@ -1,8 +1,8 @@
 package org.frc2851.crevolib.subsystem;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
+
+import java.util.Vector;
 
 /**
  * Abstract class that defines subsystem behavior. An example of the subsystem may be a drivetrain or a shooter.
@@ -13,9 +13,12 @@ public abstract class Subsystem
     private String _name;
     private Command _command,
             _defaultCommand = getDefaultCommand();
+    private CommandGroup mAuxilaryCommandGroup = new CommandGroup();
     private boolean _isCommandInit, _isDefaultCommandInit;
-    private CommandState mPrimaryState = new CommandState(),
-            mSecondaryState = new CommandState();
+    private CommandState mDefaultState = new CommandState(),
+            mAuxilaryState = new CommandState();
+
+    private Vector<Command> commandQueue = new Vector<>();
 
     /**
      * Runs once when the subsystem first starts
@@ -33,49 +36,41 @@ public abstract class Subsystem
      * abstract class and this constructor should only be used as super in a subclass.
      * @param name The name of the subsystem
      */
-    protected Subsystem(String name) { _name = name; }
-
-    /**
-     * Sets the current command. If there is another command running, this will stop the current command.
-     * @param command The command to be set
-     */
-    public synchronized void setCommand(Command command)
+    protected Subsystem(String name)
     {
-//        if (command != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-//        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
-//        if (_command != null) _command.stop();
-//        _command = command;
-        setCommand(command, _command);
-        _isCommandInit = false;
+        _name = name;
     }
 
-    private void setCommand(Command newCommand, Command oldCommand)
-    {
-        if (newCommand != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + newCommand.getName(), Logger.LogLevel.DEBUG);
-        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
-        if (oldCommand != null) _command.stop();
-        oldCommand = newCommand;
+    public void setCommmandGroup(Command... commands) {
+        mAuxilaryCommandGroup = new CommandGroup(commands);
+        if (mAuxilaryCommandGroup.getSize() > 0) mAuxilaryState.isNull = false;
+        mAuxilaryState.isInit = false;
+        mAuxilaryState.isFinished = false;
     }
 
     synchronized void runCommand()
     {
-        if (_command != null && initCommand(_command, mSecondaryState.isInit))
-        {
-            if (!_command.isFinished()) {
-                _command.update();
-            } else {
-                mSecondaryState.isFinished = true;
-                _command.stop();
-                _command = null;
-            }
-        } else {
-            mSecondaryState.isFinished = false;
-            mSecondaryState.isInit = false;
-            mSecondaryState.isNull = true;
-        }
-
-        if (_defaultCommand != null && initCommand(_defaultCommand, _isDefaultCommandInit))
+        if (_defaultCommand != null && initCommand(_defaultCommand, mDefaultState.isInit))
                 _defaultCommand.update(); // Default command does not stop!!!
+
+        Command auxCommand = (mAuxilaryCommandGroup == null || mAuxilaryCommandGroup.getSize() == 0) ? null : mAuxilaryCommandGroup.getCommand();
+        if (auxCommand != null) {
+            initCommand(mAuxilaryCommandGroup.getCommand(), mAuxilaryState.isInit);
+
+            if (!auxCommand.isFinished()) {
+                auxCommand.update();
+            } else {
+                auxCommand.stop();
+                if (!mAuxilaryCommandGroup.nextCommand()) {
+                    log(mAuxilaryCommandGroup.toString() + " completed, is now empty", Logger.LogLevel.DEBUG);
+                    mAuxilaryCommandGroup = null;
+                    mAuxilaryState.isNull = true;
+                } else {
+                    mAuxilaryState.isInit = false;
+                    mAuxilaryState.isFinished = false;
+                }
+            }
+        }
     }
 
     private boolean initCommand(Command command, boolean isInit)
@@ -93,12 +88,12 @@ public abstract class Subsystem
                     return false;
                 }
             } else {
-                if (isDefault) mPrimaryState.isInit = true;
-                else mSecondaryState.isInit = true;
+                if (isDefault) mDefaultState.isInit = true;
+                else mAuxilaryState.isInit = true;
             }
 
-            if (isDefault) mPrimaryState.isInit = true;
-            else mSecondaryState.isInit = true;
+            if (isDefault) mDefaultState.isInit = true;
+            else mAuxilaryState.isInit = true;
         }
         return true;
     }
@@ -116,15 +111,6 @@ public abstract class Subsystem
         Logger.println("[" + _name + "] " + message, level);
     }
 
-    public static void runCommandGroup(Subsystem subsystem, Command... command)
-    {
-        for (Command c : command)
-        {
-            subsystem.setCommand(c);
-            while (subsystem.isSubsystemActive());
-        }
-    }
-
-    public CommandState getDefaultCommandState() { return mPrimaryState; }
-    public CommandState getSecondaryCommandState() { return mSecondaryState; }
+    public CommandState getDefaultCommandState() { return mDefaultState; }
+    public CommandState getAuxilaryCommandState() { return mAuxilaryState; }
 }

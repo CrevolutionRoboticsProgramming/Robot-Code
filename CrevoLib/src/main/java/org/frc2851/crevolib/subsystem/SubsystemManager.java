@@ -17,20 +17,16 @@ public class SubsystemManager
     public void addSubsystem(Subsystem s)
     {
         if (s == null) {
-            Logger.println("SubsystemManager: Subsystem is null", Logger.LogLevel.ERROR);
+            Logger.println("SubsystemManager: subsystem is null", Logger.LogLevel.ERROR);
             return;
         }
         _subsystems.add(s);
     }
 
-    public synchronized void setTeleop() { for (Subsystem s : _subsystems) s.setCommand(s.getDefaultCommand()); }
-    public synchronized void setDisabled() { for (Subsystem s : _subsystems) s.setCommand(null); }
-
     private synchronized void run()
     {
         for (Subsystem s : _subsystems) s.runCommand();
     }
-
 
     public void start()
     {
