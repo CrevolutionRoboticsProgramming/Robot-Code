@@ -44,7 +44,7 @@ public class RollerClaw extends Subsystem {
     }
 
     @Override
-    public Command getTeleopCommand() {
+    public Command getDefaultCommand() {
         return new Command() {
             @Override
             public String getName() {
