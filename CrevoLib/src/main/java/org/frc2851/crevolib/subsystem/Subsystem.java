@@ -2,26 +2,16 @@ package org.frc2851.crevolib.subsystem;
 
 import org.frc2851.crevolib.Logger;
 
-import java.util.Vector;
-
 /**
  * Abstract class that defines subsystem behavior. An example of the subsystem may be a drivetrain or a shooter.
  * A subsystem subclass should contain all code that manipulates physical subsystems.
  */
 public abstract class Subsystem
 {
-    private String _name;
-
-    private Command _command,
-            _defaultCommand = getDefaultCommand();
+    private String mName;
+    private Command mDefaultCommand = getDefaultCommand();
     private CommandGroup mAuxilaryCommandGroup = new CommandGroup();
-
-    private boolean _isCommandInit, _isDefaultCommandInit;
-
-    private CommandState mDefaultState = new CommandState(),
-            mAuxilaryState = new CommandState();
-
-    private Vector<Command> commandQueue = new Vector<>();
+    private CommandState mDefaultState = new CommandState(), mAuxilaryState = new CommandState();
 
     /**
      * Runs once when the subsystem first starts
@@ -41,7 +31,7 @@ public abstract class Subsystem
      */
     protected Subsystem(String name)
     {
-        _name = name;
+        mName = name;
     }
 
     public void setCommmandGroup(Command... commands) {
@@ -53,24 +43,27 @@ public abstract class Subsystem
 
     synchronized void runCommand()
     {
-        if (_defaultCommand != null && initCommand(_defaultCommand, mDefaultState)) _defaultCommand.update();
+        if (mDefaultCommand != null && initCommand(mDefaultCommand, mDefaultState)) mDefaultCommand.update();
 
-        Command auxCommand = (mAuxilaryCommandGroup == null || mAuxilaryCommandGroup.getSize() == 0) ? null : mAuxilaryCommandGroup.getCommand();
-        if (auxCommand != null) {
-            initCommand(mAuxilaryCommandGroup.getCommand(), mAuxilaryState);
-
-            if (!auxCommand.isFinished()) {
-                auxCommand.update();
-            } else {
-                auxCommand.stop();
-                if (!mAuxilaryCommandGroup.nextCommand()) {
-                    log(mAuxilaryCommandGroup.toString() + " completed, is now empty", Logger.LogLevel.DEBUG);
-                    mAuxilaryCommandGroup = null;
-                    mAuxilaryState.isNull = true;
+        if (mAuxilaryCommandGroup != null)
+        {
+            Command auxCommand = mAuxilaryCommandGroup.getCommand();
+            if (initCommand(auxCommand, mAuxilaryState))
+            {
+                if (auxCommand.isFinished())
+                {
+                    auxCommand.update();
                 } else {
-                    mAuxilaryState.isInit = false;
-                    mAuxilaryState.isFinished = false;
+                    auxCommand.stop();
+                    if (!mAuxilaryCommandGroup.nextCommand())
+                    {
+                        log(mAuxilaryCommandGroup.toString() + " completed", Logger.LogLevel.DEBUG);
+                        mAuxilaryCommandGroup = null;
+                    }
                 }
+            } else {
+                log(mAuxilaryCommandGroup.toString() + "was unsuccessful", Logger.LogLevel.ERROR);
+                mAuxilaryCommandGroup = null;
             }
         }
     }
@@ -79,7 +72,8 @@ public abstract class Subsystem
     {
         if (state.isInit) return true;
 
-        if (!command.init()) {
+        if (!command.init())
+        {
             log("Could not initialize command: " + command.getName(), Logger.LogLevel.ERROR);
             command = null;
             state.isNull = true;
@@ -90,19 +84,45 @@ public abstract class Subsystem
         return true;
     }
 
-    /**
-     * Returns true if the subsystem has a command currently running.
-     * @return {@code true} when the subsystem is active
-     */
-    public boolean isSubsystemActive() { return _command != null; }
-
-    @Override
-    public String toString() { return _name; }
-
-    protected void log(String message, Logger.LogLevel level) {
-        Logger.println("[" + _name + "] " + message, level);
+    public synchronized void stopAuxilaryCommand()
+    {
+        Command c = mAuxilaryCommandGroup.getCommand();
+        c.stop();
+        mAuxilaryCommandGroup = null;
+        mAuxilaryState.isNull = true;
     }
 
-    public CommandState getDefaultCommandState() { return mDefaultState; }
-    public CommandState getAuxilaryCommandState() { return mAuxilaryState; }
+    @Override
+    public String toString()
+    {
+        return mName;
+    }
+
+    /**
+     * Logs a message prepended with the subsystem name
+     * @param message
+     * @param level Log level
+     */
+    protected void log(String message, Logger.LogLevel level)
+    {
+        Logger.println("[" + mName + "] " + message, level);
+    }
+
+    /**
+     * Returns true if the default command is active
+     * @return Is command active
+     */
+    public boolean getDefaultCommandActivity()
+    {
+        return !mDefaultState.isNull;
+    }
+
+    /**
+     * Returns true if the auxilary command is active
+     * @return Is command active
+     */
+    public boolean getAuxilaryCommandActivity()
+    {
+        return !mAuxilaryState.isNull;
+    }
 }
