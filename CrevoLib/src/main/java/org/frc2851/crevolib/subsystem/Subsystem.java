@@ -11,10 +11,13 @@ import java.util.Vector;
 public abstract class Subsystem
 {
     private String _name;
+
     private Command _command,
             _defaultCommand = getDefaultCommand();
     private CommandGroup mAuxilaryCommandGroup = new CommandGroup();
+
     private boolean _isCommandInit, _isDefaultCommandInit;
+
     private CommandState mDefaultState = new CommandState(),
             mAuxilaryState = new CommandState();
 
@@ -50,12 +53,11 @@ public abstract class Subsystem
 
     synchronized void runCommand()
     {
-        if (_defaultCommand != null && initCommand(_defaultCommand, mDefaultState.isInit))
-                _defaultCommand.update(); // Default command does not stop!!!
+        if (_defaultCommand != null && initCommand(_defaultCommand, mDefaultState)) _defaultCommand.update();
 
         Command auxCommand = (mAuxilaryCommandGroup == null || mAuxilaryCommandGroup.getSize() == 0) ? null : mAuxilaryCommandGroup.getCommand();
         if (auxCommand != null) {
-            initCommand(mAuxilaryCommandGroup.getCommand(), mAuxilaryState.isInit);
+            initCommand(mAuxilaryCommandGroup.getCommand(), mAuxilaryState);
 
             if (!auxCommand.isFinished()) {
                 auxCommand.update();
@@ -73,28 +75,18 @@ public abstract class Subsystem
         }
     }
 
-    private boolean initCommand(Command command, boolean isInit)
+    private boolean initCommand(Command command, CommandState state)
     {
-        boolean isDefault = command == _defaultCommand;
-        if (!isInit) {
-            if (!command.init()) {
-                if (isDefault) {
-                    Logger.println("Could not initialize default command [" + command.getName() + "], setting default command to null", Logger.LogLevel.ERROR);
-                    _defaultCommand = null;
-                    return false;
-                } else {
-                    Logger.println("Could not initialize command: " + _command.getName(), Logger.LogLevel.ERROR);
-                    _command = null;
-                    return false;
-                }
-            } else {
-                if (isDefault) mDefaultState.isInit = true;
-                else mAuxilaryState.isInit = true;
-            }
+        if (state.isInit) return true;
 
-            if (isDefault) mDefaultState.isInit = true;
-            else mAuxilaryState.isInit = true;
+        if (!command.init()) {
+            log("Could not initialize command: " + command.getName(), Logger.LogLevel.ERROR);
+            command = null;
+            state.isNull = true;
+            return false;
         }
+
+        state.isInit = true;
         return true;
     }
 
