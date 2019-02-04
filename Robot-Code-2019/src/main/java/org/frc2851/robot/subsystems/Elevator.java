@@ -10,7 +10,6 @@ import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
-import org.frc2851.crevolib.subsystem.CommandState;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
@@ -60,8 +59,6 @@ public class Elevator extends Subsystem
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
     private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
 
-    private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
-
     private static Elevator mInstance;
     private Elevator() { super("Elevator"); }
     public static Elevator getInstance()
@@ -104,8 +101,8 @@ public class Elevator extends Subsystem
     @Override
     public Command getDefaultCommand() {
         return new Command() {
-            ElevatorPosition desiredPosition = null;
-            CommandState positionCommandState = getAuxilaryCommandState();
+            ElevatorPosition desiredPosition = null, lastPos;
+
 
             @Override
             public String getName() { return "Teleop"; }
@@ -116,63 +113,66 @@ public class Elevator extends Subsystem
             @Override
             public boolean init() { return true; }
 
-            /*
-             *  Desired Operation:
-             *      The elevator should always respond to manual input (may need to scale the 
-             */
             @Override
             public void update()
             {
                 double rawInput = mController.get(Axis.AxisID.RIGHT_Y);
-                ElevatorPosition polledPosition = getDesiredPosition();
-                desiredPosition = (mCurrentPosition == polledPosition && rawInput == 0) ? null : polledPosition;
+                lastPos = desiredPosition;
+                getDesiredPosition();
+                boolean updatePos = lastPos != desiredPosition;
 
-                if (desiredPosition != null) {
-                    setCommmandGroup(setPosition(desiredPosition));
-                    // If the command finishes but the init failed, the current position does not change. Otherwise it is set to the desired position
-                    if (positionCommandState.isFinished)
-                        mCurrentPosition = (positionCommandState.isInit) ? desiredPosition : mCurrentPosition;
-                } else {
-                    if (!positionCommandState.isFinished) setCommmandGroup(null); // Cancels setPosition command. If command is null is finished should be true.
+                if (rawInput != 0)
+                {
+                    Elevator.mInstance.stopAuxilaryCommand();
                     mTalonMaster.set(ControlMode.PercentOutput, rawInput);
+                    return;
+                }
+
+                if (desiredPosition != null && updatePos)
+                {
+                    setCommmandGroup(setPosition(desiredPosition));
                 }
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
 
             }
 
-            ElevatorPosition getDesiredPosition() {
+            void getDesiredPosition()
+            {
                 if (mController.get(Button.ButtonID.START))
-                    return ElevatorPosition.LOW_HATCH;
+                    desiredPosition = ElevatorPosition.LOW_HATCH;
                 else if (mController.get(Button.ButtonID.X))
-                    return ElevatorPosition.MID_HATCH;
+                    desiredPosition = ElevatorPosition.MID_HATCH;
                 else if (mController.get(Button.ButtonID.Y))
-                    return ElevatorPosition.HIGH_HATCH;
+                    desiredPosition = ElevatorPosition.HIGH_HATCH;
                 else if (mController.get(Button.ButtonID.B))
-                    return ElevatorPosition.LOW_CARGO;
+                    desiredPosition = ElevatorPosition.LOW_CARGO;
                 else if (mController.get(Button.ButtonID.A))
-                    return ElevatorPosition.MID_CARGO;
+                    desiredPosition = ElevatorPosition.MID_CARGO;
                 else if (mController.get(Button.ButtonID.SELECT))
-                    return ElevatorPosition.HIGH_CARGO;
-                return null;
+                    desiredPosition = ElevatorPosition.HIGH_CARGO;
             }
         };
     }
 
     public Command setPosition(ElevatorPosition pos)
     {
-        return new Command() {
+        return new Command()
+        {
             boolean isFinished = false;
 
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "SetPosition(pos: " + pos.name() + ")";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return isFinished;
             }
 
@@ -199,7 +199,8 @@ public class Elevator extends Subsystem
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 mTalonMaster.set(ControlMode.PercentOutput, 0);
             }
         };
@@ -207,35 +208,41 @@ public class Elevator extends Subsystem
 
     public Command moveForTime(double time, double power)
     {
-        return new Command() {
+        return new Command()
+        {
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "MoveForTime[" + time + "s, " + power + "]";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return false;
             }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 return false;
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
 
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
 
             }
         };
     }
 
-    public double applyDeadband(double input, double deadband) {
+    private double applyDeadband(double input, double deadband) {
         return (Math.abs(input) < deadband) ? 0 : input;
     }
 
@@ -251,12 +258,12 @@ public class Elevator extends Subsystem
          * Right Y - Manual elevator control
          */
 
-        controller.config(Button.ButtonID.A, Button.ButtonMode.RAW);
-        controller.config(Button.ButtonID.B, Button.ButtonMode.RAW);
-        controller.config(Button.ButtonID.X, Button.ButtonMode.RAW);
-        controller.config(Button.ButtonID.Y, Button.ButtonMode.RAW);
-        controller.config(Button.ButtonID.START, Button.ButtonMode.RAW);
-        controller.config(Button.ButtonID.SELECT, Button.ButtonMode.RAW);
+        controller.config(Button.ButtonID.A, Button.ButtonMode.ON_PRESS);
+        controller.config(Button.ButtonID.B, Button.ButtonMode.ON_PRESS);
+        controller.config(Button.ButtonID.X, Button.ButtonMode.ON_PRESS);
+        controller.config(Button.ButtonID.Y, Button.ButtonMode.ON_PRESS);
+        controller.config(Button.ButtonID.START, Button.ButtonMode.ON_PRESS);
+        controller.config(Button.ButtonID.SELECT, Button.ButtonMode.ON_PRESS);
         controller.config(Axis.AxisID.RIGHT_Y, x -> -(applyDeadband(x, 0.15) * mConst.elevatorRawMultiplier));
     }
 }
