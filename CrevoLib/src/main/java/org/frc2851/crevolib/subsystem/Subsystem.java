@@ -59,11 +59,13 @@ public abstract class Subsystem
                     {
                         log(mAuxilaryCommandGroup.toString() + " completed", Logger.LogLevel.DEBUG);
                         mAuxilaryCommandGroup = null;
+                        mAuxilaryState.isNull = true;
                     }
                 }
             } else {
                 log(mAuxilaryCommandGroup.toString() + "was unsuccessful", Logger.LogLevel.ERROR);
                 mAuxilaryCommandGroup = null;
+                mAuxilaryState.isNull = true;
             }
         }
     }
