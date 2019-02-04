@@ -104,7 +104,7 @@ public class Elevator extends Subsystem
     }
 
     @Override
-    public Command getTeleopCommand() {
+    public Command getDefaultCommand() {
         return new Command() {
             ElevatorPosition desiredPosition = null;
             CommandState positionCommandState = getSecondaryCommandState();
