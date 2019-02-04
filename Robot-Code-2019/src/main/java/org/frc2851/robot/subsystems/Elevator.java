@@ -2,6 +2,7 @@ package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import com.ctre.phoenix.CANifier;
+import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
@@ -53,7 +54,7 @@ public class Elevator extends Subsystem
     }
 
     private Constants mConst = Constants.getInstance();
-    private TalonSRX mTalonMaster, mTalonSlave;
+    private TalonSRX mTalonMaster;
     private CANifier mCanifier;
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
@@ -73,7 +74,6 @@ public class Elevator extends Subsystem
     protected boolean init()
     {
         mTalonMaster = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.elevatorMaster);
-        mTalonSlave = TalonSRXFactory.createPermanentSlaveTalonSRX(mConst.elevatorSlave, mTalonMaster);
         mCanifier = new CANifier(mConst.elevatorCanifier);
 
         mTalonMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative,0, mConst.talonTimeout);
@@ -95,10 +95,8 @@ public class Elevator extends Subsystem
 
         BadLog.createTopicStr("Elevator/Control Mode", BadLog.UNITLESS, () -> mControlMode.name(), "hide");
         BadLog.createTopic("Elevator/Output Percent", BadLog.UNITLESS, () -> mTalonMaster.getMotorOutputPercent(), "hide");
-        BadLog.createTopic("Elevator/Output Voltage Master", "V", () -> mTalonMaster.getBusVoltage(), "hide", "join:Elevator/Voltage Outputs");
-        BadLog.createTopic("Elevator/Output Voltage Slave", "V", () -> mTalonSlave.getBusVoltage(), "hide", "join:Elevator/Voltage Outputs");
-        BadLog.createTopic("Elevator/Output Current Master", "I", () -> mTalonMaster.getOutputCurrent(), "hide", "join:Elevator/Voltage Outputs");
-        BadLog.createTopic("Elevator/Output Current Slave", "I", () -> mTalonSlave.getOutputCurrent(), "hide", "join:Elevator/Voltage Outputs");
+        BadLog.createTopic("Elevator/Output Voltage Master", "V", () -> mTalonMaster.getBusVoltage(), "hide");
+        BadLog.createTopic("Elevator/Output Current Master", "I", () -> mTalonMaster.getOutputCurrent(), "hide");
         BadLog.createTopic("Elevator/Position", "Counts", () -> (double) mTalonMaster.getSensorCollection().getQuadraturePosition(), "hide");
         return true;
     }
@@ -107,7 +105,7 @@ public class Elevator extends Subsystem
     public Command getDefaultCommand() {
         return new Command() {
             ElevatorPosition desiredPosition = null;
-            CommandState positionCommandState = getSecondaryCommandState();
+            CommandState positionCommandState = getAuxilaryCommandState();
 
             @Override
             public String getName() { return "Teleop"; }
@@ -130,12 +128,12 @@ public class Elevator extends Subsystem
                 desiredPosition = (mCurrentPosition == polledPosition && rawInput == 0) ? null : polledPosition;
 
                 if (desiredPosition != null) {
-                    setCommand(setPosition(desiredPosition));
+                    setCommmandGroup(setPosition(desiredPosition));
                     // If the command finishes but the init failed, the current position does not change. Otherwise it is set to the desired position
                     if (positionCommandState.isFinished)
                         mCurrentPosition = (positionCommandState.isInit) ? desiredPosition : mCurrentPosition;
                 } else {
-                    if (!positionCommandState.isFinished) setCommand(null); // Cancels setPosition command. If command is null is finished should be true.
+                    if (!positionCommandState.isFinished) setCommmandGroup(null); // Cancels setPosition command. If command is null is finished should be true.
                     mTalonMaster.set(ControlMode.PercentOutput, rawInput);
                 }
             }
@@ -166,6 +164,8 @@ public class Elevator extends Subsystem
     public Command setPosition(ElevatorPosition pos)
     {
         return new Command() {
+            boolean isFinished = false;
+
             @Override
             public String getName() {
                 return "SetPosition(pos: " + pos.name() + ")";
@@ -173,32 +173,34 @@ public class Elevator extends Subsystem
 
             @Override
             public boolean isFinished() {
-                return false;
+                return isFinished;
             }
 
             @Override
             public boolean init()
             {
                 boolean setsSucceeded = true;
-                int maxRetrys = 5;
+                int maxRetries = 5;
                 int count = 0;
 
                 do {
-                    mTalonMaster.configMotionCruiseVelocity(mConst.elevatorMaximumVelocity, mConst.talonTimeout);
-                    mTalonMaster.configMotionAcceleration(mConst.elevatorMaximumAcceleration, mConst.talonTimeout);
-                } while (!setsSucceeded || count++ < maxRetrys);
+                    setsSucceeded &= mTalonMaster.configMotionCruiseVelocity(mConst.elevatorMaximumVelocity, mConst.talonTimeout) == ErrorCode.OK;
+                    setsSucceeded &= mTalonMaster.configMotionAcceleration(mConst.elevatorMaximumAcceleration, mConst.talonTimeout) == ErrorCode.OK;
+                } while (!setsSucceeded || count++ < maxRetries);
                 mTalonMaster.selectProfileSlot(mClosedLoopStategy.getSlotID(), 0);
+                mTalonMaster.set(mClosedLoopStategy.getMode(), pos.getPos());
                 return true;
             }
 
             @Override
             public void update()
             {
+                isFinished = mTalonMaster.getClosedLoopError() < mConst.elevatorAllowedClosedLoopError;
             }
 
             @Override
             public void stop() {
-
+                mTalonMaster.set(ControlMode.PercentOutput, 0);
             }
         };
     }
