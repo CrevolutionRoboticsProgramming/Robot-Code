@@ -1,5 +1,6 @@
 package org.frc2851.robot;
 
+import edu.wpi.first.wpilibj.RobotBase;
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Axis;
@@ -29,5 +30,9 @@ public class Robot extends CrevoRobot
         driver.config(Axis.AxisID.RIGHT_TRIGGER); // Quick Turn
 
         //TODO: Config buttons for Hatcher
+    }
+
+    public static void main(String... args) {
+        RobotBase.startRobot(Robot::new);
     }
 }
