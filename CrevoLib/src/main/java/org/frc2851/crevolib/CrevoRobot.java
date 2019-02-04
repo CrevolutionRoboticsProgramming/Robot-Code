@@ -88,7 +88,6 @@ public class CrevoRobot extends IterativeRobot
     public final void teleopInit()
     {
         Logger.println("Teleop Init", Logger.LogLevel.DEBUG);
-        _subManager.setTeleop();
     }
 
     @Override
@@ -96,7 +95,6 @@ public class CrevoRobot extends IterativeRobot
     {
         Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
         _executor.stop();
-        _subManager.setDisabled();
     }
 
     // TODO: Move all periodic tasks into the robot manager
