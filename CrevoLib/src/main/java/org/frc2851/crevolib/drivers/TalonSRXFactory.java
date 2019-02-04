@@ -149,6 +149,14 @@ public class TalonSRXFactory
         return talon;
     }
 
+    public static void configurePIDF(TalonSRX talon, int slot, double p, double i, double d, double f)
+    {
+        talon.config_kP(slot, p, talonTimeout);
+        talon.config_kI(slot, i, talonTimeout);
+        talon.config_kD(slot, d, talonTimeout);
+        talon.config_kF(slot, f, talonTimeout);
+    }
+
     private static TalonSRX createTalonSRX(int id, Configuration config)
     {
         TalonSRX talon = new TalonSRX(id);

@@ -1,7 +1,7 @@
 package org.frc2851.crevolib.subsystem;
 
 /**
- * An iterative set of instructions for a Subsystem to follow
+ * An iterative set of instructions for a subsystem to follow
  */
 public interface Command
 {
@@ -12,7 +12,7 @@ public interface Command
     String getName();
 
     /**
-     * Returns true when the command is complete. Once this is true, the Subsystem will stop the command.
+     * Returns true when the command is complete. Once this is true, the subsystem will stop the command.
      * @return {@code true} if the command is complete
      */
     boolean isFinished();
