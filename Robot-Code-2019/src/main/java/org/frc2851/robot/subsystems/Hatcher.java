@@ -49,7 +49,7 @@ public class Hatcher extends Subsystem {
     }
 
     @Override
-    public Command getTeleopCommand() {
+    public Command getDefaultCommand() {
         return new Command() {
 
             @Override
