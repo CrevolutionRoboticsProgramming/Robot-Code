@@ -44,7 +44,7 @@ public class RollerClaw extends Subsystem {
     }
 
     @Override
-    public Command getTeleopCommand() {
+    public Command getDefaultCommand() {
         return new Command() {
             @Override
             public String getName() {
@@ -64,12 +64,15 @@ public class RollerClaw extends Subsystem {
 
             @Override
             public void update() {
-                _motor.set(ControlMode.PercentOutput, .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER));
-                _motor.set(ControlMode.PercentOutput, -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER));
-                if (_motor.get() > 0.0) {
+                double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
+                        -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
+
+                _motor.set(ControlMode.PercentOutput, output);
+
+                if (output > 0.0) {
                     Logger.println("RollerClaw intake", Logger.LogLevel.DEBUG);
                 }
-                if (_motor.get() < 0.0) {
+                if (output < 0.0) {
                     Logger.println("RollerClaw outtake", Logger.LogLevel.DEBUG);
                 }
             }
