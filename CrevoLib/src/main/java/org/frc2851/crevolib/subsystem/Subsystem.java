@@ -48,7 +48,7 @@ public abstract class Subsystem
         if (mAuxilaryCommandGroup != null)
         {
             Command auxCommand = mAuxilaryCommandGroup.getCommand();
-            if (initCommand(auxCommand, mAuxilaryState))
+            if (auxCommand != null && initCommand(auxCommand, mAuxilaryState))
             {
                 if (auxCommand.isFinished())
                 {

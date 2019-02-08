@@ -35,5 +35,16 @@ public class Constants
     public final int gorillaSlave = 10;
     public final int screwMaster = 11;
 
+    // Hatcher
+    public final int pcmID = 0;
+    public final int extendHatcherForward = 0;
+    public final int extendHatcherReverse = 1;
+    public final int actuateHatcherForward = 2;
+    public final int actuateHatcherReverse = 3;
+
+     // RollerClaw
+   public final int rollerClawTalon = 1;
+
     public final int talonTimeout = 20;
 }
+
