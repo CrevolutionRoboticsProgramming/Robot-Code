@@ -15,9 +15,10 @@ public class Robot extends CrevoRobot
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         configControllers();
-        addSubsystem(DriveTrain.getInstance());
-        addSubsystem(Elevator.getInstance());
-        addSubsystem(Hatcher.getInstance());
+        //addSubsystem(DriveTrain.getInstance());
+        //addSubsystem(Elevator.getInstance());
+        //addSubsystem(Hatcher.getInstance());
+        addSubsystem(RollerClaw.getInstance());
     }
 
     private static void configControllers()

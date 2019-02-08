@@ -12,7 +12,7 @@ import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
 public class Hatcher extends Subsystem {
-
+    
     private Button.ButtonID hatcherExtend = Button.ButtonID.RIGHT_BUMPER;
     private Button.ButtonID hatcherActuate = Button.ButtonID.LEFT_BUMPER;
 
@@ -65,6 +65,9 @@ public class Hatcher extends Subsystem {
             @Override
             public boolean init() {
                 reset();
+
+                BadLog.createTopic("hatcher/actuate", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
+                BadLog.createTopic("hatcher/extend", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
 
             //    BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:Hatcher Actuated ");
             //    BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Hatcher Extended  ");

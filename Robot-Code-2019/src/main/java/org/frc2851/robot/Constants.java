@@ -41,5 +41,9 @@ public class Constants
     public final int actuateHatcherForward = 2;
     public final int actuateHatcherReverse = 3;
 
+     // RollerClaw
+   public final int rollerClawTalon = 1;
+
     public final int talonTimeout = 20;
 }
+
