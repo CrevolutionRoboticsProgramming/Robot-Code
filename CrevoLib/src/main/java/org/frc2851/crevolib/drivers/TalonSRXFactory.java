@@ -194,7 +194,7 @@ public class TalonSRXFactory
             setSucceeded &= talon.configForwardSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
             setSucceeded &= talon.configReverseSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
             setSucceeded &= talon.setSelectedSensorPosition(0, 0, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.setSelectedSensorPosition(0, 1, talonTimeout) == ErrorCode.OK;
+            //setSucceeded &= talon.setSelectedSensorPosition(0, 1, talonTimeout) == ErrorCode.OK;
             setSucceeded &= talon.configVelocityMeasurementPeriod(config.VELOCITY_MEASUREMENT_PERIOD, talonTimeout) == ErrorCode.OK;
             setSucceeded &= talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout) == ErrorCode.OK;
         } while (!setSucceeded && retryCounter++ < kMaxRetry);

@@ -62,7 +62,6 @@ public class CrevoRobot extends IterativeRobot
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
         BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
         BadLog.createTopicSubscriber("Time", "s", DataInferMode.DEFAULT, "hide", "delta", "xaxis");
-        badLog.finishInitialization();
 
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)
@@ -74,6 +73,8 @@ public class CrevoRobot extends IterativeRobot
         }
 
         _subManager.start();
+
+        badLog.finishInitialization();
     }
 
     @Override

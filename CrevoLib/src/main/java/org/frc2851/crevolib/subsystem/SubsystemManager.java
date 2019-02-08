@@ -1,5 +1,6 @@
 package org.frc2851.crevolib.subsystem;
 
+import badlog.lib.BadLog;
 import edu.wpi.first.wpilibj.Notifier;
 import org.frc2851.crevolib.Logger;
 
@@ -30,6 +31,8 @@ public class SubsystemManager
 
     public void start()
     {
+        for (Subsystem s : _subsystems) s.init();
+
         _notifier = new Notifier(this::run);
         _notifier.startPeriodic(0.005);
     }
