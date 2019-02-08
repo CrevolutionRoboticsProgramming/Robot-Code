@@ -1,7 +1,5 @@
 package org.frc2851.crevolib.subsystem;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 
 /**
@@ -10,11 +8,10 @@ import org.frc2851.crevolib.Logger;
  */
 public abstract class Subsystem
 {
-    private String _name;
-    private Command _command, _defaultCommand = null;
-    private boolean _isCommandInit, _isDefaultCommandInit;
-    private CommandState mPrimaryState = new CommandState(),
-            mSecondaryState = new CommandState();
+    private String mName;
+    private Command mDefaultCommand = getDefaultCommand();
+    private CommandGroup mAuxilaryCommandGroup = new CommandGroup();
+    private CommandState mDefaultState = new CommandState(), mAuxilaryState = new CommandState();
 
     /**
      * Runs once when the subsystem first starts
@@ -25,121 +22,109 @@ public abstract class Subsystem
      * Returns the default teleop command for the subsystem
      * @return The teleop command
      */
-    public abstract Command getTeleopCommand();
+    public abstract Command getDefaultCommand();
 
     /**
      * Creates the subsystem and sets the name of the subsystem (this is used in logging). Note that this is an
      * abstract class and this constructor should only be used as super in a subclass.
      * @param name The name of the subsystem
      */
-    protected Subsystem(String name) { _name = name; }
-
-    /**
-     * Sets the current command. If there is another command running, this will stop the current command.
-     * @param command The command to be set
-     */
-    public synchronized void setCommand(Command command)
+    protected Subsystem(String name)
     {
-//        if (command != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-//        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
-//        if (_command != null) _command.stop();
-//        _command = command;
-        setCommand(command, _command);
-        _isCommandInit = false;
+        mName = name;
     }
 
-    public void setDefaultCommand(Command command)
-    {
-//        if (_defaultCommand != null) Logger.println("[" + _name + "] SetDefaultCommand: " + _name + ", " + command.getName(), Logger.LogLevel.DEBUG);
-//        else Logger.println("[" + _name + "] Default Command set to Idle", Logger.LogLevel.DEBUG);
-//        if (_defaultCommand != null) _command.stop();
-        setCommand(command, _defaultCommand);
-        _isDefaultCommandInit = false;
-        mPrimaryState.isInit = false;
-        mPrimaryState.isFinished = false;
-    }
-
-    private void setCommand(Command newCommand, Command oldCommand)
-    {
-        if (newCommand != null) Logger.println("[" + _name + "] SetCommand: " + _name + ", " + newCommand.getName(), Logger.LogLevel.DEBUG);
-        else Logger.println("[" + _name + "] Command set to Idle", Logger.LogLevel.DEBUG);
-        if (oldCommand != null) _command.stop();
-        oldCommand = newCommand;
+    public void setCommmandGroup(Command... commands) {
+        mAuxilaryCommandGroup = new CommandGroup(commands);
+        if (mAuxilaryCommandGroup.getSize() > 0) mAuxilaryState.isNull = false;
+        mAuxilaryState.isInit = false;
+        mAuxilaryState.isFinished = false;
     }
 
     synchronized void runCommand()
     {
-        if (_command != null)
-        {
-            initCommand(_command, _isCommandInit);
+        if (mDefaultCommand != null && initCommand(mDefaultCommand, mDefaultState)) mDefaultCommand.update();
 
-            if (!_command.isFinished()) {
-                _command.update();
+        if (mAuxilaryCommandGroup != null)
+        {
+            Command auxCommand = mAuxilaryCommandGroup.getCommand();
+            if (auxCommand != null && initCommand(auxCommand, mAuxilaryState))
+            {
+                if (auxCommand.isFinished())
+                {
+                    auxCommand.update();
+                } else {
+                    auxCommand.stop();
+                    if (!mAuxilaryCommandGroup.nextCommand())
+                    {
+                        log(mAuxilaryCommandGroup.toString() + " completed", Logger.LogLevel.DEBUG);
+                        mAuxilaryCommandGroup = null;
+                        mAuxilaryState.isNull = true;
+                    }
+                }
             } else {
-                mSecondaryState.isFinished = true;
-                _command.stop();
-                _command = null;
+                log(mAuxilaryCommandGroup.toString() + "was unsuccessful", Logger.LogLevel.ERROR);
+                mAuxilaryCommandGroup = null;
+                mAuxilaryState.isNull = true;
             }
-        } else {
-            mSecondaryState.isFinished = true;
-            mSecondaryState.isInit = true;
-        }
-
-        if (_defaultCommand != null)
-        {
-            initCommand(_defaultCommand, _isDefaultCommandInit);
-
-            _defaultCommand.update(); // Default command does not stop!!!
         }
     }
 
-    private boolean initCommand(Command command, boolean isInit)
+    private boolean initCommand(Command command, CommandState state)
     {
-        boolean isDefault = command == _defaultCommand;
-        if (!isInit) {
-            if (!command.init()) {
-                if (isDefault) {
-                    Logger.println("Could not initialize default command [" + command.getName() + "], setting default command to null", Logger.LogLevel.ERROR);
-                    _defaultCommand = null;
-                    return false;
-                } else {
-                    Logger.println("Could not initialize command: " + _command.getName(), Logger.LogLevel.ERROR);
-                    _command = null;
-                    return false;
-                }
-            } else {
-                if (isDefault) mPrimaryState.isInit = true;
-                else mSecondaryState.isInit = true;
-            }
+        if (state.isInit) return true;
 
-            if (isDefault) _isDefaultCommandInit = true;
-            else _isCommandInit = true;
+        if (!command.init())
+        {
+            log("Could not initialize command: " + command.getName(), Logger.LogLevel.ERROR);
+            command = null;
+            state.isNull = true;
+            return false;
         }
+
+        state.isInit = true;
         return true;
     }
 
-    /**
-     * Returns true if the subsystem has a command currently running.
-     * @return {@code true} when the subsystem is active
-     */
-    public boolean isSubsystemActive() { return _command != null; }
+    public synchronized void stopAuxilaryCommand()
+    {
+        Command c = mAuxilaryCommandGroup.getCommand();
+        c.stop();
+        mAuxilaryCommandGroup = null;
+        mAuxilaryState.isNull = true;
+    }
 
     @Override
-    public String toString() { return _name; }
-
-    protected void log(String message, Logger.LogLevel level) {
-        Logger.println("[" + _name + "] " + message, level);
-    }
-
-    public static void runCommandGroup(Subsystem subsystem, Command... command)
+    public String toString()
     {
-        for (Command c : command)
-        {
-            subsystem.setCommand(c);
-            while (subsystem.isSubsystemActive());
-        }
+        return mName;
     }
 
-    public CommandState getDefaultCommandState() { return mPrimaryState; }
-    public CommandState getSecondaryCommandState() { return mSecondaryState; }
+    /**
+     * Logs a message prepended with the subsystem name
+     * @param message
+     * @param level Log level
+     */
+    protected void log(String message, Logger.LogLevel level)
+    {
+        Logger.println("[" + mName + "] " + message, level);
+    }
+
+    /**
+     * Returns true if the default command is active
+     * @return Is command active
+     */
+    public boolean getDefaultCommandActivity()
+    {
+        return !mDefaultState.isNull;
+    }
+
+    /**
+     * Returns true if the auxilary command is active
+     * @return Is command active
+     */
+    public boolean getAuxilaryCommandActivity()
+    {
+        return !mAuxilaryState.isNull;
+    }
 }
