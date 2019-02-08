@@ -35,7 +35,7 @@ public class Constants
     public final int gorillaSlave = 10;
 
     // Intake
-    public final int intakeMaster = 11;
+    public final int intakeMaster = 0;
 
     public final int talonTimeout = 20;
 }

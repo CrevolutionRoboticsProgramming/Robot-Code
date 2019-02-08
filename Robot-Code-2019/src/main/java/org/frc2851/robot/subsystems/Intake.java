@@ -18,9 +18,9 @@ public class Intake extends Subsystem {
     Constants mConst = Constants.getInstance();
     Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
     WPI_TalonSRX intakeTalon;
-    int moduleNumber = -10;
-    int forwardChannel = 1;
-    int reverseChannel = -1;
+    int moduleNumber = 0;
+    int forwardChannel = 0;
+    int reverseChannel = 1;
     DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
@@ -43,10 +43,17 @@ public class Intake extends Subsystem {
         mController.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.RAW);
 
-        intakeTalon = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConst.intakeMaster);
+        intakeTalon = TalonSRXFactory.createDefaultWPI_TalonSRX(mConst.intakeMaster);
         intakeTalon.setSafetyEnabled(false);
 
         intakeSol = new DoubleSolenoid(moduleNumber, forwardChannel, reverseChannel);
+
+        BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
+        BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
+
+        BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
+
+        BadLog.createTopic(" Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
 
         return true;
     }
@@ -67,19 +74,15 @@ public class Intake extends Subsystem {
             @Override
             public boolean init() {
                 reset();
-              //  BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
-              //  BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
-
-              //  BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
-
-              //  BadLog.createTopic(" Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
 
                 return true;
             }
 
             @Override
             public void update() {
-                // Solenoid
+                Logger.println("Updates", Logger.LogLevel.DEBUG);
+
+                // DoubleSolenoid
                 if (mController.get(Button.ButtonID.Y)) {
                     intakeSol.set(DoubleSolenoid.Value.kForward);
                     Logger.println("Intake Deployed", Logger.LogLevel.DEBUG);
@@ -90,7 +93,7 @@ public class Intake extends Subsystem {
                 // Intake
                 if (mController.get(Button.ButtonID.RIGHT_BUMPER)) {
                     intakeTalon.set(ControlMode.PercentOutput, .25);
-                    Logger.println("Intake In ", Logger.LogLevel.DEBUG);
+                    Logger.println("Intake In", Logger.LogLevel.DEBUG);
                 }
                 // OutTake
                 else if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
