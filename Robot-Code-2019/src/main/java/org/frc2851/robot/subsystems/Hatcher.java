@@ -9,16 +9,12 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
+
 /**
- * TODO: Make buttons toggled instead of raw
- * Moving the mechanism forward should be controlled by one button and
- * actuation of the end should also be controlled by one. Driving the
- * solenoid backwards will close it, driving it forward will open it.
- * Change the binds in Constants, too
+ shows which button goes to which solenoid
+ declares Solenoids and other variables
  */
-
 public class Hatcher extends Subsystem {
-
     private Button.ButtonID extendButton = Button.ButtonID.RIGHT_BUMPER;
     private Button.ButtonID actuateButton = Button.ButtonID.LEFT_BUMPER;
 
@@ -35,12 +31,17 @@ public class Hatcher extends Subsystem {
     public static Hatcher getInstance() {
         return _instance;
     }
-
+    /**
+     reset the solenoids to off
+     */
     private void reset() {
         mExtendSol.set(DoubleSolenoid.Value.kOff);
         mActuateSol.set(DoubleSolenoid.Value.kOff);
     }
-
+    /**
+     initializing that extend sol extends the arm and actuates grabs the hatch
+     setting Buttons to toggle
+     */
     @Override
     public boolean init() {
         mExtendSol = new DoubleSolenoid(mConstants.pcmID, mConstants.extendHatcherForward, mConstants.extendHatcherReverse);
@@ -67,7 +68,9 @@ public class Hatcher extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-
+            /**
+             Initialize badlog
+              */
             @Override
             public boolean init() {
                 reset();
@@ -76,7 +79,9 @@ public class Hatcher extends Subsystem {
 
                 return true;
             }
-
+            /**
+             connects the solenoid functions to there buttons on the controller
+              */
             @Override
             public void update() {
                 if (mController.get(extendButton)) {

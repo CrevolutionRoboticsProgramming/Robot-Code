@@ -11,7 +11,9 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
-
+/**
+ sets up the motor and controller used in the code
+ */
 public class RollerClaw extends Subsystem {
     Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.operator;
@@ -19,29 +21,22 @@ public class RollerClaw extends Subsystem {
     private WPI_TalonSRX _motor;
 
     static RollerClaw mInstance = new RollerClaw();
-
-    private RollerClaw() {
-        super("RollerClaw");
-    }
-    /**
-     booleans for logging
-     */
     boolean intake;
     boolean lastIntakeState;
     boolean outTake;
     boolean lastOutTakeState;
-
-
+    private RollerClaw() {
+        super("RollerClaw");
+    }
     public static RollerClaw getInstance() {
         return mInstance;
     }
-
+    /**
+     initialize the motor and controller's triggers
+     badlog is setup as well
+     */
     @Override
     protected boolean init() {
-        /**
-         initialize the motor and controller's triggers
-         badlog is setup as well
-         */
         _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
 
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
@@ -66,25 +61,23 @@ public class RollerClaw extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-
+            //sets motor to zero to start
             @Override
             public boolean init() {
                 _motor.set(ControlMode.PercentOutput, 0);
                 return true;
             }
-
+            /**
+             shows that right trigger intakes and left trigger outtakes
+             logging for intake and outtake says if its activated or deactivated
+             */
             @Override
             public void update() {
-                /**
-                 shows that right trigger intakes and left trigger outtakes
-                  */
                 double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
                         -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
 
                 _motor.set(ControlMode.PercentOutput, output);
-                /**
-                 logging for intake says if its activated or deactivated
-                 */
+
                 if(output > 0) {
                     intake = true;
                 }
@@ -98,9 +91,7 @@ public class RollerClaw extends Subsystem {
                     Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
                 }
                 lastIntakeState = intake;
-                /**
-                 logging for outtake says if its activated or deactivated
-                  */
+
                 if(output < 0) {
                     outTake = true;
                 }
