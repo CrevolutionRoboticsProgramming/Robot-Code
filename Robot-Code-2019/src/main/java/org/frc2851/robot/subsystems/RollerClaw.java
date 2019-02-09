@@ -23,6 +23,9 @@ public class RollerClaw extends Subsystem {
     private RollerClaw() {
         super("RollerClaw");
     }
+    /**
+     booleans for logging
+     */
     boolean intake;
     boolean lastIntakeState;
     boolean outTake;
@@ -35,6 +38,10 @@ public class RollerClaw extends Subsystem {
 
     @Override
     protected boolean init() {
+        /**
+         initialize the motor and controller's triggers
+         badlog is setup as well
+         */
         _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
 
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
@@ -68,11 +75,16 @@ public class RollerClaw extends Subsystem {
 
             @Override
             public void update() {
+                /**
+                 shows that right trigger intakes and left trigger outtakes
+                  */
                 double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
                         -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
 
                 _motor.set(ControlMode.PercentOutput, output);
-
+                /**
+                 logging for intake says if its activated or deactivated
+                 */
                 if(output > 0) {
                     intake = true;
                 }
@@ -86,6 +98,9 @@ public class RollerClaw extends Subsystem {
                     Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
                 }
                 lastIntakeState = intake;
+                /**
+                 logging for outtake says if its activated or deactivated
+                  */
                 if(output < 0) {
                     outTake = true;
                 }
