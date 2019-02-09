@@ -1,12 +1,19 @@
 package org.frc2851.crevolib.auton;
 
+/**
+ * Is run when Autonomous(auton) begins. it requires a class to extend from it to be used.
+ */
 public abstract class Auton {
-    private String name = "NULL Auton";
+    private String name;
     protected Auton(String name)
     {
         this.name = name;
     }
 
+    /**
+     * gets the name of the Auton
+     * @return the name of the current auton.
+     */
     public String getName()
     {
         return name;
@@ -16,6 +23,9 @@ public abstract class Auton {
 
     protected abstract void routine() throws AutonEndedException;
 
+    /**
+     * runs the Auton. if it fails to run, it prints an error message to the console.
+     */
     public void run()
     {
         isAlive = true;
@@ -29,8 +39,12 @@ public abstract class Auton {
         System.out.println("Auton Complete");
     }
 
+
     public void done() { }
 
+    /**
+     * stops the auton period by setting isAlive to false.
+     */
     public void stop() { isAlive = false; }
 
     public boolean isAlive() throws AutonEndedException

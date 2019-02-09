@@ -41,6 +41,10 @@ public class CrevoRobot extends IterativeRobot
         _subManager.addSubsystem(subsystem);
     }
 
+    /**
+     * Adds an autonomous phase into the robot's routine. It will also add it into the logger
+     * @param auton
+     */
     protected void addAuton(Auton auton)
     {
         Logger.println("Registered Auton: " + auton.getName(), Logger.LogLevel.DEBUG);

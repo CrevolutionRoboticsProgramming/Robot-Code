@@ -2,6 +2,9 @@ package org.frc2851.crevolib.auton;
 
 import org.frc2851.crevolib.Logger;
 
+/**
+ * Executes the autonomous period.
+ */
 public class AutonExecutor
 {
     private Auton mAuton;

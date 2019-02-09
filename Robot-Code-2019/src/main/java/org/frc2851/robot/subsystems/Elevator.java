@@ -14,9 +14,6 @@ import org.frc2851.robot.Robot;
  */
 public class Elevator extends Subsystem
 {
-    /**
-     *
-     */
     public enum ElevatorControlMode { DIRECT, MOTION_MAGIC, POS_PID }
 
     private Constants mConst = Constants.getInstance();
@@ -25,7 +22,9 @@ public class Elevator extends Subsystem
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
 
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
-
+    /**
+     * Creates a new mInstance for Elevator
+     */
     private static Elevator mInstance = new Elevator();
 
     private Elevator() { super("Elevator"); }
@@ -34,6 +33,10 @@ public class Elevator extends Subsystem
         return mInstance;
     }
 
+    /**
+     * Initilizes the motors and the loggers.
+     * @return
+     */
     @Override
     protected boolean init()
     {

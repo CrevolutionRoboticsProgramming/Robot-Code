@@ -49,5 +49,7 @@ public class Constants
     // Intake
     public final int intakeMaster = 0;
 
+    public final int rollerClawTalon=0;
+
     public final int talonTimeout = 20;
 }
