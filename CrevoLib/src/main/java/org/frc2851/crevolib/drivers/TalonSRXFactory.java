@@ -68,7 +68,7 @@ public class TalonSRXFactory
      * @param id CAN bus id
      * @return Configured talon
      */
-    public static TalonSRX createDefaultTalonSRX(int id)
+    public static TalonSRX createDefaultTalonSRX(int id) throws TalonCommunicationErrorException
     {
         return createTalonSRX(id, mDefaultConfiguration);
     }
@@ -78,7 +78,7 @@ public class TalonSRXFactory
      * @param id CAN bus id
      * @return Configured talon
      */
-    public static WPI_TalonSRX createDefaultWPI_TalonSRX(int id)
+    public static WPI_TalonSRX createDefaultWPI_TalonSRX(int id) throws TalonCommunicationErrorException
     {
         return createWPI_TalonSRX(id, mDefaultConfiguration);
     }
@@ -88,7 +88,7 @@ public class TalonSRXFactory
      * @param id CAN bus id
      * @return Configured talon
      */
-    public static TalonSRX createDefaultMasterTalonSRX(int id)
+    public static TalonSRX createDefaultMasterTalonSRX(int id) throws TalonCommunicationErrorException
     {
         return createTalonSRX(id, mDefaultMasterConfiguration);
     }
@@ -98,7 +98,7 @@ public class TalonSRXFactory
      * @param id CAN bus id
      * @return Configured talon
      */
-    public static WPI_TalonSRX createDefaultMasterWPI_TalonSRX(int id)
+    public static WPI_TalonSRX createDefaultMasterWPI_TalonSRX(int id) throws TalonCommunicationErrorException
     {
         return createWPI_TalonSRX(id, mDefaultMasterConfiguration);
     }
@@ -108,7 +108,7 @@ public class TalonSRXFactory
      * @param id CAN bus id
      * @return Configured talon
      */
-    public static TalonSRX createFastMasterTalonSRX(int id)
+    public static TalonSRX createFastMasterTalonSRX(int id) throws TalonCommunicationErrorException
     {
         return createTalonSRX(id, mFastMasterConfiguration);
     }
@@ -118,7 +118,7 @@ public class TalonSRXFactory
      * @param id CAN bus id
      * @return Configured talon
      */
-    public static WPI_TalonSRX createFastMasterWPI_TalonSRX(int id)
+    public static WPI_TalonSRX createFastMasterWPI_TalonSRX(int id) throws TalonCommunicationErrorException
     {
         return createWPI_TalonSRX(id, mFastMasterConfiguration);
     }
@@ -129,7 +129,7 @@ public class TalonSRXFactory
      * @param master The master talon
      * @return Configured talon
      */
-    public static TalonSRX createPermanentSlaveTalonSRX(int id, TalonSRX master)
+    public static TalonSRX createPermanentSlaveTalonSRX(int id, TalonSRX master) throws TalonCommunicationErrorException
     {
         TalonSRX talon = createTalonSRX(id, mDefaultSlaveConfiguration);
         talon.follow(master);
@@ -142,7 +142,7 @@ public class TalonSRXFactory
      * @param master The master talon
      * @return Configured talon
      */
-    public static WPI_TalonSRX createPermanentSlaveWPI_TalonSRX(int id, TalonSRX master)
+    public static WPI_TalonSRX createPermanentSlaveWPI_TalonSRX(int id, TalonSRX master) throws TalonCommunicationErrorException
     {
         WPI_TalonSRX talon = createWPI_TalonSRX(id, mDefaultSlaveConfiguration);
         talon.follow(master);
@@ -157,17 +157,17 @@ public class TalonSRXFactory
         talon.config_kF(slot, f, talonTimeout);
     }
 
-    private static TalonSRX createTalonSRX(int id, Configuration config)
+    private static TalonSRX createTalonSRX(int id, Configuration config) throws TalonCommunicationErrorException
     {
         TalonSRX talon = new TalonSRX(id);
-        configureTalon(talon, config);
+        if (!configureTalon(talon, config)) throw new TalonCommunicationErrorException(id);
         return talon;
     }
 
-    private static WPI_TalonSRX createWPI_TalonSRX(int id, Configuration config)
+    private static WPI_TalonSRX createWPI_TalonSRX(int id, Configuration config) throws TalonCommunicationErrorException
     {
         WPI_TalonSRX talon = new WPI_TalonSRX(id);
-        configureTalon(talon, config);
+        if (!configureTalon(talon, config)) throw new TalonCommunicationErrorException(id);
         return talon;
     }
 
