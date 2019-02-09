@@ -18,7 +18,7 @@ import org.frc2851.robot.Robot;
         LEFT_X(0), LEFT_Y(1), RIGHT_X(4), RIGHT_Y(5), LEFT_TRIGGER(2), RIGHT_TRIGGER(3);*/
 
 public class Climber extends Subsystem {
-ix
+
     private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.driver;
 
