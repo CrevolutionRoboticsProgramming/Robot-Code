@@ -10,6 +10,7 @@ import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
@@ -28,7 +29,8 @@ public class DriveTrain extends Subsystem
         HIGH(DoubleSolenoid.Value.kForward), LOW(DoubleSolenoid.Value.kReverse);
 
         private final DoubleSolenoid.Value val;
-        DriveGear(DoubleSolenoid.Value val) {
+        DriveGear(DoubleSolenoid.Value val)
+        {
             this.val = val;
         }
     }
@@ -56,121 +58,108 @@ public class DriveTrain extends Subsystem
 
     // PID
     final boolean TUNING_PID = true;
-    PID leftMotionPID, rightMotionPID;
+    private PID leftMotionPID, rightMotionPID;
 
     // Members
-    private WPI_TalonSRX _leftMaster, _leftSlaveA, _leftSlaveB, _rightMaster, _rightSlaveA, _rightSlaveB;
-    private Controller _controller = Robot.driver;
-    private PigeonIMU _pigeon;
-    private Constants mConstants = Constants.getInstance();
+    private WPI_TalonSRX mLeftMaster, mLeftSlaveA, mLeftSlaveB, mRightMaster, mRightSlaveA, mRightSlaveB;
+    private PigeonIMU mPigeon;
     private DoubleSolenoid mShifterSolenoid;
 
-    private static DriveTrain _instance = new DriveTrain();
+    private Controller mController = Robot.driver;
+    private Constants mConstants = Constants.getInstance();
+    private DriveGear mCurrentGear = mConstants.defaultDriveGear;
+
+    private static DriveTrain mInstance = new DriveTrain();
+
     private DriveTrain()
     {
         super("DriveTrain");
     }
-    public static DriveTrain getInstance() { return _instance; }
 
-    private DriveGear mCurrentGear = mConstants.defaultDriveGear;
+    public static DriveTrain getInstance()
+    {
+        return mInstance;
+    }
 
     @Override
     protected boolean init()
     {
-//        try {
-//            _leftMaster = _config.getWpiTalon("talonLeftA");
-//            _leftSlaveA = _config.getWpiTalon("talonLeftB");
-//            _rightMaster = _config.getWpiTalon("talonRightA");
-//             = _config.getWpiTalon("talonRightB");
-//        } catch (ElementNotFoundException e) {
-//            return false;
-//        }
-
-        _leftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveMaster);
-        _leftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveSlaveA);
-        _leftSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveSlaveB);
-        _rightMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveMaster);
-        _rightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveA);
-        _rightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveB);
-
-        mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.shifterForwardChannel, mConstants.shifterReverseChannel);
-
-//        try {
-//            if (TUNING_PID) {
-//                Preferences p = Preferences.getInstance();
-//                leftMotionPID = new PID(p.getDouble("leftP", 0), p.getDouble("leftI", 0),
-//                        p.getDouble("leftD", 0), p.getDouble("leftF", 0));
-//                rightMotionPID = new PID(p.getDouble("rightP", 0), p.getDouble("rightI", 0),
-//                        p.getDouble("rightD", 0), p.getDouble("rightF", 0));
-//            } else {
-//                leftMotionPID = _config.getPID("leftMotionPID");
-//                rightMotionPID = _config.getPID("rightMotionPID");
-//            }
-//        } catch (ElementNotFoundException | DataConversionException e) {
-//            Logger.println("Could not read PID values DriveTrain", Logger.LogLevel.ERROR);
-//        }
+        try {
+            mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveMaster);
+            mLeftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveSlaveA);
+            mLeftSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveSlaveB);
+            mRightMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveMaster);
+            mRightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveA);
+            mRightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveB);
+        } catch (TalonCommunicationErrorException e) {
+            log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
+            return false;
+        }
 
         setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, DEFAULT_PEAK_OUT);
 
         // I don't know what safety does but the messages it throws annoy me.
-        _leftMaster.setSafetyEnabled(false);
-        _leftSlaveA.setSafetyEnabled(false);
-        _leftSlaveB.setSafetyEnabled(false);
-        _rightMaster.setSafetyEnabled(false);
-        _rightSlaveA.setSafetyEnabled(false);
-        _rightSlaveB.setSafetyEnabled(false);
+        mLeftMaster.setSafetyEnabled(false);
+        mLeftSlaveA.setSafetyEnabled(false);
+        mLeftSlaveB.setSafetyEnabled(false);
+        mRightMaster.setSafetyEnabled(false);
+        mRightSlaveA.setSafetyEnabled(false);
+        mRightSlaveB.setSafetyEnabled(false);
+
+        mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.shifterForwardChannel, mConstants.shifterReverseChannel);
 
         // Pigeon Configuration
         if (USE_GYRO) {
-            _pigeon = new PigeonIMU(0); // TODO: Add to config file
-            _leftMaster.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_LEFT, TALON_TIMEOUT);
-            _rightMaster.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_RIGHT, TALON_TIMEOUT);
+            mPigeon = new PigeonIMU(0); // TODO: Add to config file
+            mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_LEFT, TALON_TIMEOUT);
+            mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_RIGHT, TALON_TIMEOUT);
         }
-
-        reset(); // Probably unnecessary. Worth the lost cycles for certainty.
-
-        BadLog.createTopic("Drivetrain/Left Percent", BadLog.UNITLESS, () -> _leftMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
-        BadLog.createTopic("Drivetrain/Right Percent", BadLog.UNITLESS, () -> _rightMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
-
-        BadLog.createTopic("Drivetrain/Left Master Voltage", "V", () -> _leftMaster.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave A Voltage", "V", () -> _leftSlaveA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave B Voltage", "V", () -> _leftSlaveB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Right Master Voltage", "V", () -> _rightMaster.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave A Voltage", "V", () -> _rightSlaveA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave B Voltage", "V", () -> _rightSlaveB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-
-        BadLog.createTopic("Drivetrain/Left Master Current", "A", () -> _leftMaster.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave A Current", "A", () -> _leftSlaveA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave B Current", "A", () -> _leftSlaveB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Right Master Current", "A", () -> _rightMaster.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave A Current", "A", () -> _rightSlaveA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave B Current", "A", () -> _rightSlaveB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-
-        BadLog.createTopic("Drivetrain/Left Encoder", "counts", () -> (double) _leftMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
-        BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) _rightMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
-        BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(_leftMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
-        BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(_rightMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
-        if (USE_GYRO) BadLog.createTopic("Drivetrain/Angle", "deg", () -> _pigeon.getFusedHeading());
         return true;
+    }
+
+    private void badLogInit()
+    {
+        BadLog.createTopic("Drivetrain/Left Percent", BadLog.UNITLESS, () -> mLeftMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
+        BadLog.createTopic("Drivetrain/Right Percent", BadLog.UNITLESS, () -> mRightMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
+
+        BadLog.createTopic("Drivetrain/Left Master Voltage", "V", () -> mLeftMaster.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Left Slave A Voltage", "V", () -> mLeftSlaveA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Left Slave B Voltage", "V", () -> mLeftSlaveB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Right Master Voltage", "V", () -> mRightMaster.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Right Slave A Voltage", "V", () -> mRightSlaveA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+        BadLog.createTopic("Drivetrain/Right Slave B Voltage", "V", () -> mRightSlaveB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
+
+        BadLog.createTopic("Drivetrain/Left Master Current", "A", () -> mLeftMaster.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Left Slave A Current", "A", () -> mLeftSlaveA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Left Slave B Current", "A", () -> mLeftSlaveB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Right Master Current", "A", () -> mRightMaster.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Right Slave A Current", "A", () -> mRightSlaveA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+        BadLog.createTopic("Drivetrain/Right Slave B Current", "A", () -> mRightSlaveB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
+
+        BadLog.createTopic("Drivetrain/Left Encoder", "counts", () -> (double) mLeftMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
+        BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) mRightMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
+        BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(mLeftMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
+        BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(mRightMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
+        if (USE_GYRO) BadLog.createTopic("Drivetrain/Angle", "deg", () -> mPigeon.getFusedHeading());
     }
 
     private void reset()
     {
         zeroSensors();
         setLeftRightMotorOutputs(0, 0);
-        _leftMaster.setNeutralMode(TALON_NEUTRAL_MODE);
-        _leftSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
-        _leftSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
-        _rightMaster.setNeutralMode(TALON_NEUTRAL_MODE);
-        _rightSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
-        _rightSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
+        mLeftMaster.setNeutralMode(TALON_NEUTRAL_MODE);
+        mLeftSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
+        mLeftSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
+        mRightMaster.setNeutralMode(TALON_NEUTRAL_MODE);
+        mRightSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
+        mRightSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
     }
 
     private void zeroSensors()
     {
-        ErrorCode code = _leftMaster.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
-        _rightMaster.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
-        if (USE_GYRO) _pigeon.setYaw(0, TALON_TIMEOUT);
+        ErrorCode code = mLeftMaster.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
+        mRightMaster.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
+        if (USE_GYRO) mPigeon.setYaw(0, TALON_TIMEOUT);
         Logger.println("Zero Sensor Code: " + code.toString(), Logger.LogLevel.DEBUG);
     }
 
@@ -179,7 +168,7 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            DifferentialDrive robotDrive = new DifferentialDrive(_leftMaster, _rightMaster);
+            DifferentialDrive robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
 
             final double TURN_MULT = 0.9;
 
@@ -194,9 +183,9 @@ public class DriveTrain extends Subsystem
             {
                 reset();
 
-                _leftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
-                _rightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
-                _rightMaster.setSensorPhase(true);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mRightMaster.setSensorPhase(true);
 
                 robotDrive.tankDrive(0, 0);
                 robotDrive.setSafetyEnabled(false);
@@ -206,10 +195,10 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                double throttle = _controller.get(Axis.AxisID.LEFT_Y);
-                double turn = _controller.get(Axis.AxisID.RIGHT_X) * TURN_MULT
-                boolean curvatureToggle = _controller.get(Button.ButtonID.RIGHT_BUMPER);
-                boolean gearToggle = _controller.get(Button.ButtonID.LEFT_BUMPER);
+                double throttle = mController.get(Axis.AxisID.LEFT_Y);
+                double turn = mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT;
+                boolean curvatureToggle = mController.get(Button.ButtonID.RIGHT_BUMPER);
+                boolean gearToggle = mController.get(Button.ButtonID.LEFT_BUMPER);
 
                 DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
                 if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
@@ -217,8 +206,8 @@ public class DriveTrain extends Subsystem
                 robotDrive.curvatureDrive(throttle, turn, curvatureToggle);
 
                 // Encoder Test
-                String encTest = "Left(" + _leftMaster.getSelectedSensorPosition(0) + "," + _leftMaster.getSelectedSensorVelocity(0) +
-                        "), Right(" + _rightMaster.getSelectedSensorPosition(0) + "," + _rightMaster.getSelectedSensorVelocity(0) + ")";
+                String encTest = "Left(" + mLeftMaster.getSelectedSensorPosition(0) + "," + mLeftMaster.getSelectedSensorVelocity(0) +
+                        "), Right(" + mRightMaster.getSelectedSensorPosition(0) + "," + mRightMaster.getSelectedSensorVelocity(0) + ")";
                 System.out.println(encTest);
             }
 
@@ -247,7 +236,7 @@ public class DriveTrain extends Subsystem
 
             @Override
             public boolean isFinished() {
-                return Math.abs(targetPos - _rightMaster.getSelectedSensorPosition(0)) < 1024;
+                return Math.abs(targetPos - mRightMaster.getSelectedSensorPosition(0)) < 1024;
             }
 
             @Override
@@ -255,50 +244,50 @@ public class DriveTrain extends Subsystem
             {
                 double startTime = Timer.getFPGATimestamp();
                 // Sensor Config
-                _rightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
 
-                _leftMaster.configRemoteFeedbackFilter(_rightMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor,
+                mLeftMaster.configRemoteFeedbackFilter(mRightMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor,
                         0, TALON_TIMEOUT);
-                _leftMaster.configSensorTerm(SensorTerm.Sum0, FeedbackDevice.RemoteSensor0, TALON_TIMEOUT);
-                _leftMaster.configSensorTerm(SensorTerm.Sum1, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
-                _leftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorSum, PID_PRIMARY, TALON_TIMEOUT);
-                _leftMaster.configSelectedFeedbackCoefficient(0.5, PID_PRIMARY, TALON_TIMEOUT);
+                mLeftMaster.configSensorTerm(SensorTerm.Sum0, FeedbackDevice.RemoteSensor0, TALON_TIMEOUT);
+                mLeftMaster.configSensorTerm(SensorTerm.Sum1, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorSum, PID_PRIMARY, TALON_TIMEOUT);
+                mLeftMaster.configSelectedFeedbackCoefficient(0.5, PID_PRIMARY, TALON_TIMEOUT);
 
-                _leftMaster.selectProfileSlot(PID_SLOT_DRIVE, PID_PRIMARY);
+                mLeftMaster.selectProfileSlot(PID_SLOT_DRIVE, PID_PRIMARY);
 
                 if (USE_GYRO)
                 {
-                    _leftMaster.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw,
+                    mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw,
                             1, TALON_TIMEOUT);
-                    _leftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor1, 1, TALON_TIMEOUT);
-                    _leftMaster.configSelectedFeedbackCoefficient(3600.0d / 8192.0d, 1, TALON_TIMEOUT);
+                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor1, 1, TALON_TIMEOUT);
+                    mLeftMaster.configSelectedFeedbackCoefficient(3600.0d / 8192.0d, 1, TALON_TIMEOUT);
 
-                    _leftMaster.selectProfileSlot(PID_SLOT_GYRO, PID_AUX);
+                    mLeftMaster.selectProfileSlot(PID_SLOT_GYRO, PID_AUX);
                 } else {
-                    _leftMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
-                    _leftMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, TALON_TIMEOUT);
-                    _leftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, PID_AUX, TALON_TIMEOUT);
-                    _leftMaster.configSelectedFeedbackCoefficient(turnCoeff, 1, TALON_TIMEOUT);
+                    mLeftMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
+                    mLeftMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, TALON_TIMEOUT);
+                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, PID_AUX, TALON_TIMEOUT);
+                    mLeftMaster.configSelectedFeedbackCoefficient(turnCoeff, 1, TALON_TIMEOUT);
 
-                    _leftMaster.selectProfileSlot(PID_SLOT_ENC_TURN, PID_AUX);
+                    mLeftMaster.selectProfileSlot(PID_SLOT_ENC_TURN, PID_AUX);
                 }
 
-                _leftMaster.configAuxPIDPolarity(false, TALON_TIMEOUT);
+                mLeftMaster.configAuxPIDPolarity(false, TALON_TIMEOUT);
 
                 // Motion Magic Config
-                _leftMaster.configMotionAcceleration(MOTION_MAGIC_MAX_ACC, TALON_TIMEOUT);
-                _leftMaster.configMotionCruiseVelocity(MOTION_MAGIC_MAX_VEL, TALON_TIMEOUT);
+                mLeftMaster.configMotionAcceleration(MOTION_MAGIC_MAX_ACC, TALON_TIMEOUT);
+                mLeftMaster.configMotionCruiseVelocity(MOTION_MAGIC_MAX_VEL, TALON_TIMEOUT);
 
-                targetAngle = _leftMaster.getSelectedSensorPosition(1);
-                targetPos = distanceToCounts(distance) + _leftMaster.getSelectedSensorPosition(0);
+                targetAngle = mLeftMaster.getSelectedSensorPosition(1);
+                targetPos = distanceToCounts(distance) + mLeftMaster.getSelectedSensorPosition(0);
                 Logger.println("Time for MMG Init: " + (Timer.getFPGATimestamp() - startTime), Logger.LogLevel.DEBUG);
                 return true;
             }
 
             @Override
             public void update() {
-                _leftMaster.set(ControlMode.MotionMagic, targetPos, DemandType.AuxPID, targetAngle);
-                _rightMaster.follow(_leftMaster, FollowerType.AuxOutput1);
+                mLeftMaster.set(ControlMode.MotionMagic, targetPos, DemandType.AuxPID, targetAngle);
+                mRightMaster.follow(mLeftMaster, FollowerType.AuxOutput1);
             }
 
             @Override
@@ -317,22 +306,22 @@ public class DriveTrain extends Subsystem
 
             @Override
             public boolean isFinished() {
-                return _leftMaster.getClosedLoopError(0) < 512;
+                return mLeftMaster.getClosedLoopError(0) < 512;
             }
 
             @Override
             public boolean init() {
-                int targetPos = _leftMaster.getSelectedSensorPosition(0) + counts;
-                setPID(_leftMaster, 0, new PID(0, 0, 0, 0));
-                setPID(_rightMaster, 0, new PID(0, 0, 0, 0));
-                _leftMaster.set(ControlMode.Position, targetPos);
-                _leftSlaveA.set(ControlMode.Follower, _leftMaster.getDeviceID());
+                int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
+                setPID(mLeftMaster, 0, new PID(0, 0, 0, 0));
+                setPID(mRightMaster, 0, new PID(0, 0, 0, 0));
+                mLeftMaster.set(ControlMode.Position, targetPos);
+                mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
                 return true;
             }
 
             @Override
             public void update() {
-                _rightMaster.set(ControlMode.PercentOutput, -_leftMaster.getMotorOutputPercent());
+                mRightMaster.set(ControlMode.PercentOutput, -mLeftMaster.getMotorOutputPercent());
             }
 
             @Override
@@ -402,24 +391,24 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 try {
-                    left = new MotionProfileExecutor(Robot.getMotionProfile(leftProfile), _leftMaster, false);
-                    right = new MotionProfileExecutor(Robot.getMotionProfile(rightProfile), _rightMaster, false);
+                    left = new MotionProfileExecutor(Robot.getMotionProfile(leftProfile), mLeftMaster, false);
+                    right = new MotionProfileExecutor(Robot.getMotionProfile(rightProfile), mRightMaster, false);
                 } catch (NullPointerException e) {
                     return false;
                 }
 
-                setPID(_leftMaster, 0, leftMotionPID);
-                setPID(_rightMaster, 0, rightMotionPID);
+                setPID(mLeftMaster, 0, leftMotionPID);
+                setPID(mRightMaster, 0, rightMotionPID);
 
                 //TODO: Feedback Coeff
-                _leftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
-                _rightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
                 if (USE_GYRO) {
-                    _leftMaster.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
-                    _leftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
+                    mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
+                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
 
-                    _rightMaster.configRemoteFeedbackFilter(_pigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
-                    _rightMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
+                    mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
+                    mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
                 }
 
                 left.start();
@@ -433,8 +422,8 @@ public class DriveTrain extends Subsystem
                 left.update();
                 right.update();
 
-                _leftMaster.set(ControlMode.MotionProfile, left.getSetValue().value);
-                _rightMaster.set(ControlMode.MotionProfile, right.getSetValue().value);
+                mLeftMaster.set(ControlMode.MotionProfile, left.getSetValue().value);
+                mRightMaster.set(ControlMode.MotionProfile, right.getSetValue().value);
             }
 
             @Override
@@ -480,21 +469,21 @@ public class DriveTrain extends Subsystem
 
     private void setNominalAndPeakOutputs(double nominal, double peak)
     {
-        _leftMaster.configNominalOutputForward(nominal, TALON_TIMEOUT);
-        _leftMaster.configPeakOutputForward(peak, TALON_TIMEOUT);
-        _leftMaster.configNominalOutputReverse(-nominal, TALON_TIMEOUT);
-        _leftMaster.configPeakOutputReverse(-peak, TALON_TIMEOUT);
+        mLeftMaster.configNominalOutputForward(nominal, TALON_TIMEOUT);
+        mLeftMaster.configPeakOutputForward(peak, TALON_TIMEOUT);
+        mLeftMaster.configNominalOutputReverse(-nominal, TALON_TIMEOUT);
+        mLeftMaster.configPeakOutputReverse(-peak, TALON_TIMEOUT);
 
-        _rightMaster.configNominalOutputForward(nominal, TALON_TIMEOUT);
-        _rightMaster.configPeakOutputForward(peak, TALON_TIMEOUT);
-        _rightMaster.configNominalOutputReverse(-nominal, TALON_TIMEOUT);
-        _rightMaster.configPeakOutputReverse(-peak, TALON_TIMEOUT);
+        mRightMaster.configNominalOutputForward(nominal, TALON_TIMEOUT);
+        mRightMaster.configPeakOutputForward(peak, TALON_TIMEOUT);
+        mRightMaster.configNominalOutputReverse(-nominal, TALON_TIMEOUT);
+        mRightMaster.configPeakOutputReverse(-peak, TALON_TIMEOUT);
     }
 
     private void setLeftRightMotorOutputs(double left, double right)
     {
-        _leftMaster.set(ControlMode.PercentOutput, left);
-        _rightMaster.set(ControlMode.PercentOutput, right);
+        mLeftMaster.set(ControlMode.PercentOutput, left);
+        mRightMaster.set(ControlMode.PercentOutput, right);
     }
 
     private void configureController(Controller controller)
