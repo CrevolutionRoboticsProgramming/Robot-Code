@@ -24,6 +24,11 @@ public class RollerClaw extends Subsystem {
     private RollerClaw() {
         super("RollerClaw");
     }
+    boolean intake;
+    boolean lastIntakeState;
+    boolean outTake;
+    boolean lastOutTakeState;
+
 
     public static RollerClaw getInstance() {
         return mInstance;
@@ -36,9 +41,9 @@ public class RollerClaw extends Subsystem {
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
         mController.config(Axis.AxisID.LEFT_TRIGGER);
 
-        BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> _motor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
-        BadLog.createTopic("Roller Claw Voltage", "V", () -> _motor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
-        BadLog.createTopic("Roller Claw Current", "A", () -> _motor.getOutputCurrent(), "hide", "join:Roller Claw/Current Outputs");
+       // BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> _motor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
+       // BadLog.createTopic("Roller Claw Voltage", "V", () -> _motor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
+       // BadLog.createTopic("Roller Claw Current", "A", () -> _motor.getOutputCurrent(), "hide", "join:Roller Claw/Current Outputs");
 
         return true;
     }
@@ -69,12 +74,34 @@ public class RollerClaw extends Subsystem {
 
                 _motor.set(ControlMode.PercentOutput, output);
 
-                if (output > 0.0) {
-                    Logger.println("RollerClaw intake", Logger.LogLevel.DEBUG);
+                if(output > 0) {
+                    intake = true;
                 }
-                if (output < 0.0) {
-                    Logger.println("RollerClaw outtake", Logger.LogLevel.DEBUG);
+                else{
+                    intake = false;
                 }
+                if (intake == true && lastIntakeState == false){
+                    Logger.println("intake activated", Logger.LogLevel.DEBUG);
+                }
+                if (intake == false && lastIntakeState == true){
+                    Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
+                }
+                lastIntakeState = intake;
+                if(output < 0) {
+                    outTake = true;
+                }
+                else{
+                    outTake = false;
+                }
+
+                if (outTake == true && lastOutTakeState == false){
+                    Logger.println("outTake activated", Logger.LogLevel.DEBUG);
+                }
+                if (outTake == false && lastOutTakeState == true){
+                    Logger.println("outTake deactivated", Logger.LogLevel.DEBUG);
+                }
+                lastOutTakeState = outTake;
+
             }
 
             @Override
@@ -83,5 +110,4 @@ public class RollerClaw extends Subsystem {
             }
         };
     }
-
 }
