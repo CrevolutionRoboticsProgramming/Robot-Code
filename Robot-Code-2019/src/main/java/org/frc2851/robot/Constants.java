@@ -25,6 +25,8 @@ public class Constants
     public final int pigeonID = 42;
 
     public final DriveTrain.DriveGear defaultDriveGear = DriveTrain.DriveGear.HIGH;
+    public final int shifterForwardChannel = 7;
+    public final int shifterReverseChannel = 8;
 
     // Elevator
     public final int elevatorMaster = 7;

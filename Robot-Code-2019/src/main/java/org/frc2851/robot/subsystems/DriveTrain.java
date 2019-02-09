@@ -7,9 +7,7 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import org.frc2851.crevolib.ElementNotFoundException;
 import org.frc2851.crevolib.Logger;
@@ -28,7 +26,15 @@ import org.jdom2.DataConversionException;
 
 public class DriveTrain extends Subsystem
 {
-    public enum DriveGear { HIGH, LOW }
+    public enum DriveGear
+    {
+        HIGH(DoubleSolenoid.Value.kForward), LOW(DoubleSolenoid.Value.kReverse);
+
+        private final DoubleSolenoid.Value val;
+        DriveGear(DoubleSolenoid.Value val) {
+            this.val = val;
+        }
+    }
 
     // Constants
     private final double CPR = 4096;
@@ -60,7 +66,7 @@ public class DriveTrain extends Subsystem
     private Controller _controller = Robot.driver;
     private PigeonIMU _pigeon;
     private Constants mConstants = Constants.getInstance();
-    private DriveGear mDriveGear = mConstants.defaultDriveGear;
+    private DoubleSolenoid mShifterSolenoid;
 
     private static DriveTrain _instance = new DriveTrain();
     private DriveTrain()
@@ -68,6 +74,8 @@ public class DriveTrain extends Subsystem
         super("DriveTrain");
     }
     public static DriveTrain getInstance() { return _instance; }
+
+    private DriveGear mCurrentGear = mConstants.defaultDriveGear;
 
     @Override
     protected boolean init()
@@ -88,6 +96,8 @@ public class DriveTrain extends Subsystem
         _rightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveA);
         _rightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveB);
 
+        mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.shifterForwardChannel, mConstants.shifterReverseChannel);
+
 //        try {
 //            if (TUNING_PID) {
 //                Preferences p = Preferences.getInstance();
@@ -104,11 +114,6 @@ public class DriveTrain extends Subsystem
 //        }
 
         setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, DEFAULT_PEAK_OUT);
-
-        // Controller configuration
-        _controller.config(Axis.AxisID.LEFT_Y); // Throttle
-        _controller.config(Axis.AxisID.RIGHT_X); // Turn
-        _controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature Toggle
 
         // I don't know what safety does but the messages it throws annoy me.
         _leftMaster.setSafetyEnabled(false);
@@ -180,8 +185,6 @@ public class DriveTrain extends Subsystem
             DifferentialDrive robotDrive = new DifferentialDrive(_leftMaster, _rightMaster);
 
             final double TURN_MULT = 0.9;
-            final double DEADBAND_VERT = 0.11;
-            final double DEADBAND_HORZ = 0.11;
 
             @Override
             public String getName() { return "Teleop"; }
@@ -206,9 +209,13 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                double throttle = applyDeadband(_controller.get(Axis.AxisID.LEFT_Y), DEADBAND_VERT);
-                double turn = applyDeadband(_controller.get(Axis.AxisID.RIGHT_X) * TURN_MULT, DEADBAND_HORZ);
+                double throttle = _controller.get(Axis.AxisID.LEFT_Y);
+                double turn = _controller.get(Axis.AxisID.RIGHT_X) * TURN_MULT
                 boolean curvatureToggle = _controller.get(Button.ButtonID.RIGHT_BUMPER);
+                boolean gearToggle = _controller.get(Button.ButtonID.LEFT_BUMPER);
+
+                DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
+                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
                 robotDrive.curvatureDrive(throttle, turn, curvatureToggle);
 
@@ -302,35 +309,6 @@ public class DriveTrain extends Subsystem
         };
     }
 
-    public Command turnToAngleGyro(double angle, double power)
-    {
-        return new Command()
-        {
-            @Override
-            public String getName() { return "TurnAngle[" + angle + "]"; }
-
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-
-            @Override
-            public boolean init() {
-                return true;
-            }
-
-            @Override
-            public void update() {
-
-            }
-
-            @Override
-            public void stop() {
-
-            }
-        };
-    }
-
     public Command turnToAngleEncoder(double angle)
     {
         return new Command()
@@ -367,6 +345,11 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    public Command driveTime(double time, double power)
+    {
+        return driveTime(time, power, power);
+    }
+
     public Command driveTime(double time, double leftPower, double rightPower)
     {
         return new Command() {
@@ -382,58 +365,16 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 timer.start();
-                setLeftRightMotorOutputs(leftPower, rightPower);
                 return true;
             }
 
             @Override
-            public void update() { }
+            public void update() { setLeftRightMotorOutputs(leftPower, rightPower); }
 
             @Override
             public void stop()
             {
                 timer.stop();
-                reset();
-            }
-        };
-    }
-
-    public Command driveDistance(double distance, double maxPower)
-    {
-        return new Command()
-        {
-            boolean isFinished = false;
-            int counts = distanceToCounts(distance);
-            @Override
-            public String getName() { return "DriveDistance[" + distance + " feet, " + maxPower + "]"; }
-
-            @Override
-            public boolean isFinished() {
-                return isFinished;
-            }
-
-            @Override
-            public boolean init()
-            {
-                reset();
-                setPID(_leftMaster, 0, new PID(0, 0, 0, 0));
-                setPID(_rightMaster, 0, new PID(0, 0, 0, 0));
-                setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, maxPower);
-
-                _leftMaster.set(ControlMode.Position, counts);
-                _rightMaster.set(ControlMode.Position, counts);
-                return true;
-            }
-
-            @Override
-            public void update()
-            {
-                // Will finish when the motor is within 1/4 of a rotation
-                if (Math.abs(counts - _leftMaster.getSelectedSensorPosition(0)) < 1024) isFinished = true;
-            }
-
-            @Override
-            public void stop() {
                 reset();
             }
         };
@@ -509,40 +450,27 @@ public class DriveTrain extends Subsystem
         };
     }
 
-    // TODO: Implement Motion Profile Arc
-    public Command runMotionProfileArc(String left, String right)
-    {
+    public Command setDriveGear(DriveGear gear) {
         return new Command() {
             @Override
-            public String getName() {
-                return "RunMotionProfileArc(" + left + ", " + right + ")";
-            }
+            public String getName() { return "SetDriveGear[" + gear.name() + "]"; }
 
             @Override
-            public boolean isFinished() {
-                return false;
-            }
+            public boolean isFinished() { return true; }
 
             @Override
             public boolean init()
             {
+                mShifterSolenoid.set(gear.val);
                 return true;
             }
 
             @Override
-            public void update() {
-
-            }
+            public void update() { }
 
             @Override
-            public void stop() {
-
-            }
+            public void stop() { }
         };
-    }
-
-    private void setDriveGear(DriveGear gear) {
-        mDriveGear = gear;
     }
 
     private void setPID(TalonSRX talon, int slot, PID pid)
@@ -570,6 +498,14 @@ public class DriveTrain extends Subsystem
     {
         _leftMaster.set(ControlMode.PercentOutput, left);
         _rightMaster.set(ControlMode.PercentOutput, right);
+    }
+
+    private void configureController(Controller controller)
+    {
+        controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(x, 0.15)); // Throttle
+        controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
+        controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature
+        controller.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.TOGGLE); // Shifter
     }
 
     private int distanceToCounts(double distance)
