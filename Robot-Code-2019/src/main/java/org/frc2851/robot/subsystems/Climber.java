@@ -1,6 +1,6 @@
 package org.frc2851.robot.subsystems;
 //when b is pressed, the screw drive actuates(moves)
-
+// This is in here so git does not complain.
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -38,19 +38,19 @@ public class Climber extends Subsystem {
         mController.config(Button.ButtonID.A, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.B, Button.ButtonMode.TOGGLE);
 
-        _gorillaMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.gorillaMaster);
+        _gorillaMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.gorillaMaster);
         _gorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, _gorillaMaster);
-        _screwMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.screwMaster);
-        Logger.println("Init worked", Logger.LogLevel.DEBUG);
+        _screwMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.screwMaster);
+
         BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> _screwMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Slave", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Screw","Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Slave", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Screw", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Volt", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Slave Volt", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Screw Volt","Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Amp", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Slave Amp", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Screw Amp", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
 
         return true;
     }
@@ -74,7 +74,7 @@ public class Climber extends Subsystem {
     }
 
     @Override
-    public Command getTeleopCommand() {
+    public Command getDefaultCommand() {
         return new Command() {
             @Override
             public String getName() {
