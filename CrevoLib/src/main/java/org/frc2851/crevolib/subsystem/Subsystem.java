@@ -34,6 +34,10 @@ public abstract class Subsystem
         mName = name;
     }
 
+    /**
+     * Sets the group the Command is in
+     * @param commands
+     */
     public void setCommmandGroup(Command... commands) {
         mAuxilaryCommandGroup = new CommandGroup(commands);
         if (mAuxilaryCommandGroup.getSize() > 0) mAuxilaryState.isNull = false;
@@ -41,6 +45,9 @@ public abstract class Subsystem
         mAuxilaryState.isFinished = false;
     }
 
+    /**
+     * Runs a Command, and logs if that command was successful.
+     */
     synchronized void runCommand()
     {
         if (mDefaultCommand != null && initCommand(mDefaultCommand, mDefaultState)) mDefaultCommand.update();
@@ -70,6 +77,12 @@ public abstract class Subsystem
         }
     }
 
+    /**
+     *Initilizes a new command, along with a state.
+     * @param command Uses a Command
+     * @param state  Uses a State
+     * @return true if the command was successfully initialized else returns false
+     */
     private boolean initCommand(Command command, CommandState state)
     {
         if (state.isInit) return true;
@@ -86,6 +99,9 @@ public abstract class Subsystem
         return true;
     }
 
+    /**
+     * Stops the current Auxilary Command
+     */
     public synchronized void stopAuxilaryCommand()
     {
         Command c = mAuxilaryCommandGroup.getCommand();
@@ -94,6 +110,10 @@ public abstract class Subsystem
         mAuxilaryState.isNull = true;
     }
 
+    /**
+     * converts a string to a mName for use
+     * @return The mName
+     */
     @Override
     public String toString()
     {
@@ -102,7 +122,7 @@ public abstract class Subsystem
 
     /**
      * Logs a message prepended with the subsystem name
-     * @param message
+     * @param message Message of String
      * @param level Log level
      */
     protected void log(String message, Logger.LogLevel level)

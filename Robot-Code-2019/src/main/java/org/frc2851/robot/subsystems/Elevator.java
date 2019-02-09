@@ -9,8 +9,14 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
+/**
+ * controls the Elevator Motors
+ */
 public class Elevator extends Subsystem
 {
+    /**
+     *
+     */
     public enum ElevatorControlMode { DIRECT, MOTION_MAGIC, POS_PID }
 
     private Constants mConst = Constants.getInstance();

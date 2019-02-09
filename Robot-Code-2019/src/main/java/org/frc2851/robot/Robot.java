@@ -7,10 +7,19 @@ import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.robot.subsystems.*;
 
+/**
+ * Does everything a crevoRobot Does and adds a few new things
+ */
 public class Robot extends CrevoRobot
 {
+    /**
+     * Initilizes two controllers:
+     */
     public static Controller driver, operator;
 
+    /**
+     * Tells the Robot Class What other classes should be included.
+     */
     public Robot()
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
@@ -21,6 +30,9 @@ public class Robot extends CrevoRobot
         addSubsystem(Intake.getInstance());
     }
 
+    /**
+     * Configures the Controlers
+     */
     private static void configControllers()
     {
         driver = new Controller(0);
@@ -33,6 +45,10 @@ public class Robot extends CrevoRobot
         //TODO: Config buttons for Hatcher
     }
 
+    /**
+     * runs the Robot
+     * @param args
+     */
     public static void main(String... args) {
         RobotBase.startRobot(Robot::new);
     }

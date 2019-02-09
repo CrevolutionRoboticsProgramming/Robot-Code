@@ -17,22 +17,42 @@ import org.frc2851.robot.Robot;
         LEFT_JOYSTICK(9), RIGHT_JOYSTICK(10);
         LEFT_X(0), LEFT_Y(1), RIGHT_X(4), RIGHT_Y(5), LEFT_TRIGGER(2), RIGHT_TRIGGER(3);*/
 
+/**
+ * Controls the Climbing Motors.
+ */
 public class Climber extends Subsystem {
-
+    /**
+     * Implements mConstants from the constants class
+     */
     private Constants mConstants = Constants.getInstance();
+    /**
+     * Implements the controller from the Controller class
+     */
     private Controller mController = Robot.driver;
-
+    /**
+     * Creates a new Instance called Climber from the subsystem class
+     */
     private static Climber mInstance = new Climber();
 
+    /**
+     * Attempts to get the instance of Climber.
+     * @return The mInstance
+     */
     public static Climber getInstance() {
         return mInstance;
     }
+
+    /**
+     * Gets the name of the Class.
+     */
     private Climber() {
         super("Climber");
     }
 
     private WPI_TalonSRX _gorillaMaster, _gorillaSlave, _screwMaster;
-
+    /**
+     * Initializes the Controller, the motors, and the Logging
+     */
     @Override
     public boolean init() {
         mController.config(Button.ButtonID.A, Button.ButtonMode.TOGGLE);
@@ -67,38 +87,60 @@ public class Climber extends Subsystem {
     }
 }*/
 
+    /**
+     * Resets the motors
+     */
     private void reset() {
         _gorillaMaster.set(ControlMode.PercentOutput, 0);
         _screwMaster.set(ControlMode.PercentOutput, 0);
         Logger.println("All climb motors zeroed", Logger.LogLevel.DEBUG);
     }
-
+    /**
+     * Runs everything required for Climb to run in TeleOp
+     */
     @Override
     public Command getDefaultCommand() {
         return new Command() {
+            /**
+             * gets the name.
+             * @return The name of Command.
+             */
             @Override
             public String getName() {
                 return "Teleop";
             }
 
+            /**
+             * runs when the robot is finished.
+             * @return Is the Robot Finished
+             */
             @Override
             public boolean isFinished() {
                 return false;
             }
 
+            /**
+             * Runs when Teleop begins
+             * @return Was teleop initilized
+             */
             @Override
             public boolean init() {
                 reset();
                 return true;
             }
 
+            /**
+             *If A is pressed, then toggle gorilla. else if B is pressed, Toggle Screw.
+             */
             @Override
             public void update() {
                 // Gorilla arm
+
                 if (mController.get(Button.ButtonID.A)) {
                     _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
                     Logger.println("Raised Gorilla", Logger.LogLevel.DEBUG);
                 } else {
+
                     _gorillaMaster.set(ControlMode.PercentOutput, -1.0);
                     Logger.println("Lowered Gorilla", Logger.LogLevel.DEBUG);
                 }
@@ -113,6 +155,9 @@ public class Climber extends Subsystem {
                 }
             }
 
+            /**
+             * Runs When teleOP is Disabled.
+             */
             @Override
             public void stop() {
                 reset();

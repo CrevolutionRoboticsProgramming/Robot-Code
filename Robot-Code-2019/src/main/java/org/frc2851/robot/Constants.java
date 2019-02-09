@@ -2,14 +2,25 @@ package org.frc2851.robot;
 
 import org.frc2851.robot.subsystems.DriveTrain;
 
+/**
+ * creates a class to Store and use Constants
+ */
 public class Constants
 {
     private static Constants mInstance;
+
+    /**
+     * Gets the Instance state of the Constance class
+     * @return The instance.
+     */
     public static Constants getInstance() {
         if (mInstance == null) mInstance = new Constants();
         return mInstance;
     }
 
+    /**
+     * Runs the Constants class.
+     */
     private Constants() { }
 
     public boolean singleControllerMode = false;
