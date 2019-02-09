@@ -33,6 +33,7 @@ public class Constants
     // Climber
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
+    public final int screwMaster = 11;
 
     // Hatcher
     public final int pcmID = 0;
