@@ -12,24 +12,30 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
-
+/**
+ sets up the motor and controller used in the code
+ */
 public class RollerClaw extends Subsystem {
-
     Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.operator;
 
     private WPI_TalonSRX _motor;
 
     static RollerClaw mInstance = new RollerClaw();
-
+    boolean intake;
+    boolean lastIntakeState;
+    boolean outTake;
+    boolean lastOutTakeState;
     private RollerClaw() {
         super("RollerClaw");
     }
-
     public static RollerClaw getInstance() {
         return mInstance;
     }
-
+    /**
+     initialize the motor and controller's triggers
+     badlog is setup as well
+     */
     @Override
     protected boolean init() {
         try {
@@ -61,13 +67,16 @@ public class RollerClaw extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-
+            //sets motor to zero to start
             @Override
             public boolean init() {
                 _motor.set(ControlMode.PercentOutput, 0);
                 return true;
             }
-
+            /**
+             shows that right trigger intakes and left trigger outtakes
+             logging for intake and outtake says if its activated or deactivated
+             */
             @Override
             public void update() {
                 double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
@@ -75,12 +84,35 @@ public class RollerClaw extends Subsystem {
 
                 _motor.set(ControlMode.PercentOutput, output);
 
-                if (output > 0.0) {
-                    Logger.println("RollerClaw intake", Logger.LogLevel.DEBUG);
+                if(output > 0) {
+                    intake = true;
                 }
-                if (output < 0.0) {
-                    Logger.println("RollerClaw outtake", Logger.LogLevel.DEBUG);
+                else{
+                    intake = false;
                 }
+                if (intake == true && lastIntakeState == false){
+                    Logger.println("intake activated", Logger.LogLevel.DEBUG);
+                }
+                if (intake == false && lastIntakeState == true){
+                    Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
+                }
+                lastIntakeState = intake;
+
+                if(output < 0) {
+                    outTake = true;
+                }
+                else{
+                    outTake = false;
+                }
+
+                if (outTake == true && lastOutTakeState == false){
+                    Logger.println("outTake activated", Logger.LogLevel.DEBUG);
+                }
+                if (outTake == false && lastOutTakeState == true){
+                    Logger.println("outTake deactivated", Logger.LogLevel.DEBUG);
+                }
+                lastOutTakeState = outTake;
+
             }
 
             @Override
@@ -89,5 +121,4 @@ public class RollerClaw extends Subsystem {
             }
         };
     }
-
 }

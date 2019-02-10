@@ -4,6 +4,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 import java.io.File;
 
+/**
+ * Logs events
+ */
 public class Logger
 {
     private static LogLevel logLevel = LogLevel.DEBUG;

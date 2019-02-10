@@ -2,14 +2,25 @@ package org.frc2851.robot;
 
 import org.frc2851.robot.subsystems.DriveTrain;
 
+/**
+ * creates a class to Store and use Constants
+ */
 public class Constants
 {
     private static Constants mInstance;
+
+    /**
+     * Gets the Instance state of the Constance class
+     * @return The instance.
+     */
     public static Constants getInstance() {
         if (mInstance == null) mInstance = new Constants();
         return mInstance;
     }
 
+    /**
+     * Runs the Constants class.
+     */
     private Constants() { }
 
     public final int magEncCPR = 4096;
@@ -55,17 +66,12 @@ public class Constants
     // Climber
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
+    public final int screwMaster = 11;
 
-    // Hatcher
-    public final int pcmID = 0;
-    public final int extendHatcherForward = 0;
-    public final int extendHatcherReverse = 1;
-    public final int actuateHatcherForward = 2;
-    public final int actuateHatcherReverse = 3;
+    // Intake
+    public final int intakeMaster = 0;
 
-     // RollerClaw
-   public final int rollerClawTalon = 1;
+    public final int rollerClawTalon=0;
 
     public final int talonTimeout = 20;
 }
-

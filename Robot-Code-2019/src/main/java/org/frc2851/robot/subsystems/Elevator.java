@@ -11,6 +11,9 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
+/**
+ * controls the Elevator Motors
+ */
 public class Elevator extends Subsystem
 {
     public enum ElevatorControlMode { DIRECT, MOTION_MAGIC, POS_PID }
@@ -21,7 +24,9 @@ public class Elevator extends Subsystem
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
 
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
-
+    /**
+     * Creates a new mInstance for Elevator
+     */
     private static Elevator mInstance = new Elevator();
 
     private Elevator() { super("Elevator"); }
@@ -30,6 +35,10 @@ public class Elevator extends Subsystem
         return mInstance;
     }
 
+    /**
+     * Initilizes the motors and the loggers.
+     * @return
+     */
     @Override
     protected boolean init()
     {
