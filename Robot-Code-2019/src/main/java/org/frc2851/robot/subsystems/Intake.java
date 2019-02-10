@@ -5,6 +5,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -46,7 +47,12 @@ public class Intake extends Subsystem {
         mController.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.RAW);
 
-        intakeTalon = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConst.intakeMaster);
+        try {
+            intakeTalon = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConst.intakeMaster);
+        } catch (TalonCommunicationErrorException e) {
+            log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
+            return false;
+        }
         intakeTalon.setSafetyEnabled(false);
 
         intakeSol = new DoubleSolenoid(moduleNumber, forwardChannel, reverseChannel);

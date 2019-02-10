@@ -5,6 +5,7 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -58,9 +59,14 @@ public class Climber extends Subsystem {
         mController.config(Button.ButtonID.A, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.B, Button.ButtonMode.TOGGLE);
 
-        _gorillaMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.gorillaMaster);
-        _gorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, _gorillaMaster);
-        _screwMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.screwMaster);
+        try {
+            _gorillaMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.gorillaMaster);
+            _gorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, _gorillaMaster);
+            _screwMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.screwMaster);
+        } catch (TalonCommunicationErrorException e) {
+            log("Could not initialize motor, climber init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
+            return false;
+        }
 
         BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
