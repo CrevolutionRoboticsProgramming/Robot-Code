@@ -24,6 +24,7 @@ public class Constants
     private Constants() { }
 
     public final int magEncCPR = 4096;
+    public final int pcmID = 0;
 
     public boolean singleControllerMode = false;
 
@@ -74,4 +75,10 @@ public class Constants
     public final int rollerClawTalon=0;
 
     public final int talonTimeout = 20;
+
+    // Hatcher
+    public final int extendHatcherForward = 0;
+    public final int extendHatcherReverse = 0;
+    public final int actuateHatcherForward = 0;
+    public final int actuateHatcherReverse = 0;
 }
