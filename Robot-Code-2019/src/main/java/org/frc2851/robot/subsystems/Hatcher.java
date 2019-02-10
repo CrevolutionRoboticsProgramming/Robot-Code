@@ -11,8 +11,7 @@ import org.frc2851.robot.Robot;
 
 
 /**
- shows which button goes to which solenoid
- declares Solenoids and other variables
+ * Represents the Hatcher subsystem
  */
 public class Hatcher extends Subsystem {
     private Button.ButtonID extendButton = Button.ButtonID.RIGHT_BUMPER;
@@ -24,23 +23,32 @@ public class Hatcher extends Subsystem {
 
     private static Hatcher _instance = new Hatcher();
 
+    /**
+     * Initializes the Hatcher class with the name "Hatcher"
+     */
     private Hatcher() {
         super("Hatcher");
     }
 
+    /**
+     * Returns the sole instance of the Hatcher class
+     * @return The instance of the Hatcher class
+     */
     public static Hatcher getInstance() {
         return _instance;
     }
+
     /**
-     reset the solenoids to off
+     * Resets the solenoids
      */
     private void reset() {
         mExtendSol.set(DoubleSolenoid.Value.kOff);
         mActuateSol.set(DoubleSolenoid.Value.kOff);
     }
+
     /**
-     initializing that extend sol extends the arm and actuates grabs the hatch
-     setting Buttons to toggle
+     * Initializes the controller, solenoids, and logging
+     * @return A boolean representing whether initialization has succeeded
      */
     @Override
     public boolean init() {
@@ -52,9 +60,16 @@ public class Hatcher extends Subsystem {
         mController.config(extendButton, Button.ButtonMode.TOGGLE);
         mController.config(actuateButton, Button.ButtonMode.TOGGLE);
 
+        BadLog.createTopic("hatcher/actuate", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
+        BadLog.createTopic("hatcher/extend", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
+
         return true;
     }
 
+    /**
+     * Returns a command representing user control over the hatcher
+     * @return A command representing user control over the hatcher
+     */
     @Override
     public Command getDefaultCommand() {
         return new Command() {
@@ -68,20 +83,14 @@ public class Hatcher extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-            /**
-             Initialize badlog
-              */
+
             @Override
             public boolean init() {
                 reset();
-                BadLog.createTopic("hatcher/actuate", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
-                BadLog.createTopic("hatcher/extend", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
 
                 return true;
             }
-            /**
-             connects the solenoid functions to there buttons on the controller
-              */
+
             @Override
             public void update() {
                 if (mController.get(extendButton)) {

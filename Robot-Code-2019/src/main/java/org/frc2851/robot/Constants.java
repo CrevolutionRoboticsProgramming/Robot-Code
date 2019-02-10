@@ -10,17 +10,14 @@ public class Constants
     private static Constants mInstance;
 
     /**
-     * Gets the Instance state of the Constance class
-     * @return The instance.
+     * Gets the sole instance of the Constants class
+     * @return The instance of the Constants class
      */
     public static Constants getInstance() {
         if (mInstance == null) mInstance = new Constants();
         return mInstance;
     }
 
-    /**
-     * Runs the Constants class.
-     */
     private Constants() { }
 
     public final int magEncCPR = 4096;
@@ -88,14 +85,17 @@ public class Constants
 
     // Intake
     public final int intakeMaster = 0;
+    public final int intakeForward = 0;
+    public final int intakeReverse = 0;
 
+    // Roller Claw
     public final int rollerClawTalon=0;
-
-    public final int talonTimeout = 20;
 
     // Hatcher
     public final int extendHatcherForward = 0;
     public final int extendHatcherReverse = 0;
     public final int actuateHatcherForward = 0;
     public final int actuateHatcherReverse = 0;
+
+    public final int talonTimeout = 20;
 }
