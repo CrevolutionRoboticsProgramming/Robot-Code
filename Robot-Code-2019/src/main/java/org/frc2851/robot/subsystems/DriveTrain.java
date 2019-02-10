@@ -36,24 +36,6 @@ public class DriveTrain extends Subsystem
     }
 
     // Constants
-    private final double CPR = 4096;
-    private final double WHEEL_DIAMETER = 1.0d / 3.0d;
-    private final double DRIVE_WIDTH = 2.5;
-    private final double DEFAULT_PEAK_OUT = 1;
-    private final double DEFAULT_NOMINAL_OUT = 0;
-    private final int TALON_TIMEOUT = Constants.getInstance().talonTimeout;
-    private final int PID_PRIMARY = 0, PID_AUX = 1;
-    private final int PID_SLOT_DRIVE = 0, PID_SLOT_GYRO = 1, PID_SLOT_ENC_TURN = 2;
-    private final int PIGEON_REMOTE_LEFT = 0, PIGEON_REMOTE_RIGHT = 0;
-
-    private boolean USE_GYRO = false;
-
-    // Motion Magic info
-    // Units (Average Counts per 100ms)
-    // TODO: Experimentally determine max vel and acc
-    private final int MOTION_MAGIC_MAX_VEL = 15000;
-    private final int MOTION_MAGIC_MAX_ACC = 3000;
-
     private final NeutralMode TALON_NEUTRAL_MODE = NeutralMode.Brake;
 
     // PID
@@ -67,7 +49,7 @@ public class DriveTrain extends Subsystem
 
     private Controller mController = Robot.driver;
     private Constants mConstants = Constants.getInstance();
-    private DriveGear mCurrentGear = mConstants.defaultDriveGear;
+    private DriveGear mCurrentGear = mConstants.dt_defaultDriveGear;
 
     private static DriveTrain mInstance = new DriveTrain();
 
@@ -85,18 +67,18 @@ public class DriveTrain extends Subsystem
     protected boolean init()
     {
         try {
-            mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveMaster);
-            mLeftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveSlaveA);
-            mLeftSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.leftDriveSlaveB);
-            mRightMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveMaster);
-            mRightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveA);
-            mRightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rightDriveSlaveB);
+            mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftMaster);
+            mLeftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveA);
+            mLeftSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveB);
+            mRightMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightMaster);
+            mRightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightSlaveA);
+            mRightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightSlaveB);
         } catch (TalonCommunicationErrorException e) {
             log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
 
-        setNominalAndPeakOutputs(DEFAULT_NOMINAL_OUT, DEFAULT_PEAK_OUT);
+        setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_nominalOut);
 
         // I don't know what safety does but the messages it throws annoy me.
         mLeftMaster.setSafetyEnabled(false);
@@ -106,13 +88,13 @@ public class DriveTrain extends Subsystem
         mRightSlaveA.setSafetyEnabled(false);
         mRightSlaveB.setSafetyEnabled(false);
 
-        mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.shifterForwardChannel, mConstants.shifterReverseChannel);
+        mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
 
         // Pigeon Configuration
-        if (USE_GYRO) {
+        if (mConstants.dt_usePigeon) {
             mPigeon = new PigeonIMU(0); // TODO: Add to config file
-            mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_LEFT, TALON_TIMEOUT);
-            mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, PIGEON_REMOTE_RIGHT, TALON_TIMEOUT);
+            mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
+            mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
         return true;
     }
@@ -140,7 +122,7 @@ public class DriveTrain extends Subsystem
         BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) mRightMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
         BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(mLeftMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
         BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(mRightMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
-        if (USE_GYRO) BadLog.createTopic("Drivetrain/Angle", "deg", () -> mPigeon.getFusedHeading());
+        if (mConstants.dt_usePigeon) BadLog.createTopic("Drivetrain/Angle", "deg", () -> mPigeon.getFusedHeading());
     }
 
     private void reset()
@@ -157,9 +139,9 @@ public class DriveTrain extends Subsystem
 
     private void zeroSensors()
     {
-        ErrorCode code = mLeftMaster.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
-        mRightMaster.getSensorCollection().setQuadraturePosition(0, TALON_TIMEOUT);
-        if (USE_GYRO) mPigeon.setYaw(0, TALON_TIMEOUT);
+        ErrorCode code = mLeftMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout);
+        mRightMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout);
+        if (mConstants.dt_usePigeon) mPigeon.setYaw(0, mConstants.talonTimeout);
         Logger.println("Zero Sensor Code: " + code.toString(), Logger.LogLevel.DEBUG);
     }
 
@@ -183,8 +165,8 @@ public class DriveTrain extends Subsystem
             {
                 reset();
 
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
-                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.setSensorPhase(true);
 
                 robotDrive.tankDrive(0, 0);
@@ -244,39 +226,39 @@ public class DriveTrain extends Subsystem
             {
                 double startTime = Timer.getFPGATimestamp();
                 // Sensor Config
-                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
 
                 mLeftMaster.configRemoteFeedbackFilter(mRightMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor,
-                        0, TALON_TIMEOUT);
-                mLeftMaster.configSensorTerm(SensorTerm.Sum0, FeedbackDevice.RemoteSensor0, TALON_TIMEOUT);
-                mLeftMaster.configSensorTerm(SensorTerm.Sum1, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorSum, PID_PRIMARY, TALON_TIMEOUT);
-                mLeftMaster.configSelectedFeedbackCoefficient(0.5, PID_PRIMARY, TALON_TIMEOUT);
+                        0, mConstants.talonTimeout);
+                mLeftMaster.configSensorTerm(SensorTerm.Sum0, FeedbackDevice.RemoteSensor0, mConstants.talonTimeout);
+                mLeftMaster.configSensorTerm(SensorTerm.Sum1, FeedbackDevice.CTRE_MagEncoder_Relative, mConstants.talonTimeout);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorSum, 0, mConstants.talonTimeout);
+                mLeftMaster.configSelectedFeedbackCoefficient(0.5, 0, mConstants.talonTimeout);
 
-                mLeftMaster.selectProfileSlot(PID_SLOT_DRIVE, PID_PRIMARY);
+                mLeftMaster.selectProfileSlot(mConstants.dt_drivePidSlot, 0);
 
-                if (USE_GYRO)
+                if (mConstants.dt_usePigeon)
                 {
                     mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw,
-                            1, TALON_TIMEOUT);
-                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor1, 1, TALON_TIMEOUT);
-                    mLeftMaster.configSelectedFeedbackCoefficient(3600.0d / 8192.0d, 1, TALON_TIMEOUT);
+                            1, mConstants.talonTimeout);
+                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor1, 1, mConstants.talonTimeout);
+                    mLeftMaster.configSelectedFeedbackCoefficient(3600.0d / 8192.0d, 1, mConstants.talonTimeout);
 
-                    mLeftMaster.selectProfileSlot(PID_SLOT_GYRO, PID_AUX);
+                    mLeftMaster.selectProfileSlot(mConstants.dt_gyroPidSlot, 1);
                 } else {
-                    mLeftMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, TALON_TIMEOUT);
-                    mLeftMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, TALON_TIMEOUT);
-                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, PID_AUX, TALON_TIMEOUT);
-                    mLeftMaster.configSelectedFeedbackCoefficient(turnCoeff, 1, TALON_TIMEOUT);
+                    mLeftMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, mConstants.talonTimeout);
+                    mLeftMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, mConstants.talonTimeout);
+                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, 1, mConstants.talonTimeout);
+                    mLeftMaster.configSelectedFeedbackCoefficient(turnCoeff, 1, mConstants.talonTimeout);
 
-                    mLeftMaster.selectProfileSlot(PID_SLOT_ENC_TURN, PID_AUX);
+                    mLeftMaster.selectProfileSlot(mConstants.dt_encTurnPidSlot, 1);
                 }
 
-                mLeftMaster.configAuxPIDPolarity(false, TALON_TIMEOUT);
+                mLeftMaster.configAuxPIDPolarity(false, mConstants.talonTimeout);
 
                 // Motion Magic Config
-                mLeftMaster.configMotionAcceleration(MOTION_MAGIC_MAX_ACC, TALON_TIMEOUT);
-                mLeftMaster.configMotionCruiseVelocity(MOTION_MAGIC_MAX_VEL, TALON_TIMEOUT);
+                mLeftMaster.configMotionAcceleration(mConstants.dt_motionMagicMaxAcceleration, mConstants.talonTimeout);
+                mLeftMaster.configMotionCruiseVelocity(mConstants.dt_motionMagicMaxVelocity, mConstants.talonTimeout);
 
                 targetAngle = mLeftMaster.getSelectedSensorPosition(1);
                 targetPos = distanceToCounts(distance) + mLeftMaster.getSelectedSensorPosition(0);
@@ -299,18 +281,17 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            int counts = (int)(((Math.toRadians(angle) * DRIVE_WIDTH) * 0.5) / (WHEEL_DIAMETER * Math.PI) * CPR);
+            int counts = (int)(((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
 
             @Override
             public String getName() { return "TurnAngle[" + angle + "]"; }
 
             @Override
-            public boolean isFinished() {
-                return mLeftMaster.getClosedLoopError(0) < 512;
-            }
+            public boolean isFinished() { return mLeftMaster.getClosedLoopError(0) < 512; }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
                 setPID(mLeftMaster, 0, new PID(0, 0, 0, 0));
                 setPID(mRightMaster, 0, new PID(0, 0, 0, 0));
@@ -320,12 +301,14 @@ public class DriveTrain extends Subsystem
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
                 mRightMaster.set(ControlMode.PercentOutput, -mLeftMaster.getMotorOutputPercent());
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 reset();
             }
         };
@@ -355,7 +338,10 @@ public class DriveTrain extends Subsystem
             }
 
             @Override
-            public void update() { setLeftRightMotorOutputs(leftPower, rightPower); }
+            public void update()
+            {
+                setLeftRightMotorOutputs(leftPower, rightPower);
+            }
 
             @Override
             public void stop()
@@ -401,14 +387,14 @@ public class DriveTrain extends Subsystem
                 setPID(mRightMaster, 0, rightMotionPID);
 
                 //TODO: Feedback Coeff
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
-                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, PID_PRIMARY, TALON_TIMEOUT);
-                if (USE_GYRO) {
-                    mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
-                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
+                if (mConstants.dt_usePigeon) {
+                    mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, mConstants.talonTimeout);
+                    mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, 1, mConstants.talonTimeout);
 
-                    mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, TALON_TIMEOUT);
-                    mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, PID_AUX, TALON_TIMEOUT);
+                    mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, mConstants.talonTimeout);
+                    mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, 1, mConstants.talonTimeout);
                 }
 
                 left.start();
@@ -461,23 +447,23 @@ public class DriveTrain extends Subsystem
 
     private void setPID(TalonSRX talon, int slot, PID pid)
     {
-        talon.config_kP(slot, pid.p, TALON_TIMEOUT);
-        talon.config_kI(slot, pid.i, TALON_TIMEOUT);
-        talon.config_kD(slot, pid.d, TALON_TIMEOUT);
-        talon.config_kF(slot, pid.f, TALON_TIMEOUT);
+        talon.config_kP(slot, pid.p, mConstants.talonTimeout);
+        talon.config_kI(slot, pid.i, mConstants.talonTimeout);
+        talon.config_kD(slot, pid.d, mConstants.talonTimeout);
+        talon.config_kF(slot, pid.f, mConstants.talonTimeout);
     }
 
     private void setNominalAndPeakOutputs(double nominal, double peak)
     {
-        mLeftMaster.configNominalOutputForward(nominal, TALON_TIMEOUT);
-        mLeftMaster.configPeakOutputForward(peak, TALON_TIMEOUT);
-        mLeftMaster.configNominalOutputReverse(-nominal, TALON_TIMEOUT);
-        mLeftMaster.configPeakOutputReverse(-peak, TALON_TIMEOUT);
+        mLeftMaster.configNominalOutputForward(nominal, mConstants.talonTimeout);
+        mLeftMaster.configPeakOutputForward(peak, mConstants.talonTimeout);
+        mLeftMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout);
+        mLeftMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout);
 
-        mRightMaster.configNominalOutputForward(nominal, TALON_TIMEOUT);
-        mRightMaster.configPeakOutputForward(peak, TALON_TIMEOUT);
-        mRightMaster.configNominalOutputReverse(-nominal, TALON_TIMEOUT);
-        mRightMaster.configPeakOutputReverse(-peak, TALON_TIMEOUT);
+        mRightMaster.configNominalOutputForward(nominal, mConstants.talonTimeout);
+        mRightMaster.configPeakOutputForward(peak, mConstants.talonTimeout);
+        mRightMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout);
+        mRightMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout);
     }
 
     private void setLeftRightMotorOutputs(double left, double right)
@@ -496,15 +482,17 @@ public class DriveTrain extends Subsystem
 
     private int distanceToCounts(double distance)
     {
-        return (int)(distance / (CPR * WHEEL_DIAMETER * Math.PI));
+        return (int)(distance / (mConstants.magEncCPR * mConstants.dt_wheelDiameter * Math.PI));
     }
 
-    private double applyDeadband(double val, double deadband) {
+    private double applyDeadband(double val, double deadband)
+    {
         return (Math.abs(val) < deadband) ? 0 : val;
     }
 
     // counts / 100ms
-    private double ctreVelToFPS(int ctreVel) {
-        return ((ctreVel * 10) / CPR) * WHEEL_DIAMETER * Math.PI;
+    private double ctreVelToFPS(int ctreVel)
+    {
+        return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
     }
 }
