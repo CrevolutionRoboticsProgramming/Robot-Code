@@ -16,6 +16,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Base robot class that all robots inherit from
+ */
 public class CrevoRobot extends IterativeRobot
 {
     private static final String MOTION_PROFILE_DIR = "/home/lvuser/motion/";

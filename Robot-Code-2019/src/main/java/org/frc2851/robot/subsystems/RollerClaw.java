@@ -4,6 +4,7 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
@@ -11,8 +12,9 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
+
 /**
- sets up the motor and controller used in the code
+ * Represents the roller claw subsystem
  */
 public class RollerClaw extends Subsystem {
     Constants mConstants = Constants.getInstance();
@@ -23,24 +25,39 @@ public class RollerClaw extends Subsystem {
     static RollerClaw mInstance = new RollerClaw();
     boolean intake;
     boolean lastIntakeState;
-    boolean outTake;
-    boolean lastOutTakeState;
+    boolean outtake;
+    boolean lastOuttakeState;
+
+    /**
+     * Initializes the RollerClaw class with the name "RollerClaw"
+     */
     private RollerClaw() {
         super("RollerClaw");
     }
+
+    /**
+     * Returns the sole instance of the RollerClaw class
+     * @return The instance of the RollerClaw class
+     */
     public static RollerClaw getInstance() {
         return mInstance;
     }
+
     /**
-     initialize the motor and controller's triggers
-     badlog is setup as well
+     * Initializes the controller, motor, and logging
+     * @return A boolean representing whether initialization has succeeded
      */
     @Override
     protected boolean init() {
-        _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
-
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
         mController.config(Axis.AxisID.LEFT_TRIGGER);
+
+        try {
+            _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
+        } catch (TalonCommunicationErrorException e) {
+            log("Could not initialize motor, roller claw init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
+            return false;
+        }
 
         BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> _motor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
         BadLog.createTopic("Roller Claw Voltage", "V", () -> _motor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
@@ -49,6 +66,10 @@ public class RollerClaw extends Subsystem {
         return true;
     }
 
+    /**
+     * Returns a command representing user control over the roller claw
+     * @return A command representing user control over the roller claw
+     */
     @Override
     public Command getDefaultCommand() {
         return new Command() {
@@ -61,16 +82,13 @@ public class RollerClaw extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-            //sets motor to zero to start
+
             @Override
             public boolean init() {
                 _motor.set(ControlMode.PercentOutput, 0);
                 return true;
             }
-            /**
-             shows that right trigger intakes and left trigger outtakes
-             logging for intake and outtake says if its activated or deactivated
-             */
+
             @Override
             public void update() {
                 double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
@@ -78,35 +96,20 @@ public class RollerClaw extends Subsystem {
 
                 _motor.set(ControlMode.PercentOutput, output);
 
-                if(output > 0) {
-                    intake = true;
-                }
-                else{
-                    intake = false;
-                }
-                if (intake == true && lastIntakeState == false){
-                    Logger.println("intake activated", Logger.LogLevel.DEBUG);
-                }
-                if (intake == false && lastIntakeState == true){
-                    Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
+                if (intake && !lastIntakeState){
+                    log("Activated Intake", Logger.LogLevel.DEBUG);
+                } else if (lastIntakeState){
+                    log("Deactivated Intake", Logger.LogLevel.DEBUG);
                 }
                 lastIntakeState = intake;
 
-                if(output < 0) {
-                    outTake = true;
+                if (output < 0 && !lastOuttakeState){
+                    log("Activated Outtake", Logger.LogLevel.DEBUG);
                 }
-                else{
-                    outTake = false;
+                if (lastOuttakeState){
+                    log("Deactivated Outtake", Logger.LogLevel.DEBUG);
                 }
-
-                if (outTake == true && lastOutTakeState == false){
-                    Logger.println("outTake activated", Logger.LogLevel.DEBUG);
-                }
-                if (outTake == false && lastOutTakeState == true){
-                    Logger.println("outTake deactivated", Logger.LogLevel.DEBUG);
-                }
-                lastOutTakeState = outTake;
-
+                lastOuttakeState = outtake;
             }
 
             @Override
