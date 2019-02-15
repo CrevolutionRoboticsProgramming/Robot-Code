@@ -52,4 +52,11 @@ public class Constants
     public final int rollerClawTalon=0;
 
     public final int talonTimeout = 20;
+
+    // Hatcher
+    public final int pcmID = 0;
+    public final int extendHatcherForward = 0;
+    public final int extendHatcherReverse = 1;
+    public final int actuateHatcherForward = 2;
+    public final int actuateHatcherReverse = 3;
 }
