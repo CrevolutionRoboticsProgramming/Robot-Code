@@ -12,17 +12,21 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
+import edu.wpi.first.wpilibj.DigitalInput;
+
 // button id references for ME to use.(you can use them too if you want)
 /*A(1), B(2), X(3), Y(4), START(8), SELECT(7), LEFT_BUMPER(5), RIGHT_BUMPER(6),
         LEFT_JOYSTICK(9), RIGHT_JOYSTICK(10);
         LEFT_X(0), LEFT_Y(1), RIGHT_X(4), RIGHT_Y(5), LEFT_TRIGGER(2), RIGHT_TRIGGER(3);*/
 
-public class Climber extends Subsystem {
-
+public class Climber extends Subsystem
+{
     private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.driver;
 
     private static Climber mInstance = new Climber();
+
+    DigitalInput limitSwitch;
 
     public static Climber getInstance() {
         return mInstance;
@@ -37,6 +41,7 @@ public class Climber extends Subsystem {
     public boolean init() {
         mController.config(Button.ButtonID.A, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.B, Button.ButtonMode.TOGGLE);
+        limitSwitch = new DigitalInput(1);
 
         _gorillaMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.gorillaMaster);
         _gorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, _gorillaMaster);
@@ -74,7 +79,7 @@ public class Climber extends Subsystem {
     }
 
     @Override
-    public Command getTeleopCommand() {
+    public Command getDefaultCommand() {
         return new Command() {
             @Override
             public String getName() {
@@ -110,6 +115,11 @@ public class Climber extends Subsystem {
                 } else {
                     _screwMaster.set(ControlMode.PercentOutput, -1.0);
                     Logger.println("Disabled Screw", Logger.LogLevel.DEBUG);
+                }
+
+                //Limit switch
+                if(limitSwitch.get()){
+                    _gorillaMaster.set(ControlMode.PercentOutput, 0);
                 }
             }
 
