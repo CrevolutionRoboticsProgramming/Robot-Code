@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
@@ -19,6 +20,8 @@ public class RollerClaw extends Subsystem {
     private WPI_TalonSRX _motor;
 
     static RollerClaw mInstance = new RollerClaw();
+
+    DigitalInput limitSwitch = new DigitalInput(1);
 
     private RollerClaw() {
         super("RollerClaw");
@@ -100,6 +103,10 @@ public class RollerClaw extends Subsystem {
                     Logger.println("outTake deactivated", Logger.LogLevel.DEBUG);
                 }
                 lastOutTakeState = outTake;
+
+                if(limitSwitch.get()){
+                    _motor.set(0.5);
+                }
 
             }
 
