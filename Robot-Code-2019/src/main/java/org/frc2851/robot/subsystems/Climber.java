@@ -26,7 +26,7 @@ public class Climber extends Subsystem
 
     private static Climber mInstance = new Climber();
 
-    DigitalInput limitSwitch;
+    DigitalInput gorillaLimitOut, gorillaLimitIn, screwLimitOut, screwLimitIn;
 
     public static Climber getInstance() {
         return mInstance;
@@ -41,12 +41,16 @@ public class Climber extends Subsystem
     public boolean init() {
         mController.config(Button.ButtonID.A, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.B, Button.ButtonMode.TOGGLE);
-        limitSwitch = new DigitalInput(1);
+
+        gorillaLimitOut = new DigitalInput(mConstants.gorillaLimitOut);
+        gorillaLimitIn = new DigitalInput(mConstants.gorillaLimitIn);
+        screwLimitOut = new DigitalInput(mConstants.screwLimitOut);
+        screwLimitIn = new DigitalInput(mConstants.screwLimitIn);
 
         _gorillaMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.gorillaMaster);
         _gorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, _gorillaMaster);
         _screwMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.screwMaster);
-        Logger.println("Init worked", Logger.LogLevel.DEBUG);
+
         BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> _screwMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
@@ -75,7 +79,7 @@ public class Climber extends Subsystem
     private void reset() {
         _gorillaMaster.set(ControlMode.PercentOutput, 0);
         _screwMaster.set(ControlMode.PercentOutput, 0);
-        Logger.println("All climb motors zeroed", Logger.LogLevel.DEBUG);
+        Logger.println("All motors zeroed", Logger.LogLevel.DEBUG);
     }
 
     @Override
@@ -101,25 +105,24 @@ public class Climber extends Subsystem
             public void update() {
                 // Gorilla arm
                 if (mController.get(Button.ButtonID.A)) {
-                    _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
-                    Logger.println("Raised Gorilla", Logger.LogLevel.DEBUG);
-                } else {
+                    if (!gorillaLimitOut.get()) {
+                        _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
+                        Logger.println("Raised Gorilla", Logger.LogLevel.DEBUG);
+                    }
+                } else if (!gorillaLimitIn.get()) {
                     _gorillaMaster.set(ControlMode.PercentOutput, -1.0);
                     Logger.println("Lowered Gorilla", Logger.LogLevel.DEBUG);
                 }
 
                 // Screw drive
                 if (mController.get(Button.ButtonID.B)) {
-                    _screwMaster.set(ControlMode.PercentOutput, 1.0);
-                    Logger.println("Enabled Screw", Logger.LogLevel.DEBUG);
-                } else {
+                    if (!screwLimitOut.get()) {
+                        _screwMaster.set(ControlMode.PercentOutput, 1.0);
+                        Logger.println("Enabled Screw", Logger.LogLevel.DEBUG);
+                    }
+                } else if (!screwLimitIn.get()){
                     _screwMaster.set(ControlMode.PercentOutput, -1.0);
                     Logger.println("Disabled Screw", Logger.LogLevel.DEBUG);
-                }
-
-                //Limit switch
-                if(limitSwitch.get()){
-                    _gorillaMaster.set(ControlMode.PercentOutput, 0);
                 }
             }
 
