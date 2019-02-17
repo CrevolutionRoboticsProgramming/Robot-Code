@@ -1,6 +1,10 @@
 package org.frc2851.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Axis;
@@ -16,6 +20,8 @@ public class Robot extends CrevoRobot
      * Initilizes two controllers:
      */
     public static Controller driver, operator;
+    private SendableChooser driveModeSelector = new SendableChooser();
+
 
     /**
      * Tells the Robot Class What other classes should be included.
@@ -27,7 +33,14 @@ public class Robot extends CrevoRobot
         //addSubsystem(DriveTrain.getInstance());
         //addSubsystem(Elevator.getInstance());
         //addSubsystem(Hatcher.getInstance());
-        addSubsystem(Intake.getInstance());
+        //addSubsystem(Intake.getInstance());
+        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
+        driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);
+    }
+
+    public void teleopInit()
+    {
+        DriveTrain.setDriveMode((DriveTrain.DriveControlMode) driveModeSelector.getSelected());
     }
 
     /**

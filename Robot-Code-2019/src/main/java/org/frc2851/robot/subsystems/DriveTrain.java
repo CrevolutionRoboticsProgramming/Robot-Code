@@ -35,14 +35,27 @@ public class DriveTrain extends Subsystem
         }
     }
 
+    public enum DriveDistanceStrategy
+    {
+        MOTION_MAGIC, PID
+    }
+
+    public enum DriveControlMode {
+        TANK, FPS, FPS_CURVE, ARCADE
+    }
+
     // Constants
     private final NeutralMode TALON_NEUTRAL_MODE = NeutralMode.Brake;
 
+    private static boolean mTuneMode = false;
+
     // PID
-    final boolean TUNING_PID = true;
-    private PID leftMotionPID, rightMotionPID;
+    private PID mLeftMotionPID, mRightMotionPID, mAuxMotionPID, mLeftRawPID, mRightRawPID, mTurnGyroPID;
+    private int mMotionSlotPrimary = 0, mMotionSlotAux = 1, mRawSlotDrive = 2, mRawSlotTurn = 3;
 
     // Members
+    private DriveControlMode mDriveControlMode = DriveControlMode.FPS;
+
     private WPI_TalonSRX mLeftMaster, mLeftSlaveA, mLeftSlaveB, mRightMaster, mRightSlaveA, mRightSlaveB;
     private PigeonIMU mPigeon;
     private DoubleSolenoid mShifterSolenoid;
@@ -51,7 +64,7 @@ public class DriveTrain extends Subsystem
     private Constants mConstants = Constants.getInstance();
     private DriveGear mCurrentGear = mConstants.dt_defaultDriveGear;
 
-    private static DriveTrain mInstance = new DriveTrain();
+    private static DriveTrain mInstance;
 
     private DriveTrain()
     {
@@ -60,12 +73,14 @@ public class DriveTrain extends Subsystem
 
     public static DriveTrain getInstance()
     {
+        if (mInstance == null) mInstance = new DriveTrain();
         return mInstance;
     }
 
     @Override
     protected boolean init()
     {
+        configureController(Robot.driver);
         try {
             mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftMaster);
             mLeftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveA);
@@ -96,6 +111,8 @@ public class DriveTrain extends Subsystem
             mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
+        mLeftMotionPID = new PID(0, 0, 0, 0, 0);
+
         return true;
     }
 
@@ -185,12 +202,29 @@ public class DriveTrain extends Subsystem
                 DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
                 if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
-                robotDrive.curvatureDrive(throttle, turn, curvatureToggle);
+                switch (mDriveControlMode)
+                {
+                    case FPS:
+                        robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
+                        break;
+
+                    case FPS_CURVE:
+                        robotDrive.curvatureDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT, curvatureToggle);
+                        break;
+
+                    case ARCADE:
+                        robotDrive.arcadeDrive(mController.get(Axis.AxisID.RIGHT_Y), mController.get(Axis.AxisID.RIGHT_X));
+                        break;
+
+                    case TANK:
+                        robotDrive.tankDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_Y));
+                        break;
+                }
 
                 // Encoder Test
-                String encTest = "Left(" + mLeftMaster.getSelectedSensorPosition(0) + "," + mLeftMaster.getSelectedSensorVelocity(0) +
-                        "), Right(" + mRightMaster.getSelectedSensorPosition(0) + "," + mRightMaster.getSelectedSensorVelocity(0) + ")";
-                System.out.println(encTest);
+//                String encTest = "Left(" + mLeftMaster.getSelectedSensorPosition(0) + "," + mLeftMaster.getSelectedSensorVelocity(0) +
+//                        "), Right(" + mRightMaster.getSelectedSensorPosition(0) + "," + mRightMaster.getSelectedSensorVelocity(0) + ")";
+//                System.out.println(encTest);
             }
 
             @Override
@@ -198,6 +232,102 @@ public class DriveTrain extends Subsystem
                 reset();
             }
         };
+    }
+
+    public Command driveTime(double time, double leftPower, double rightPower)
+    {
+        return new Command() {
+            @Override
+            public String getName() {
+                return "DriveTime[T: " + time + ", L: " + leftPower + ", R: " + rightPower + "]";
+            }
+
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+
+            @Override
+            public boolean init() {
+                return false;
+            }
+
+            @Override
+            public void update() {
+
+            }
+
+            @Override
+            public void stop() {
+
+            }
+        };
+    }
+
+    public Command driveTime(double time, double power)
+    {
+        return driveTime(time, power, power);
+    }
+
+    public Command driveDistance(double distance, double maxOutput, DriveDistanceStrategy strategy, int allowableError)
+    {
+        return new Command() {
+            PID leftPID, rightPID, turnPID;
+
+            @Override
+            public String getName()
+            {
+                return "DriveDistance[D: " + distance + ", MaxOut: " + maxOutput + "S: " + strategy.name() + "]";
+            }
+
+            @Override
+            public boolean isFinished()
+            {
+
+                return false;
+            }
+
+            @Override
+            public boolean init()
+            {
+                setNominalAndPeakOutputs(0, maxOutput);
+                switch (strategy)
+                {
+                    case MOTION_MAGIC:
+                    {
+
+                    }
+
+                    case PID:
+                    {
+                        mLeftMaster.selectProfileSlot(0, mRawSlotDrive);
+                        mRightMaster.selectProfileSlot(0, mRawSlotDrive);
+                        // TODO: Look into auxiliary pid with raw control
+//                        mLeftMaster.selectProfileSlot(1, mRawSlotTurn);
+//                        mRightMaster.selectProfileSlot(1, mRawSlotTurn);
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void update()
+            {
+
+            }
+
+            @Override
+            public void stop()
+            {
+
+            }
+        };
+    }
+
+    public Command driveDistance(double distance, DriveDistanceStrategy strategy)
+    {
+        // TODO: Replace 1 with default max out
+        return driveDistance(distance, mConstants.dt_peakOut, strategy, 1024);
     }
 
     public Command driveDistanceMotionProfile(double distance)
@@ -293,8 +423,8 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
-                setPID(mLeftMaster, 0, new PID(0, 0, 0, 0));
-                setPID(mRightMaster, 0, new PID(0, 0, 0, 0));
+                setPID(mLeftMaster, 0, new PID(0, 0, 0, 0, 0));
+                setPID(mRightMaster, 0, new PID(0, 0, 0, 0, 0));
                 mLeftMaster.set(ControlMode.Position, targetPos);
                 mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
                 return true;
@@ -309,44 +439,6 @@ public class DriveTrain extends Subsystem
             @Override
             public void stop()
             {
-                reset();
-            }
-        };
-    }
-
-    public Command driveTime(double time, double power)
-    {
-        return driveTime(time, power, power);
-    }
-
-    public Command driveTime(double time, double leftPower, double rightPower)
-    {
-        return new Command() {
-            Timer timer = new Timer();
-
-            @Override
-            public String getName() { return "DriveTime[" + time + "s, " + leftPower + ", " + rightPower + "]"; }
-
-            @Override
-            public boolean isFinished() { return timer.get() > time; }
-
-            @Override
-            public boolean init()
-            {
-                timer.start();
-                return true;
-            }
-
-            @Override
-            public void update()
-            {
-                setLeftRightMotorOutputs(leftPower, rightPower);
-            }
-
-            @Override
-            public void stop()
-            {
-                timer.stop();
                 reset();
             }
         };
@@ -383,8 +475,8 @@ public class DriveTrain extends Subsystem
                     return false;
                 }
 
-                setPID(mLeftMaster, 0, leftMotionPID);
-                setPID(mRightMaster, 0, rightMotionPID);
+                setPID(mLeftMaster, 0, mLeftMotionPID);
+                setPID(mRightMaster, 0, mRightMotionPID);
 
                 //TODO: Feedback Coeff
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
@@ -447,10 +539,10 @@ public class DriveTrain extends Subsystem
 
     private void setPID(TalonSRX talon, int slot, PID pid)
     {
-        talon.config_kP(slot, pid.p, mConstants.talonTimeout);
-        talon.config_kI(slot, pid.i, mConstants.talonTimeout);
-        talon.config_kD(slot, pid.d, mConstants.talonTimeout);
-        talon.config_kF(slot, pid.f, mConstants.talonTimeout);
+        talon.config_kP(slot, pid.getP(), mConstants.talonTimeout);
+        talon.config_kI(slot, pid.getI(), mConstants.talonTimeout);
+        talon.config_kD(slot, pid.getD(), mConstants.talonTimeout);
+        talon.config_kF(slot, pid.getF(), mConstants.talonTimeout);
     }
 
     private void setNominalAndPeakOutputs(double nominal, double peak)
@@ -475,6 +567,8 @@ public class DriveTrain extends Subsystem
     private void configureController(Controller controller)
     {
         controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(x, 0.15)); // Throttle
+        controller.config(Axis.AxisID.LEFT_X, x -> applyDeadband(x, 0.15)); // Throttle
+        controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(x, 0.15)); // Throttle
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
         controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.TOGGLE); // Shifter
@@ -495,4 +589,7 @@ public class DriveTrain extends Subsystem
     {
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
     }
+
+    public static void setTuneMode(boolean modeEnabled) { mTuneMode = modeEnabled; }
+    public static void setDriveMode(DriveControlMode mode) { }
 }
