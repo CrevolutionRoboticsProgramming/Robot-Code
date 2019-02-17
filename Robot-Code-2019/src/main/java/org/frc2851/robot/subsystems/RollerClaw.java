@@ -21,24 +21,23 @@ public class RollerClaw extends Subsystem {
 
     static RollerClaw mInstance = new RollerClaw();
 
-    DigitalInput limitSwitch = new DigitalInput(1);
+    DigitalInput mLimitSwitch;
 
     private RollerClaw() {
         super("RollerClaw");
     }
-    boolean intake;
-    boolean lastIntakeState;
-    boolean outTake;
-    boolean lastOutTakeState;
-
 
     public static RollerClaw getInstance() {
         return mInstance;
     }
 
+    private boolean isIntaking, lastIntakeState;
+    private boolean isOuttaking, lastOuttakeState;
+
     @Override
     protected boolean init() {
         _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
+        mLimitSwitch = new DigitalInput(mConstants.rollerClawLimitSwitch);
 
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
         mController.config(Axis.AxisID.LEFT_TRIGGER);
@@ -76,38 +75,27 @@ public class RollerClaw extends Subsystem {
 
                 _motor.set(ControlMode.PercentOutput, output);
 
-                if(output > 0) {
-                    intake = true;
-                }
-                else{
-                    intake = false;
-                }
-                if (intake == true && lastIntakeState == false){
-                    Logger.println("intake activated", Logger.LogLevel.DEBUG);
-                }
-                if (intake == false && lastIntakeState == true){
-                    Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
-                }
-                lastIntakeState = intake;
-                if(output < 0) {
-                    outTake = true;
-                }
-                else{
-                    outTake = false;
-                }
+                isIntaking = output > 0;
 
-                if (outTake == true && lastOutTakeState == false){
-                    Logger.println("outTake activated", Logger.LogLevel.DEBUG);
+                if (isIntaking && !lastIntakeState){
+                    log("Began Intaking", Logger.LogLevel.DEBUG);
+                } else if (!isIntaking && lastIntakeState){
+                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
-                if (outTake == false && lastOutTakeState == true){
-                    Logger.println("outTake deactivated", Logger.LogLevel.DEBUG);
-                }
-                lastOutTakeState = outTake;
+                lastIntakeState = isIntaking;
 
-                if(limitSwitch.get()){
-                    _motor.set(0.5);
-                }
+                isOuttaking = output < 0;
 
+                if (isOuttaking && !lastOuttakeState){
+                    log("Began Outtaking", Logger.LogLevel.DEBUG);
+                } else if (!isOuttaking && lastOuttakeState){
+                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
+                }
+                lastOuttakeState = isOuttaking;
+
+                if(mLimitSwitch.get()){
+                    _motor.set(0.1);
+                }
             }
 
             @Override
