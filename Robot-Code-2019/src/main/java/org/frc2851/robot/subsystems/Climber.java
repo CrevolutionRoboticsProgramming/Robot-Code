@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
@@ -25,6 +26,8 @@ public class Climber extends Subsystem {
     private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.driver;
     private static Climber mInstance = new Climber();
+
+    DigitalInput gorillaLimitOut, gorillaLimitIn, screwLimitOut, screwLimitIn;
 
     /**
      * Returns the sole instance of the Climber class
@@ -64,12 +67,12 @@ public class Climber extends Subsystem {
         BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> _screwMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master Volt", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Slave Volt", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Screw Volt","Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master Amp", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Slave Amp", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Screw Amp", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Slave", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Screw","Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Slave", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Screw", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
 
         return true;
     }
@@ -92,7 +95,7 @@ public class Climber extends Subsystem {
     private void reset() {
         _gorillaMaster.set(ControlMode.PercentOutput, 0);
         _screwMaster.set(ControlMode.PercentOutput, 0);
-        log("All climb motors zeroed", Logger.LogLevel.DEBUG);
+        log("All motors zeroed", Logger.LogLevel.DEBUG);
     }
 
     /**
@@ -102,7 +105,6 @@ public class Climber extends Subsystem {
     @Override
     public Command getDefaultCommand() {
         return new Command() {
-
             @Override
             public String getName() {
                 return "Teleop";
@@ -121,21 +123,24 @@ public class Climber extends Subsystem {
 
             @Override
             public void update() {
-
                 // Gorilla arm
                 if (mController.get(Button.ButtonID.A)) {
-                    _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
-                    log("Raised Gorilla", Logger.LogLevel.DEBUG);
-                } else {
+                    if (!gorillaLimitOut.get()) {
+                        _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
+                        log("Raised Gorilla", Logger.LogLevel.DEBUG);
+                    }
+                } else if (!gorillaLimitIn.get()) {
                     _gorillaMaster.set(ControlMode.PercentOutput, -1.0);
                     log("Lowered Gorilla", Logger.LogLevel.DEBUG);
                 }
 
                 // Screw drive
                 if (mController.get(Button.ButtonID.B)) {
-                    _screwMaster.set(ControlMode.PercentOutput, 1.0);
-                    log("Enabled Screw", Logger.LogLevel.DEBUG);
-                } else {
+                    if (!screwLimitOut.get()) {
+                        _screwMaster.set(ControlMode.PercentOutput, 1.0);
+                        log("Enabled Screw", Logger.LogLevel.DEBUG);
+                    }
+                } else if (!screwLimitIn.get()){
                     _screwMaster.set(ControlMode.PercentOutput, -1.0);
                     log("Disabled Screw", Logger.LogLevel.DEBUG);
                 }

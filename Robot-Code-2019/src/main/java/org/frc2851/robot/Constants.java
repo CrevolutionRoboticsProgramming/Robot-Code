@@ -82,6 +82,10 @@ public class Constants
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
     public final int screwMaster = 11;
+    public final int gorillaLimitOut = 1;
+    public final int gorillaLimitIn = 2;
+    public final int screwLimitOut = 3;
+    public final int screwLimitIn = 4;
 
     // Intake
     public final int intakeMaster = 0;
