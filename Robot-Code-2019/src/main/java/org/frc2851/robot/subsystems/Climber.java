@@ -4,6 +4,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Button;
@@ -12,7 +13,6 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
-import edu.wpi.first.wpilibj.DigitalInput;
 
 // button id references for ME to use.(you can use them too if you want)
 /*A(1), B(2), X(3), Y(4), START(8), SELECT(7), LEFT_BUMPER(5), RIGHT_BUMPER(6),
@@ -79,7 +79,7 @@ public class Climber extends Subsystem
     private void reset() {
         _gorillaMaster.set(ControlMode.PercentOutput, 0);
         _screwMaster.set(ControlMode.PercentOutput, 0);
-        Logger.println("All motors zeroed", Logger.LogLevel.DEBUG);
+        log("All motors zeroed", Logger.LogLevel.DEBUG);
     }
 
     @Override
@@ -107,22 +107,22 @@ public class Climber extends Subsystem
                 if (mController.get(Button.ButtonID.A)) {
                     if (!gorillaLimitOut.get()) {
                         _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
-                        Logger.println("Raised Gorilla", Logger.LogLevel.DEBUG);
+                        log("Raised Gorilla", Logger.LogLevel.DEBUG);
                     }
                 } else if (!gorillaLimitIn.get()) {
                     _gorillaMaster.set(ControlMode.PercentOutput, -1.0);
-                    Logger.println("Lowered Gorilla", Logger.LogLevel.DEBUG);
+                    log("Lowered Gorilla", Logger.LogLevel.DEBUG);
                 }
 
                 // Screw drive
                 if (mController.get(Button.ButtonID.B)) {
                     if (!screwLimitOut.get()) {
                         _screwMaster.set(ControlMode.PercentOutput, 1.0);
-                        Logger.println("Enabled Screw", Logger.LogLevel.DEBUG);
+                        log("Enabled Screw", Logger.LogLevel.DEBUG);
                     }
                 } else if (!screwLimitIn.get()){
                     _screwMaster.set(ControlMode.PercentOutput, -1.0);
-                    Logger.println("Disabled Screw", Logger.LogLevel.DEBUG);
+                    log("Disabled Screw", Logger.LogLevel.DEBUG);
                 }
             }
 
