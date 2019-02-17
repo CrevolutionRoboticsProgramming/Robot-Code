@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
@@ -23,14 +24,9 @@ public class RollerClaw extends Subsystem {
     private WPI_TalonSRX _motor;
 
     static RollerClaw mInstance = new RollerClaw();
-    boolean intake;
-    boolean lastIntakeState;
-    boolean outtake;
-    boolean lastOuttakeState;
 
-    /**
-     * Initializes the RollerClaw class with the name "RollerClaw"
-     */
+    DigitalInput mLimitSwitch;
+
     private RollerClaw() {
         super("RollerClaw");
     }
@@ -43,21 +39,26 @@ public class RollerClaw extends Subsystem {
         return mInstance;
     }
 
+    private boolean isIntaking, lastIntakeState;
+    private boolean isOuttaking, lastOuttakeState;
+
     /**
      * Initializes the controller, motor, and logging
      * @return A boolean representing whether initialization has succeeded
      */
     @Override
     protected boolean init() {
-        mController.config(Axis.AxisID.RIGHT_TRIGGER);
-        mController.config(Axis.AxisID.LEFT_TRIGGER);
-
         try {
             _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
         } catch (TalonCommunicationErrorException e) {
             log("Could not initialize motor, roller claw init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
+
+        mLimitSwitch = new DigitalInput(mConstants.rollerClawLimitSwitch);
+
+        mController.config(Axis.AxisID.RIGHT_TRIGGER);
+        mController.config(Axis.AxisID.LEFT_TRIGGER);
 
         BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> _motor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
         BadLog.createTopic("Roller Claw Voltage", "V", () -> _motor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
@@ -96,20 +97,27 @@ public class RollerClaw extends Subsystem {
 
                 _motor.set(ControlMode.PercentOutput, output);
 
-                if (intake && !lastIntakeState){
-                    log("Activated Intake", Logger.LogLevel.DEBUG);
-                } else if (lastIntakeState){
-                    log("Deactivated Intake", Logger.LogLevel.DEBUG);
-                }
-                lastIntakeState = intake;
+                isIntaking = output > 0;
 
-                if (output < 0 && !lastOuttakeState){
-                    log("Activated Outtake", Logger.LogLevel.DEBUG);
+                if (isIntaking && !lastIntakeState){
+                    log("Began Intaking", Logger.LogLevel.DEBUG);
+                } else if (!isIntaking && lastIntakeState){
+                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
-                if (lastOuttakeState){
-                    log("Deactivated Outtake", Logger.LogLevel.DEBUG);
+                lastIntakeState = isIntaking;
+
+                isOuttaking = output < 0;
+
+                if (isOuttaking && !lastOuttakeState){
+                    log("Began Outtaking", Logger.LogLevel.DEBUG);
+                } else if (!isOuttaking && lastOuttakeState){
+                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
                 }
-                lastOuttakeState = outtake;
+                lastOuttakeState = isOuttaking;
+
+                if(mLimitSwitch.get()){
+                    _motor.set(0.1);
+                }
             }
 
             @Override
