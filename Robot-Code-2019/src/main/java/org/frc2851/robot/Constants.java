@@ -86,7 +86,7 @@ public class Constants
     // Intake
     public final int intakeMaster = 0;
     public final int intakeForward = 0;
-    public final int intakeReverse = 0;
+    public final int intakeReverse = 1;
 
     // Roller Claw
     public final int rollerClawTalon=0;
