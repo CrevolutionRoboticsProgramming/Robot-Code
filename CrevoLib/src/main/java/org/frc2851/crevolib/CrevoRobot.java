@@ -4,6 +4,7 @@ import badlog.lib.BadLog;
 import badlog.lib.DataInferMode;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
 import org.frc2851.crevolib.auton.AutonExecutor;
@@ -90,7 +91,7 @@ public class CrevoRobot extends IterativeRobot
     }
 
     @Override
-    public final void teleopInit()
+    public void teleopInit()
     {
         Logger.println("Teleop Init", Logger.LogLevel.DEBUG);
     }
