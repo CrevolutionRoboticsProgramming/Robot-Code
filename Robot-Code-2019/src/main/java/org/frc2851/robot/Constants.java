@@ -26,6 +26,8 @@ public class Constants
 
     public final DriveTrain.DriveGear defaultDriveGear = DriveTrain.DriveGear.HIGH;
 
+    public final int pcmID = 0;
+
     // Elevator
     public final int elevatorMaster = 7;
     public final int elevatorSlave = 8;
@@ -36,6 +38,8 @@ public class Constants
 
     // Intake
     public final int intakeMaster = 0;
+    public final int intakeForward = 0;
+    public final int intakeReverse = 1;
 
     public final int talonTimeout = 20;
 }
