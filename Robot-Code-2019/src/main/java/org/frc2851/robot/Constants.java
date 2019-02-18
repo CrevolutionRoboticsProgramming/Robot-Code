@@ -1,5 +1,6 @@
 package org.frc2851.robot;
 
+import org.frc2851.crevolib.motion.PID;
 import org.frc2851.robot.subsystems.DriveTrain;
 
 /**
@@ -61,25 +62,17 @@ public class Constants
     public final double dt_nominalOut = 0;
 
     // Elevator
-    public final int elevatorMaster = 7;
-    public final int elevatorSlave = 8;
-    public final int elevatorCanifier = 11;
+    public final int el_talon = 7;
+//    public final int elevatorCanifier = 11;
 
-    public final double elevatorRawMultiplier = 0.8;
+    public final double el_rawMultiplier = 0.8;
 
-    public final int elevatorMaximumVelocity = 0;
-    public final int elevatorMaximumAcceleration = 0;
-    public final int elevatorAllowedClosedLoopError = 128;
+    public final int el_maxVelocity = 0;
+    public final int el_maxAcceleration = 0;
+    public final int el_allowedClosedLoopError = 128;
 
-    public final double elevatorMotionP = 0;
-    public final double elevatorMotionI = 0;
-    public final double elevatorMotionD = 0;
-    public final double elevatorMotionF = 0;
-
-    public final double elevatorPosP = 0;
-    public final double elevatorPosI = 0;
-    public final double elevatorPosD = 0;
-    public final double elevatorPosF = 0;
+    public final PID el_motionPID = new PID(0, 0, 0, 0);
+    public final PID el_posPID = new PID(0, 0, 0, 0);
 
     // Climber
     public final int gorillaMaster = 9;
