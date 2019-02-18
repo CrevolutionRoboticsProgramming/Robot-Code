@@ -4,7 +4,8 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -14,6 +15,7 @@ import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
+import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
@@ -69,9 +71,9 @@ public class Elevator extends Subsystem
     private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
 
     // Tuning
-    Preferences mPrefs = Preferences.getInstance();
+    CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
 
-    boolean mTuning = false;
+    boolean mTuning = true;
 
     private static Elevator mInstance;
     private Elevator() { super("Elevator"); }
@@ -100,33 +102,22 @@ public class Elevator extends Subsystem
 //        mTalon.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
 //                mCanifier.getDeviceID(), mConst.talonTimeout);
 
+        if (!mTunePrefs.containsKey("magP")) mTunePrefs.putDouble("magP", 0);
+        if (!mTunePrefs.containsKey("magI")) mTunePrefs.putDouble("magI", 0);
+        if (!mTunePrefs.containsKey("magD")) mTunePrefs.putDouble("magD", 0);
+        if (!mTunePrefs.containsKey("magF")) mTunePrefs.putDouble("magF", 0);
 
-        if (!mTuning)
-        {
-            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
-                    mConst.el_motionPID.getP(),
-                    mConst.el_motionPID.getI(),
-                    mConst.el_motionPID.getD(),
-                    mConst.el_motionPID.getF());
+        if (!mTunePrefs.containsKey("posP")) mTunePrefs.putDouble("posP", 0);
+        if (!mTunePrefs.containsKey("posI")) mTunePrefs.putDouble("posI", 0);
+        if (!mTunePrefs.containsKey("posD")) mTunePrefs.putDouble("posD", 0);
+        if (!mTunePrefs.containsKey("posF")) mTunePrefs.putDouble("posF", 0);
 
-            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.POS_PID.getSlotID(),
-                    mConst.el_posPID.getP(),
-                    mConst.el_posPID.getI(),
-                    mConst.el_posPID.getD(),
-                    mConst.el_posPID.getF());
-        } else {
-            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
-                    mPrefs.getDouble("el_magP", 0),
-                    mPrefs.getDouble("el_magI", 0),
-                    mPrefs.getDouble("el_magD", 0),
-                    mPrefs.getDouble("el_magF", 0));
+        if (!mTunePrefs.containsKey("set")) mTunePrefs.putDouble("set", 0);
 
-            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
-                    mPrefs.getDouble("el_posP", 0),
-                    mPrefs.getDouble("el_posI", 0),
-                    mPrefs.getDouble("el_posD", 0),
-                    mPrefs.getDouble("el_posF", 0));
-        }
+        mTunePrefs.putInt("pos", 0);
+        mTunePrefs.putInt("vel", 0);
+        mTunePrefs.putInt("error", 0);
+
         configureController(mController);
 
         BadLog.createTopicStr("Elevator/Control Mode", BadLog.UNITLESS, () -> mControlMode.name(), "hide");
@@ -168,13 +159,14 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
-                double rawInput = mController.get(Axis.AxisID.RIGHT_Y) * 0.5;
-                lastPos = desiredPosition;
-                getDesiredPosition();
-                boolean updatePos = lastPos != desiredPosition;
+                if (Robot.isRunning()) {
+                    double rawInput = mController.get(Axis.AxisID.RIGHT_Y) * 0.5;
+                    lastPos = desiredPosition;
+                    getDesiredPosition();
+                    boolean updatePos = lastPos != desiredPosition;
 
-                // Temporary: for initial testing
-                mTalon.set(ControlMode.PercentOutput, rawInput);
+                    // Temporary: for initial testing
+                    mTalon.set(ControlMode.PercentOutput, rawInput);
 
 //                if (rawInput != 0)
 //                {
@@ -185,10 +177,11 @@ public class Elevator extends Subsystem
 //
 //                if (/*desiredPosition != null && updatePos*/ mController.get(Button.ButtonID.A))
 //                {
-//                    setCommmandGroup(setPosition(mPrefs.getInt("el_set", -1), "tune"));
+//                    setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
 //                }
 
-                log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
+                    log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
+                }
             }
 
             @Override
@@ -237,6 +230,33 @@ public class Elevator extends Subsystem
                     return false;
                 }
 
+                if (!mTuning)
+                {
+                    TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                            mConst.el_motionPID.getP(),
+                            mConst.el_motionPID.getI(),
+                            mConst.el_motionPID.getD(),
+                            mConst.el_motionPID.getF());
+
+                    TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.POS_PID.getSlotID(),
+                            mConst.el_posPID.getP(),
+                            mConst.el_posPID.getI(),
+                            mConst.el_posPID.getD(),
+                            mConst.el_posPID.getF());
+                } else {
+                    TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                            mTunePrefs.getDouble("magP", 0),
+                            mTunePrefs.getDouble("magI", 0),
+                            mTunePrefs.getDouble("magD", 0),
+                            mTunePrefs.getDouble("magF", 0));
+
+                    TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                            mTunePrefs.getDouble("posP", 0),
+                            mTunePrefs.getDouble("posI", 0),
+                            mTunePrefs.getDouble("posD", 0),
+                            mTunePrefs.getDouble("posF", 0));
+                }
+
                 boolean setsSucceeded = true;
                 int maxRetries = 5;
                 int count = 0;
@@ -261,6 +281,12 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
+                if (mTuning)
+                {
+                    mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
+                    mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
+                    mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
+                }
                 isFinished = mTalon.getClosedLoopError() < mConst.el_allowedClosedLoopError;
             }
 

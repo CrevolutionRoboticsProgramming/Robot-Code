@@ -28,7 +28,7 @@ public class Robot extends CrevoRobot
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         configControllers();
         //addSubsystem(DriveTrain.getInstance());
-        //addSubsystem(Elevator.getInstance());
+        addSubsystem(Elevator.getInstance());
         //addSubsystem(Hatcher.getInstance());
         //addSubsystem(Intake.getInstance());
         for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
