@@ -4,6 +4,7 @@ import badlog.lib.BadLog;
 import badlog.lib.DataInferMode;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
@@ -17,7 +18,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class CrevoRobot extends IterativeRobot
+public class CrevoRobot extends TimedRobot
 {
     private static final String MOTION_PROFILE_DIR = "/home/lvuser/motion/";
 
@@ -30,6 +31,8 @@ public class CrevoRobot extends IterativeRobot
     private BadLog badLog;
     private long startTimeNs;
     private long lastLog, currentTimeMillis;
+
+    private static boolean mIsEnabled = false;
 
 
     /**
@@ -152,5 +155,11 @@ public class CrevoRobot extends IterativeRobot
             lastLog = System.currentTimeMillis();
             badLog.log();
         }
+
+        mIsEnabled = isEnabled();
+    }
+
+    public static boolean isRunning() {
+        return mIsEnabled;
     }
 }
