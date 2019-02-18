@@ -18,14 +18,18 @@ import org.frc2851.robot.Robot;
  * Represents the roller claw subsystem
  */
 public class RollerClaw extends Subsystem {
-    Constants mConstants = Constants.getInstance();
+    private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.operator;
 
     private WPI_TalonSRX _motor;
 
-    static RollerClaw mInstance = new RollerClaw();
+    private static RollerClaw mInstance = new RollerClaw();
 
-    DigitalInput mLimitSwitch;
+    // Positioned at the back of the roller claw; if pressed, we have a cargo, so we run the motors at 0.1 speed to keep it in
+    private DigitalInput mLimitSwitch;
+
+    private boolean isIntaking, lastIntakeState;
+    private boolean isOuttaking, lastOuttakeState;
 
     private RollerClaw() {
         super("RollerClaw");
@@ -38,9 +42,6 @@ public class RollerClaw extends Subsystem {
     public static RollerClaw getInstance() {
         return mInstance;
     }
-
-    private boolean isIntaking, lastIntakeState;
-    private boolean isOuttaking, lastOuttakeState;
 
     /**
      * Initializes the controller, motor, and logging

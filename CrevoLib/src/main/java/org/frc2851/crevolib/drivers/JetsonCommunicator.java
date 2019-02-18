@@ -56,7 +56,7 @@ public class JetsonCommunicator implements Runnable {
                 serverSocket.receive(packet);
                 message = new String(packet.getData(), 0, packet.getLength());
             } catch (java.io.IOException e) {
-                Logger.println("Cannot receive message; IOException", Logger.LogLevel.ERROR);
+                Logger.println("Cannot receive message", Logger.LogLevel.ERROR);
                 e.printStackTrace();
             }
         }

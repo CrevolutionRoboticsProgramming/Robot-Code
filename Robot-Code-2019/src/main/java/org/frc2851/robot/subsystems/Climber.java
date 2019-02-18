@@ -27,7 +27,9 @@ public class Climber extends Subsystem {
     private Controller mController = Robot.driver;
     private static Climber mInstance = new Climber();
 
-    DigitalInput gorillaLimitOut, gorillaLimitIn, screwLimitOut, screwLimitIn;
+    private DigitalInput gorillaLimitOut, gorillaLimitIn, screwLimitOut, screwLimitIn;
+
+    private boolean lastGorillaState, lastScrewState;
 
     /**
      * Returns the sole instance of the Climber class
@@ -63,6 +65,11 @@ public class Climber extends Subsystem {
             log("Could not initialize motor, climber init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
+
+        gorillaLimitOut = new DigitalInput(mConstants.gorillaLimitOut);
+        gorillaLimitIn = new DigitalInput(mConstants.gorillaLimitIn);
+        screwLimitOut = new DigitalInput(mConstants.screwLimitOut);
+        screwLimitIn = new DigitalInput(mConstants.screwLimitIn);
 
         BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
         BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
@@ -127,23 +134,33 @@ public class Climber extends Subsystem {
                 if (mController.get(Button.ButtonID.A)) {
                     if (!gorillaLimitOut.get()) {
                         _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
-                        log("Raised Gorilla", Logger.LogLevel.DEBUG);
+                        if(!lastGorillaState) {
+                            log("Lowered Gorilla", Logger.LogLevel.DEBUG);
+                        }
                     }
                 } else if (!gorillaLimitIn.get()) {
                     _gorillaMaster.set(ControlMode.PercentOutput, -1.0);
-                    log("Lowered Gorilla", Logger.LogLevel.DEBUG);
+                    if(lastGorillaState) {
+                        log("Raised Gorilla", Logger.LogLevel.DEBUG);
+                    }
                 }
+                lastGorillaState = mController.get(Button.ButtonID.A);
 
                 // Screw drive
                 if (mController.get(Button.ButtonID.B)) {
                     if (!screwLimitOut.get()) {
                         _screwMaster.set(ControlMode.PercentOutput, 1.0);
-                        log("Enabled Screw", Logger.LogLevel.DEBUG);
+                        if(!lastScrewState) {
+                            log("Enabled Screw", Logger.LogLevel.DEBUG);
+                        }
                     }
                 } else if (!screwLimitIn.get()){
                     _screwMaster.set(ControlMode.PercentOutput, -1.0);
-                    log("Disabled Screw", Logger.LogLevel.DEBUG);
+                    if(lastScrewState) {
+                        log("Disabled Screw", Logger.LogLevel.DEBUG);
+                    }
                 }
+                lastScrewState = mController.get(Button.ButtonID.B);
             }
 
             @Override

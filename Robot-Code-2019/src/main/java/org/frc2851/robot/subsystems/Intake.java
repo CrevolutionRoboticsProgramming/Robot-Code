@@ -19,10 +19,10 @@ import org.frc2851.robot.Robot;
  */
 public class Intake extends Subsystem {
 
-    Constants mConstants = Constants.getInstance();
-    Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
-    WPI_TalonSRX intakeTalon;
-    DoubleSolenoid intakeSol;
+    private Constants mConstants = Constants.getInstance();
+    private Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
+    private WPI_TalonSRX intakeTalon;
+    private DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
 
@@ -44,7 +44,10 @@ public class Intake extends Subsystem {
     private boolean lastDeployState;
     private boolean lastIntakeState, lastOuttakeState;
 
-    void reset() {
+    /**
+     * Resets the motor and solenoid
+     */
+    private void reset() {
         intakeTalon.set(ControlMode.PercentOutput, 0);
         intakeSol.set(DoubleSolenoid.Value.kOff);
     }
@@ -54,7 +57,7 @@ public class Intake extends Subsystem {
      * @return A boolean representing whether the initialization has succeeded
      */
     @Override
-    protected boolean init(){
+    protected boolean init() {
         mController.config(Button.ButtonID.Y, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.RAW);
@@ -63,7 +66,7 @@ public class Intake extends Subsystem {
             intakeTalon = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.intakeMaster);
         } catch (TalonCommunicationErrorException e) {
             log("Could not initialize motor, intake init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
-        return false;
+            return false;
         }
 
         intakeTalon.setSafetyEnabled(false);
@@ -83,7 +86,7 @@ public class Intake extends Subsystem {
      * @return A command representing user control over the intake
      */
     @Override
-    public Command getDefaultCommand(){
+    public Command getDefaultCommand() {
         return new Command() {
             @Override
             public String getName() {
@@ -107,7 +110,7 @@ public class Intake extends Subsystem {
                 // DoubleSolenoid
                 if (mController.get(Button.ButtonID.Y)) {
                     intakeSol.set(DoubleSolenoid.Value.kForward);
-                    if(!lastDeployState) {
+                    if (!lastDeployState) {
                         log("Intake Deployed", Logger.LogLevel.DEBUG);
                     }
                 } else {
@@ -115,33 +118,30 @@ public class Intake extends Subsystem {
                 }
                 lastDeployState = intakeSol.get() == DoubleSolenoid.Value.kForward;
 
-                // Intake
+                // Motor
                 if (mController.get(Button.ButtonID.RIGHT_BUMPER)) {
                     intakeTalon.set(ControlMode.PercentOutput, 1);
-                    log("Intaking", Logger.LogLevel.DEBUG);
-                }
-                // Outtake
-                else if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
-                    intakeTalon.set(ControlMode.PercentOutput, -1);
-                    log("Outtaking", Logger.LogLevel.DEBUG);
-                }
-                else {
-                    intakeTalon.set(ControlMode.PercentOutput, 0);
-                }
-
-                if (mController.get(Button.ButtonID.RIGHT_BUMPER) && !lastIntakeState){
-                    log("Began Intaking", Logger.LogLevel.DEBUG);
-                } else if (!mController.get(Button.ButtonID.RIGHT_BUMPER) && lastIntakeState){
+                    if (lastIntakeState) {
+                        log("Began Intaking", Logger.LogLevel.DEBUG);
+                    }
+                } else if (lastIntakeState) {
                     log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
                 lastIntakeState = mController.get(Button.ButtonID.RIGHT_BUMPER);
 
-                if (mController.get(Button.ButtonID.LEFT_BUMPER) && !lastOuttakeState){
-                    log("Began Outtaking", Logger.LogLevel.DEBUG);
-                } else if (!mController.get(Button.ButtonID.LEFT_BUMPER) && lastOuttakeState){
+                if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
+                    intakeTalon.set(ControlMode.PercentOutput, -1);
+                    if (lastIntakeState) {
+                        log("Began Outtaking", Logger.LogLevel.DEBUG);
+                    }
+                } else if (lastOuttakeState) {
                     log("Stopped Outtaking", Logger.LogLevel.DEBUG);
                 }
                 lastOuttakeState = mController.get(Button.ButtonID.LEFT_BUMPER);
+
+                if (!mController.get(Button.ButtonID.RIGHT_BUMPER) && !mController.get(Button.ButtonID.LEFT_BUMPER)) {
+                    intakeTalon.set(ControlMode.PercentOutput, 0);
+                }
             }
 
             @Override

@@ -5,7 +5,7 @@ import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
-import org.frc2851.robot.subsystems.Intake;
+import org.frc2851.robot.subsystems.*;
 
 /**
  * Holds code unique to this year's robot
@@ -18,14 +18,16 @@ public class Robot extends CrevoRobot
     /**
      * Initializes the Robot class
      */
-    public Robot()
+    private Robot()
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         configControllers();
-        //addSubsystem(DriveTrain.getInstance());
-        //addSubsystem(Elevator.getInstance());
-        //addSubsystem(Hatcher.getInstance());
+        addSubsystem(Climber.getInstance());
+        addSubsystem(DriveTrain.getInstance());
+        addSubsystem(Elevator.getInstance());
+        addSubsystem(Hatcher.getInstance());
         addSubsystem(Intake.getInstance());
+        addSubsystem(RollerClaw.getInstance());
     }
 
     /**
