@@ -14,54 +14,79 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
-/**declares the motor used and the controller amongst other stuff needed in the code*/
+/**
+ * Represents the cargo intake subsystem
+ */
 public class Intake extends Subsystem {
 
-    Constants mConst = Constants.getInstance();
-    Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
-    WPI_TalonSRX intakeTalon;
-    int moduleNumber = -10;
-    int forwardChannel = 1;
-    int reverseChannel = -1;
-    DoubleSolenoid intakeSol;
+    private Constants mConstants = Constants.getInstance();
+    private Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
+    private WPI_TalonSRX intakeTalon;
+    private DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
 
+    /**
+     * Returns the sole instance of the Intake class
+     * @return The instance of the Intake class
+     */
     public static Intake getInstance() {
         return mInstance;
     }
+
+    /**
+     * Initializes the Intake class with the name "Intake"
+     */
     private Intake() {
         super("Intake");
     }
 
-    void reset() {
+    private boolean lastDeployState;
+    private boolean lastIntakeState, lastOuttakeState;
+
+    /**
+     * Resets the motor and solenoid
+     */
+    private void reset() {
         intakeTalon.set(ControlMode.PercentOutput, 0);
         intakeSol.set(DoubleSolenoid.Value.kOff);
     }
+
     /**
-     initializes the buttons and motor and solenoid
-      */
+     * Initializes the controller, motor, solenoid, and logging
+     * @return A boolean representing whether the initialization has succeeded
+     */
     @Override
-    protected boolean init(){
+    protected boolean init() {
         mController.config(Button.ButtonID.Y, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.RAW);
 
         try {
-            intakeTalon = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConst.intakeMaster);
+            intakeTalon = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.intakeMaster);
         } catch (TalonCommunicationErrorException e) {
-            log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
+            log("Could not initialize motor, intake init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
+
         intakeTalon.setSafetyEnabled(false);
 
-        intakeSol = new DoubleSolenoid(moduleNumber, forwardChannel, reverseChannel);
+        intakeSol = new DoubleSolenoid(mConstants.pcmID, mConstants.intakeForward, mConstants.intakeReverse);
+
+        BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
+        BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
+        BadLog.createTopic("Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
+        BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
 
         return true;
     }
 
+    /**
+     * Returns a command representing user control over the intake
+     * @return A command representing user control over the intake
+     */
     @Override
-    public Command getDefaultCommand(){
+    public Command getDefaultCommand() {
         return new Command() {
             @Override
             public String getName() {
@@ -72,47 +97,51 @@ public class Intake extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-            /**begins badlog*/
+
             @Override
             public boolean init() {
                 reset();
-                BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
-                BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
-
-                BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
-
-                BadLog.createTopic(" Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
 
                 return true;
             }
-            /**
-            *sets motors and solenoid to their respective buttons and logs it
-             */
+
             @Override
             public void update() {
-                // Solenoid
+                // DoubleSolenoid
                 if (mController.get(Button.ButtonID.Y)) {
                     intakeSol.set(DoubleSolenoid.Value.kForward);
-                    Logger.println("Intake Deployed", Logger.LogLevel.DEBUG);
+                    if (!lastDeployState) {
+                        log("Intake Deployed", Logger.LogLevel.DEBUG);
+                    }
                 } else {
                     intakeSol.set(DoubleSolenoid.Value.kReverse);
                 }
+                lastDeployState = intakeSol.get() == DoubleSolenoid.Value.kForward;
 
-                // Intake
+                // Motor
                 if (mController.get(Button.ButtonID.RIGHT_BUMPER)) {
-                    intakeTalon.set(ControlMode.PercentOutput, .25);
-                    Logger.println("Intake In ", Logger.LogLevel.DEBUG);
+                    intakeTalon.set(ControlMode.PercentOutput, 1);
+                    if (lastIntakeState) {
+                        log("Began Intaking", Logger.LogLevel.DEBUG);
+                    }
+                } else if (lastIntakeState) {
+                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
-                // OutTake
-                else if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
-                    intakeTalon.set(ControlMode.PercentOutput, -.25);
-                    Logger.println("Intake Out", Logger.LogLevel.DEBUG);
+                lastIntakeState = mController.get(Button.ButtonID.RIGHT_BUMPER);
+
+                if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
+                    intakeTalon.set(ControlMode.PercentOutput, -1);
+                    if (lastIntakeState) {
+                        log("Began Outtaking", Logger.LogLevel.DEBUG);
+                    }
+                } else if (lastOuttakeState) {
+                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
                 }
-                else {
+                lastOuttakeState = mController.get(Button.ButtonID.LEFT_BUMPER);
+
+                if (!mController.get(Button.ButtonID.RIGHT_BUMPER) && !mController.get(Button.ButtonID.LEFT_BUMPER)) {
                     intakeTalon.set(ControlMode.PercentOutput, 0);
                 }
-
-
             }
 
             @Override

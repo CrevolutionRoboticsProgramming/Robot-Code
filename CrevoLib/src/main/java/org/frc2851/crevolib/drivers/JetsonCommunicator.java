@@ -25,9 +25,15 @@ public class JetsonCommunicator implements Runnable {
     private static JetsonCommunicator _instance = new JetsonCommunicator();
     private static Thread _thread = new Thread(_instance);
 
+    /**
+     * Private constructor ensures that JetsonCommunicator cannot be instantiated outside of the JetsonCommunicator class
+     */
     private JetsonCommunicator() {
     }
 
+    /**
+     * Starts the processes controlling communication with the Jetson
+     */
     public void start() {
         try {
             serverSocket = new DatagramSocket(new InetSocketAddress(receivePort));
@@ -40,13 +46,15 @@ public class JetsonCommunicator implements Runnable {
         _thread.start();
     }
 
+    /**
+     * Receives messages on a separate thread
+     */
     @Override
     public void run() {
         while (true) {
             try {
                 serverSocket.receive(packet);
                 message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Received");
             } catch (java.io.IOException e) {
                 Logger.println("Cannot receive message", Logger.LogLevel.ERROR);
                 e.printStackTrace();
@@ -54,6 +62,10 @@ public class JetsonCommunicator implements Runnable {
         }
     }
 
+    /**
+     * Sends the specified message to the Jetson
+     * @param message Message to send to the Jetson
+     */
     public void send(String message) {
         try {
             sendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(sendIP), sendPort));
@@ -63,14 +75,26 @@ public class JetsonCommunicator implements Runnable {
         }
     }
 
+    /**
+     * Returns the sole instance of the JetsonCommunicator class
+     * @return The instance of the JetsonCommunicator class
+     */
     public static JetsonCommunicator getInstance() {
         return _instance;
     }
 
+    /**
+     * Returns the message previously received
+     * @return The message previously received
+     */
     public String getMessage() {
         return message;
     }
 
+    /**
+     * Returns the IP of the roboRIO for debugging purposes
+     * @return The IP of the roboRIO
+     */
     public String getThisIP() {
         String returnString = "Cannot get this IP";
 
@@ -84,6 +108,10 @@ public class JetsonCommunicator implements Runnable {
         return returnString;
     }
 
+    /**
+     * Returns the port that the roboRIO is receiving messages on
+     * @return The port that the roboRIO is receiving messages on
+     */
     public int getThisPort() {
         return receivePort;
     }

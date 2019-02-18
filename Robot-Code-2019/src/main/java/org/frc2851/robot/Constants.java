@@ -4,24 +4,21 @@ import org.frc2851.crevolib.motion.PID;
 import org.frc2851.robot.subsystems.DriveTrain;
 
 /**
- * creates a class to Store and use Constants
+ * Stores constants used throughout the program
  */
 public class Constants
 {
     private static Constants mInstance;
 
     /**
-     * Gets the Instance state of the Constance class
-     * @return The instance.
+     * Gets the sole instance of the Constants class
+     * @return The instance of the Constants class
      */
     public static Constants getInstance() {
         if (mInstance == null) mInstance = new Constants();
         return mInstance;
     }
 
-    /**
-     * Runs the Constants class.
-     */
     private Constants() { }
 
     public final int magEncCPR = 4096;
@@ -78,17 +75,25 @@ public class Constants
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
     public final int screwMaster = 11;
+    public final int gorillaLimitOut = 1;
+    public final int gorillaLimitIn = 2;
+    public final int screwLimitOut = 3;
+    public final int screwLimitIn = 4;
 
     // Intake
     public final int intakeMaster = 0;
-
-    public final int rollerClawTalon=0;
-
-    public final int talonTimeout = 20;
+    public final int intakeForward = 0;
+    public final int intakeReverse = 1;
 
     // Hatcher
     public final int extendHatcherForward = 0;
     public final int extendHatcherReverse = 0;
     public final int actuateHatcherForward = 0;
     public final int actuateHatcherReverse = 0;
+
+    // RollerClaw
+    public final int rollerClawTalon = 1;
+    public final int rollerClawLimitSwitch = 0;
+
+    public final int talonTimeout = 20;
 }

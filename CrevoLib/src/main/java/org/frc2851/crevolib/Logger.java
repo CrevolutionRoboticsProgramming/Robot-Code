@@ -12,6 +12,9 @@ public class Logger
     private static LogLevel logLevel = LogLevel.DEBUG;
     private static final String LOG_PATH = "/home/lvuser/logs/";
 
+    /**
+     * Stores enumerations representing three levels of logging. Each level has its own integer and prefix.
+     */
     public enum LogLevel {
         DEBUG(0, "D: "), WARNING(1, "W: "), ERROR(2, "E: ");
 
@@ -28,8 +31,15 @@ public class Logger
 
     private Logger() { }
 
+    /**
+     * Sets the level to log at
+     * @param level Level to log at
+     */
     public static void setLogLevel(LogLevel level) { logLevel = level; }
 
+    /**
+     * Starts the Logger class
+     */
     // TODO: Autogenerate unique log file name (timestamp-day.csv)
     static void start() {
 //        try {
@@ -40,6 +50,11 @@ public class Logger
 //        }
     }
 
+    /**
+     * Prints the message at the specified level
+     * @param message Message to print
+     * @param level Level to print at
+     */
     public static void println(String message, LogLevel level)
     {
         if (level.LEVEL < Logger.logLevel.LEVEL) { return; }

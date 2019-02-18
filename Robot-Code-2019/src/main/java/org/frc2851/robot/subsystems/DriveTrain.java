@@ -22,6 +22,8 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
+import java.util.ArrayList;
+
 public class DriveTrain extends Subsystem
 {
     public enum DriveGear
@@ -57,6 +59,7 @@ public class DriveTrain extends Subsystem
     private DriveControlMode mDriveControlMode = DriveControlMode.FPS;
 
     private WPI_TalonSRX mLeftMaster, mLeftSlaveA, mLeftSlaveB, mRightMaster, mRightSlaveA, mRightSlaveB;
+    private ArrayList<WPI_TalonSRX> leftMotors = new ArrayList<>(), rightMotors = new ArrayList<>();
     private PigeonIMU mPigeon;
     private DoubleSolenoid mShifterSolenoid;
 
@@ -88,6 +91,14 @@ public class DriveTrain extends Subsystem
             mRightMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightMaster);
             mRightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightSlaveA);
             mRightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightSlaveB);
+
+            leftMotors.add(mLeftMaster);
+            leftMotors.add(mLeftSlaveA);
+            leftMotors.add(mLeftSlaveB);
+
+            rightMotors.add(mRightMaster);
+            rightMotors.add(mRightSlaveA);
+            rightMotors.add(mRightSlaveB);
         } catch (TalonCommunicationErrorException e) {
             log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
@@ -111,7 +122,7 @@ public class DriveTrain extends Subsystem
             mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
-        mLeftMotionPID = new PID(0, 0, 0, 0, 0);
+        mLeftMotionPID = new PID(0, 0, 0, 0);
 
         return true;
     }
@@ -144,7 +155,7 @@ public class DriveTrain extends Subsystem
 
     private void reset()
     {
-        zeroSensors();
+        if (!zeroSensors()) log("Failed to zero sensors", Logger.LogLevel.ERROR);
         setLeftRightMotorOutputs(0, 0);
         mLeftMaster.setNeutralMode(TALON_NEUTRAL_MODE);
         mLeftSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
@@ -154,12 +165,17 @@ public class DriveTrain extends Subsystem
         mRightSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
     }
 
-    private void zeroSensors()
+    private boolean zeroSensors()
     {
-        ErrorCode code = mLeftMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout);
-        mRightMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout);
-        if (mConstants.dt_usePigeon) mPigeon.setYaw(0, mConstants.talonTimeout);
-        Logger.println("Zero Sensor Code: " + code.toString(), Logger.LogLevel.DEBUG);
+        boolean setsSucceeded = true;
+        int tries = 0;
+        final int maxTries = 5;
+        do {
+            setsSucceeded &= mLeftMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout) == ErrorCode.OK;
+        } while (!setsSucceeded && tries++ < maxTries);
+        return setsSucceeded;
+//        if (mConstants.dt_usePigeon) mPigeon.setYaw(0, mConstants.talonTimeout);
     }
 
     @Override
@@ -169,7 +185,7 @@ public class DriveTrain extends Subsystem
         {
             DifferentialDrive robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
 
-            final double TURN_MULT = 0.9;
+            final double TURN_MULT = 1;
 
             @Override
             public String getName() { return "Teleop"; }
@@ -180,6 +196,7 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
+                // TODO: Set phases
                 reset();
 
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
@@ -194,14 +211,13 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                double throttle = mController.get(Axis.AxisID.LEFT_Y);
-                double turn = mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT;
                 boolean curvatureToggle = mController.get(Button.ButtonID.RIGHT_BUMPER);
                 boolean gearToggle = mController.get(Button.ButtonID.LEFT_BUMPER);
 
                 DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
-                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
+//                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
+                mDriveControlMode = DriveControlMode.FPS;
                 switch (mDriveControlMode)
                 {
                     case FPS:
@@ -423,8 +439,8 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
-                setPID(mLeftMaster, 0, new PID(0, 0, 0, 0, 0));
-                setPID(mRightMaster, 0, new PID(0, 0, 0, 0, 0));
+                setPID(mLeftMaster, 0, new PID(0, 0, 0, 0));
+                setPID(mRightMaster, 0, new PID(0, 0, 0, 0));
                 mLeftMaster.set(ControlMode.Position, targetPos);
                 mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
                 return true;
@@ -545,17 +561,29 @@ public class DriveTrain extends Subsystem
         talon.config_kF(slot, pid.getF(), mConstants.talonTimeout);
     }
 
-    private void setNominalAndPeakOutputs(double nominal, double peak)
+    private boolean setNominalAndPeakOutputs(double nominal, double peak)
     {
-        mLeftMaster.configNominalOutputForward(nominal, mConstants.talonTimeout);
-        mLeftMaster.configPeakOutputForward(peak, mConstants.talonTimeout);
-        mLeftMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout);
-        mLeftMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout);
+        boolean setsSucceeded = true;
+        int tries = 0;
+        final int maxRetries = 5;
+        do {
+            setsSucceeded &= mLeftMaster.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftMaster.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
 
-        mRightMaster.configNominalOutputForward(nominal, mConstants.talonTimeout);
-        mRightMaster.configPeakOutputForward(peak, mConstants.talonTimeout);
-        mRightMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout);
-        mRightMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout);
+            setsSucceeded &= mRightMaster.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightMaster.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+        } while (!setsSucceeded && tries++ < maxRetries);
+        return setsSucceeded;
+    }
+
+    public void setNeutralMode(NeutralMode mode)
+    {
+        for (WPI_TalonSRX talon : leftMotors) talon.setNeutralMode(mode);
+        for (WPI_TalonSRX talon : rightMotors) talon.setNeutralMode(mode);
     }
 
     private void setLeftRightMotorOutputs(double left, double right)
@@ -590,6 +618,5 @@ public class DriveTrain extends Subsystem
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
     }
 
-    public static void setTuneMode(boolean modeEnabled) { mTuneMode = modeEnabled; }
     public static void setDriveMode(DriveControlMode mode) { }
 }

@@ -9,21 +9,19 @@ import org.frc2851.crevolib.io.Controller;
 import org.frc2851.robot.subsystems.*;
 
 /**
- * Does everything a crevoRobot Does and adds a few new things
+ * Holds code unique to this year's robot
  */
 public class Robot extends CrevoRobot
 {
-    /**
-     * Initilizes two controllers:
-     */
+
     public static Controller driver, operator;
     private SendableChooser driveModeSelector = new SendableChooser();
 
 
     /**
-     * Tells the Robot Class What other classes should be included.
+     * Initializes the Robot class
      */
-    public Robot()
+    private Robot()
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         configControllers();
@@ -41,7 +39,7 @@ public class Robot extends CrevoRobot
     }
 
     /**
-     * Configures the Controlers
+     * Configures the controllers
      */
     private static void configControllers()
     {
@@ -56,8 +54,7 @@ public class Robot extends CrevoRobot
     }
 
     /**
-     * runs the Robot
-     * @param args
+     * Main method for code execution
      */
     public static void main(String... args) {
         RobotBase.startRobot(Robot::new);

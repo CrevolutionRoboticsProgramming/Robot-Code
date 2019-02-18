@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
@@ -12,29 +13,39 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
+
 /**
- sets up the motor and controller used in the code
+ * Represents the roller claw subsystem
  */
 public class RollerClaw extends Subsystem {
-    Constants mConstants = Constants.getInstance();
+    private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.operator;
 
     private WPI_TalonSRX _motor;
 
-    static RollerClaw mInstance = new RollerClaw();
-    boolean intake;
-    boolean lastIntakeState;
-    boolean outTake;
-    boolean lastOutTakeState;
+    private static RollerClaw mInstance = new RollerClaw();
+
+    // Positioned at the back of the roller claw; if pressed, we have a cargo, so we run the motors at 0.1 speed to keep it in
+    private DigitalInput mLimitSwitch;
+
+    private boolean isIntaking, lastIntakeState;
+    private boolean isOuttaking, lastOuttakeState;
+
     private RollerClaw() {
         super("RollerClaw");
     }
+
+    /**
+     * Returns the sole instance of the RollerClaw class
+     * @return The instance of the RollerClaw class
+     */
     public static RollerClaw getInstance() {
         return mInstance;
     }
+
     /**
-     initialize the motor and controller's triggers
-     badlog is setup as well
+     * Initializes the controller, motor, and logging
+     * @return A boolean representing whether initialization has succeeded
      */
     @Override
     protected boolean init() {
@@ -44,6 +55,8 @@ public class RollerClaw extends Subsystem {
             log("Could not initialize motor, roller claw init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
+
+        mLimitSwitch = new DigitalInput(mConstants.rollerClawLimitSwitch);
 
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
         mController.config(Axis.AxisID.LEFT_TRIGGER);
@@ -55,6 +68,10 @@ public class RollerClaw extends Subsystem {
         return true;
     }
 
+    /**
+     * Returns a command representing user control over the roller claw
+     * @return A command representing user control over the roller claw
+     */
     @Override
     public Command getDefaultCommand() {
         return new Command() {
@@ -67,16 +84,13 @@ public class RollerClaw extends Subsystem {
             public boolean isFinished() {
                 return false;
             }
-            //sets motor to zero to start
+
             @Override
             public boolean init() {
                 _motor.set(ControlMode.PercentOutput, 0);
                 return true;
             }
-            /**
-             shows that right trigger intakes and left trigger outtakes
-             logging for intake and outtake says if its activated or deactivated
-             */
+
             @Override
             public void update() {
                 double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
@@ -84,35 +98,27 @@ public class RollerClaw extends Subsystem {
 
                 _motor.set(ControlMode.PercentOutput, output);
 
-                if(output > 0) {
-                    intake = true;
-                }
-                else{
-                    intake = false;
-                }
-                if (intake == true && lastIntakeState == false){
-                    Logger.println("intake activated", Logger.LogLevel.DEBUG);
-                }
-                if (intake == false && lastIntakeState == true){
-                    Logger.println("intake deactivated", Logger.LogLevel.DEBUG);
-                }
-                lastIntakeState = intake;
+                isIntaking = output > 0;
 
-                if(output < 0) {
-                    outTake = true;
+                if (isIntaking && !lastIntakeState){
+                    log("Began Intaking", Logger.LogLevel.DEBUG);
+                } else if (!isIntaking && lastIntakeState){
+                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
-                else{
-                    outTake = false;
-                }
+                lastIntakeState = isIntaking;
 
-                if (outTake == true && lastOutTakeState == false){
-                    Logger.println("outTake activated", Logger.LogLevel.DEBUG);
-                }
-                if (outTake == false && lastOutTakeState == true){
-                    Logger.println("outTake deactivated", Logger.LogLevel.DEBUG);
-                }
-                lastOutTakeState = outTake;
+                isOuttaking = output < 0;
 
+                if (isOuttaking && !lastOuttakeState){
+                    log("Began Outtaking", Logger.LogLevel.DEBUG);
+                } else if (!isOuttaking && lastOuttakeState){
+                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
+                }
+                lastOuttakeState = isOuttaking;
+
+                if(mLimitSwitch.get()){
+                    _motor.set(0.1);
+                }
             }
 
             @Override
