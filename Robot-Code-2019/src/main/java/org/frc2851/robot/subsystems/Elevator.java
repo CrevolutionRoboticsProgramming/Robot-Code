@@ -1,10 +1,11 @@
 package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
-import com.ctre.phoenix.CANifier;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
@@ -18,6 +19,10 @@ import org.frc2851.robot.Robot;
 
 /**
  * controls the Elevator Motors
+ */
+
+/*
+ * TODO: Determine motor direction and set encoder phase accordingly
  */
 public class Elevator extends Subsystem
 {
@@ -58,11 +63,15 @@ public class Elevator extends Subsystem
     }
 
     private Constants mConst = Constants.getInstance();
-    private TalonSRX mTalonMaster;
-    private CANifier mCanifier;
+    private TalonSRX mTalon;
     private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
     private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
+
+    // Tuning
+    Preferences mPrefs = Preferences.getInstance();
+
+    boolean mTuning = false;
 
     private static Elevator mInstance;
     private Elevator() { super("Elevator"); }
@@ -80,36 +89,62 @@ public class Elevator extends Subsystem
     protected boolean init()
     {
         try {
-            mTalonMaster = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.elevatorMaster);
+            mTalon = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.el_talon);
         } catch (TalonCommunicationErrorException e) {
-            log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
+            log("Could not initialize motor, elevator init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
-        mCanifier = new CANifier(mConst.elevatorCanifier);
+//        mCanifier = new CANifier(mConst.elevatorCanifier);
 
-        mTalonMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative,0, mConst.talonTimeout);
-        mTalonMaster.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
-                mCanifier.getDeviceID(), mConst.talonTimeout);
+        mTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative,0, mConst.talonTimeout);
+//        mTalon.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
+//                mCanifier.getDeviceID(), mConst.talonTimeout);
 
-        TalonSRXFactory.configurePIDF(mTalonMaster, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
-                mConst.elevatorMotionP,
-                mConst.elevatorMotionI,
-                mConst.elevatorMotionD,
-                mConst.elevatorMotionF);
-        TalonSRXFactory.configurePIDF(mTalonMaster, ElevatorControlMode.POS_PID.getSlotID(),
-                mConst.elevatorPosP,
-                mConst.elevatorPosI,
-                mConst.elevatorPosD,
-                mConst.elevatorPosF);
 
+        if (!mTuning)
+        {
+            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                    mConst.el_motionPID.getP(),
+                    mConst.el_motionPID.getI(),
+                    mConst.el_motionPID.getD(),
+                    mConst.el_motionPID.getF());
+
+            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.POS_PID.getSlotID(),
+                    mConst.el_posPID.getP(),
+                    mConst.el_posPID.getI(),
+                    mConst.el_posPID.getD(),
+                    mConst.el_posPID.getF());
+        } else {
+            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                    mPrefs.getDouble("el_magP", 0),
+                    mPrefs.getDouble("el_magI", 0),
+                    mPrefs.getDouble("el_magD", 0),
+                    mPrefs.getDouble("el_magF", 0));
+
+            TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
+                    mPrefs.getDouble("el_posP", 0),
+                    mPrefs.getDouble("el_posI", 0),
+                    mPrefs.getDouble("el_posD", 0),
+                    mPrefs.getDouble("el_posF", 0));
+        }
         configureController(mController);
 
         BadLog.createTopicStr("Elevator/Control Mode", BadLog.UNITLESS, () -> mControlMode.name(), "hide");
-        BadLog.createTopic("Elevator/Output Percent", BadLog.UNITLESS, () -> mTalonMaster.getMotorOutputPercent(), "hide");
-        BadLog.createTopic("Elevator/Output Voltage Master", "V", () -> mTalonMaster.getBusVoltage(), "hide");
-        BadLog.createTopic("Elevator/Output Current Master", "I", () -> mTalonMaster.getOutputCurrent(), "hide");
-        BadLog.createTopic("Elevator/Position", "Counts", () -> (double) mTalonMaster.getSensorCollection().getQuadraturePosition(), "hide");
+        BadLog.createTopic("Elevator/Output Percent", BadLog.UNITLESS, () -> mTalon.getMotorOutputPercent(), "hide");
+        BadLog.createTopic("Elevator/Output Voltage Master", "V", () -> mTalon.getBusVoltage(), "hide");
+        BadLog.createTopic("Elevator/Output Current Master", "I", () -> mTalon.getOutputCurrent(), "hide");
+        BadLog.createTopic("Elevator/Position", "Counts", () -> (double) mTalon.getSensorCollection().getQuadraturePosition(), "hide");
         return true;
+    }
+
+    public void reset()
+    {
+        boolean setSucceeded = true;
+        int retryCounter = 0;
+        final int maxRetries = 5;
+        do {
+            setSucceeded &= mTalon.setSelectedSensorPosition(0, 0, mConst.talonTimeout) == ErrorCode.OK;
+        } while (!setSucceeded || retryCounter++ < maxRetries);
     }
 
     @Override
@@ -117,42 +152,47 @@ public class Elevator extends Subsystem
         return new Command() {
             ElevatorPosition desiredPosition = null, lastPos;
 
-
             @Override
-            public String getName() { return "Teleop"; }
+            public String getName() { return "Default"; }
 
             @Override
             public boolean isFinished() { return false; }
 
             @Override
-            public boolean init() { return true; }
+            public boolean init()
+            {
+                reset();
+                return true;
+            }
 
             @Override
             public void update()
             {
-                double rawInput = mController.get(Axis.AxisID.RIGHT_Y);
+                double rawInput = mController.get(Axis.AxisID.RIGHT_Y) * 0.5;
                 lastPos = desiredPosition;
                 getDesiredPosition();
                 boolean updatePos = lastPos != desiredPosition;
 
-                if (rawInput != 0)
-                {
-                    Elevator.mInstance.stopAuxilaryCommand();
-                    mTalonMaster.set(ControlMode.PercentOutput, rawInput);
-                    return;
-                }
+                // Temporary: for initial testing
+                mTalon.set(ControlMode.PercentOutput, rawInput);
 
-                if (desiredPosition != null && updatePos)
-                {
-                    setCommmandGroup(setPosition(desiredPosition));
-                }
+//                if (rawInput != 0)
+//                {
+//                    Elevator.mInstance.stopAuxilaryCommand();
+//                    mTalon.set(ControlMode.PercentOutput, rawInput);
+//                    return;
+//                }
+//
+//                if (/*desiredPosition != null && updatePos*/ mController.get(Button.ButtonID.A))
+//                {
+//                    setCommmandGroup(setPosition(mPrefs.getInt("el_set", -1), "tune"));
+//                }
+
+                log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
             }
 
             @Override
-            public void stop()
-            {
-
-            }
+            public void stop() { }
 
             void getDesiredPosition()
             {
@@ -172,16 +212,15 @@ public class Elevator extends Subsystem
         };
     }
 
-    public Command setPosition(ElevatorPosition pos)
+    public Command setPosition(int counts, String posName)
     {
-        return new Command()
-        {
+        return new Command() {
             boolean isFinished = false;
 
             @Override
             public String getName()
             {
-                return "SetPosition(pos: " + pos.name() + ")";
+                return "SetPosition[P: " + posName + ", C: " + counts + "]";
             }
 
             @Override
@@ -193,65 +232,90 @@ public class Elevator extends Subsystem
             @Override
             public boolean init()
             {
+                if (counts == -1) {
+                    log("Could not read setpoint!", Logger.LogLevel.ERROR);
+                    return false;
+                }
+
                 boolean setsSucceeded = true;
                 int maxRetries = 5;
                 int count = 0;
 
-                do {
-                    setsSucceeded &= mTalonMaster.configMotionCruiseVelocity(mConst.elevatorMaximumVelocity, mConst.talonTimeout) == ErrorCode.OK;
-                    setsSucceeded &= mTalonMaster.configMotionAcceleration(mConst.elevatorMaximumAcceleration, mConst.talonTimeout) == ErrorCode.OK;
-                } while (!setsSucceeded || count++ < maxRetries);
-                mTalonMaster.selectProfileSlot(mClosedLoopStategy.getSlotID(), 0);
-                mTalonMaster.set(mClosedLoopStategy.getMode(), pos.getPos());
+                if (mClosedLoopStategy == ElevatorControlMode.MOTION_MAGIC) {
+                    do {
+                        setsSucceeded &= mTalon.configMotionCruiseVelocity(mConst.el_maxVelocity, mConst.talonTimeout) == ErrorCode.OK;
+                        setsSucceeded &= mTalon.configMotionAcceleration(mConst.el_maxAcceleration, mConst.talonTimeout) == ErrorCode.OK;
+                    } while (!setsSucceeded || count++ < maxRetries);
+
+                    if (!setsSucceeded || count > maxRetries)
+                    {
+                        log("Could not configure motion magic constants!", Logger.LogLevel.ERROR);
+                        return false;
+                    }
+                }
+                mTalon.selectProfileSlot(mClosedLoopStategy.getSlotID(), 0);
+                mTalon.set(mClosedLoopStategy.getMode(), counts);
                 return true;
             }
 
             @Override
             public void update()
             {
-                isFinished = mTalonMaster.getClosedLoopError() < mConst.elevatorAllowedClosedLoopError;
+                isFinished = mTalon.getClosedLoopError() < mConst.el_allowedClosedLoopError;
             }
 
             @Override
             public void stop()
             {
-                mTalonMaster.set(ControlMode.PercentOutput, 0);
+                mTalon.set(ControlMode.PercentOutput, 0);
             }
         };
+    }
+
+    public Command setPosition(ElevatorPosition pos)
+    {
+        return setPosition(pos.getPos(), pos.name());
+    }
+
+    public Command setPosition(int counts)
+    {
+        return setPosition(counts, "null");
     }
 
     public Command moveForTime(double time, double power)
     {
         return new Command()
         {
+            double startTime;
             @Override
             public String getName()
             {
-                return "MoveForTime[" + time + "s, " + power + "]";
+                return "MoveForTime[T: " + time + ", P: " + power + "]";
             }
 
             @Override
             public boolean isFinished()
             {
-                return false;
+                return (Timer.getFPGATimestamp() - startTime) > time;
             }
 
             @Override
             public boolean init()
             {
-                return false;
+                startTime = Timer.getFPGATimestamp();
+                return true;
             }
 
             @Override
             public void update()
             {
-
+                mTalon.set(ControlMode.PercentOutput, power);
             }
 
             @Override
             public void stop()
             {
-
+                mTalon.set(ControlMode.PercentOutput, 0);
             }
         };
     }
@@ -278,6 +342,6 @@ public class Elevator extends Subsystem
         controller.config(Button.ButtonID.Y, Button.ButtonMode.ON_PRESS);
         controller.config(Button.ButtonID.START, Button.ButtonMode.ON_PRESS);
         controller.config(Button.ButtonID.SELECT, Button.ButtonMode.ON_PRESS);
-        controller.config(Axis.AxisID.RIGHT_Y, x -> -(applyDeadband(x, 0.15) * mConst.elevatorRawMultiplier));
+        controller.config(Axis.AxisID.RIGHT_Y, x -> -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier));
     }
 }
