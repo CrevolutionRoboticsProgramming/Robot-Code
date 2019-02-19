@@ -2,6 +2,7 @@ package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
@@ -17,11 +18,12 @@ import org.frc2851.robot.Robot;
 /**
  * Represents the roller claw subsystem
  */
-public class RollerClaw extends Subsystem {
+public class RollerClaw extends Subsystem
+{
     private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.operator;
 
-    private WPI_TalonSRX _motor;
+    private TalonSRX _motor;
 
     private static RollerClaw mInstance = new RollerClaw();
 
@@ -31,27 +33,34 @@ public class RollerClaw extends Subsystem {
     private boolean isIntaking, lastIntakeState;
     private boolean isOuttaking, lastOuttakeState;
 
-    private RollerClaw() {
+    private RollerClaw()
+    {
         super("RollerClaw");
     }
 
     /**
      * Returns the sole instance of the RollerClaw class
+     *
      * @return The instance of the RollerClaw class
      */
-    public static RollerClaw getInstance() {
+    public static RollerClaw getInstance()
+    {
         return mInstance;
     }
 
     /**
      * Initializes the controller, motor, and logging
+     *
      * @return A boolean representing whether initialization has succeeded
      */
     @Override
-    protected boolean init() {
-        try {
-            _motor = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.rollerClawTalon);
-        } catch (TalonCommunicationErrorException e) {
+    protected boolean init()
+    {
+        try
+        {
+            _motor = TalonSRXFactory.createDefaultMasterTalonSRX(mConstants.rollerClawTalon);
+        } catch (TalonCommunicationErrorException e)
+        {
             log("Could not initialize motor, roller claw init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
@@ -70,29 +79,36 @@ public class RollerClaw extends Subsystem {
 
     /**
      * Returns a command representing user control over the roller claw
+     *
      * @return A command representing user control over the roller claw
      */
     @Override
-    public Command getDefaultCommand() {
-        return new Command() {
+    public Command getDefaultCommand()
+    {
+        return new Command()
+        {
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "Teleop";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return false;
             }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 _motor.set(ControlMode.PercentOutput, 0);
                 return true;
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
                 double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
                         -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
 
@@ -100,29 +116,35 @@ public class RollerClaw extends Subsystem {
 
                 isIntaking = output > 0;
 
-                if (isIntaking && !lastIntakeState){
+                if (isIntaking && !lastIntakeState)
+                {
                     log("Began Intaking", Logger.LogLevel.DEBUG);
-                } else if (!isIntaking && lastIntakeState){
+                } else if (!isIntaking && lastIntakeState)
+                {
                     log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
                 lastIntakeState = isIntaking;
 
                 isOuttaking = output < 0;
 
-                if (isOuttaking && !lastOuttakeState){
+                if (isOuttaking && !lastOuttakeState)
+                {
                     log("Began Outtaking", Logger.LogLevel.DEBUG);
-                } else if (!isOuttaking && lastOuttakeState){
+                } else if (!isOuttaking && lastOuttakeState)
+                {
                     log("Stopped Outtaking", Logger.LogLevel.DEBUG);
                 }
                 lastOuttakeState = isOuttaking;
 
-                if(mLimitSwitch.get()){
-                    _motor.set(0.1);
+                if (mLimitSwitch.get())
+                {
+                    _motor.set(ControlMode.PercentOutput, 0.1);
                 }
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 _motor.set(ControlMode.PercentOutput, 0);
             }
         };

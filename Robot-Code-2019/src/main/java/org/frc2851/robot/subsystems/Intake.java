@@ -2,6 +2,7 @@ package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import org.frc2851.crevolib.Logger;
@@ -22,7 +23,7 @@ public class Intake extends Subsystem
 
     private Constants mConstants = Constants.getInstance();
     private Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
-    private WPI_TalonSRX intakeTalon;
+    private TalonSRX intakeTalon;
     private DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
@@ -71,15 +72,14 @@ public class Intake extends Subsystem
 
         try
         {
-            intakeTalon = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.intakeMaster);
+            intakeTalon = TalonSRXFactory.createDefaultTalonSRX(mConstants.intakeMaster);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, intake init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
 
-        intakeTalon.setSafetyEnabled(false);
-
+        //TODO: Add second solenoid
         intakeSol = new DoubleSolenoid(mConstants.pcmID, mConstants.intakeForward, mConstants.intakeReverse);
 
         BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
