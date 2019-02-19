@@ -3,7 +3,6 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -20,6 +19,22 @@ import org.frc2851.robot.Robot;
  */
 public class Intake extends Subsystem
 {
+    public enum IntakeMotorState
+    {
+        INTAKING(1.0), OUTTAKING(-1.0), OFF(0.0);
+
+        private final double output;
+
+        IntakeMotorState(double output)
+        {
+            this.output = output;
+        }
+
+        public double getOutput()
+        {
+            return output;
+        }
+    }
 
     private Constants mConstants = Constants.getInstance();
     private Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
@@ -27,6 +42,11 @@ public class Intake extends Subsystem
     private DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
+
+    private IntakeMotorState motorState = IntakeMotorState.OFF,
+        lastMotorState = IntakeMotorState.OFF;
+    private DoubleSolenoid.Value solenoidState = DoubleSolenoid.Value.kOff,
+        lastSolenoidState = DoubleSolenoid.Value.kOff;
 
     /**
      * Returns the sole instance of the Intake class
@@ -45,9 +65,6 @@ public class Intake extends Subsystem
     {
         super("Intake");
     }
-
-    private boolean lastDeployState;
-    private boolean lastIntakeState, lastOuttakeState;
 
     /**
      * Resets the motor and solenoid
@@ -123,51 +140,41 @@ public class Intake extends Subsystem
             @Override
             public void update()
             {
-                // DoubleSolenoid
-                if (mController.get(Button.ButtonID.Y))
+                // Double Solenoid
+                if(mController.get(Button.ButtonID.Y))
                 {
-                    intakeSol.set(DoubleSolenoid.Value.kForward);
-                    if (!lastDeployState)
-                    {
-                        log("Intake Deployed", Logger.LogLevel.DEBUG);
-                    }
+                    solenoidState = DoubleSolenoid.Value.kForward;
                 } else
                 {
-                    intakeSol.set(DoubleSolenoid.Value.kReverse);
+                    solenoidState = DoubleSolenoid.Value.kReverse;
                 }
-                lastDeployState = intakeSol.get() == DoubleSolenoid.Value.kForward;
 
                 // Motor
                 if (mController.get(Button.ButtonID.RIGHT_BUMPER))
                 {
-                    intakeTalon.set(ControlMode.PercentOutput, 1);
-                    if (lastIntakeState)
-                    {
-                        log("Began Intaking", Logger.LogLevel.DEBUG);
-                    }
-                } else if (lastIntakeState)
+                    motorState = IntakeMotorState.INTAKING;
+                } else if (mController.get(Button.ButtonID.LEFT_BUMPER))
                 {
-                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
+                    motorState = IntakeMotorState.OUTTAKING;
+                } else
+                {
+                    motorState = IntakeMotorState.OFF;
                 }
-                lastIntakeState = mController.get(Button.ButtonID.RIGHT_BUMPER);
 
-                if (mController.get(Button.ButtonID.LEFT_BUMPER))
-                {
-                    intakeTalon.set(ControlMode.PercentOutput, -1);
-                    if (lastIntakeState)
-                    {
-                        log("Began Outtaking", Logger.LogLevel.DEBUG);
-                    }
-                } else if (lastOuttakeState)
-                {
-                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
-                }
-                lastOuttakeState = mController.get(Button.ButtonID.LEFT_BUMPER);
+                intakeSol.set(solenoidState);
+                intakeTalon.set(ControlMode.PercentOutput, motorState.getOutput());
 
-                if (!mController.get(Button.ButtonID.RIGHT_BUMPER) && !mController.get(Button.ButtonID.LEFT_BUMPER))
+                if (motorState != lastMotorState)
                 {
-                    intakeTalon.set(ControlMode.PercentOutput, 0);
+                    log("Motor state changed to: " + motorState.toString(), Logger.LogLevel.DEBUG);
                 }
+                if (solenoidState != lastSolenoidState)
+                {
+                    log("Solenoid state changed to: " + solenoidState.toString(), Logger.LogLevel.DEBUG);
+                }
+
+                lastMotorState = motorState;
+                lastSolenoidState = solenoidState;
             }
 
             @Override
