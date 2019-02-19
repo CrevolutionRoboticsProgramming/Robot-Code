@@ -1,13 +1,9 @@
 package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
-import com.ctre.phoenix.ErrorCode;
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
-import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
-import com.ctre.phoenix.motorcontrol.RemoteLimitSwitchSource;
+import com.ctre.phoenix.motorcontrol.*;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -77,7 +73,7 @@ public class Climber extends Subsystem
         super("Climber");
     }
 
-    private WPI_TalonSRX mGorillaMaster, mGorillaSlave /*mPogoMaster*/;
+    private TalonSRX mGorillaMaster, mGorillaSlave /*mPogoMaster*/;
     private VictorSPX mPogoMaster;
 
     /**
@@ -95,9 +91,12 @@ public class Climber extends Subsystem
 
         try
         {
-            mGorillaMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConst.cl_gorillaMaster);
-            mGorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConst.cl_gorillaSlave, mGorillaMaster);
+            mGorillaMaster = TalonSRXFactory.createDefaultTalonSRX(mConst.cl_gorillaMaster);
+            mGorillaSlave = TalonSRXFactory.createPermanentSlaveTalonSRX(mConst.cl_gorillaSlave, mGorillaMaster);
             mPogoMaster = new VictorSPX(mConst.cl_pogoMaster); //TalonSRXFactory.createDefaultWPI_TalonSRX(mConst.screwMaster);
+
+            mGorillaMaster.setInverted(InvertType.InvertMotorOutput);
+            mGorillaSlave.setInverted(InvertType.FollowMaster);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, climber init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -108,28 +107,16 @@ public class Climber extends Subsystem
 
         if (mConst.cl_useTalonLimit)
         {
-            boolean setsSucceeded = true;
-            int tries = 0;
-            final int maxTries = 5;
-            do
-            {
-                setsSucceeded &= mGorillaMaster.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector,
-                        LimitSwitchNormal.NormallyOpen) == ErrorCode.OK;
+            boolean success = TalonSRXFactory.runTalonConfig(
+                    () -> mGorillaMaster.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen),
+                    () -> mGorillaMaster.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen),
+                    () -> mPogoMaster.configForwardLimitSwitchSource(RemoteLimitSwitchSource.RemoteTalonSRX, LimitSwitchNormal.NormallyOpen,
+                            mConst.cl_pogoLimitRemoteID, mConst.talonTimeout),
+                    () -> mPogoMaster.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteTalonSRX, LimitSwitchNormal.NormallyOpen,
+                            mConst.cl_pogoLimitRemoteID, mConst.talonTimeout)
+            );
 
-                setsSucceeded &= mGorillaMaster.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector,
-                        LimitSwitchNormal.NormallyOpen) == ErrorCode.OK;
-
-                setsSucceeded &= mPogoMaster.configForwardLimitSwitchSource(RemoteLimitSwitchSource.RemoteTalonSRX,
-                        LimitSwitchNormal.NormallyOpen,
-                        mConst.cl_pogoLimitRemoteID,
-                        mConst.talonTimeout) == ErrorCode.OK;
-
-                setsSucceeded &= mPogoMaster.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteTalonSRX,
-                        LimitSwitchNormal.NormallyOpen,
-                        mConst.cl_pogoLimitRemoteID,
-                        mConst.talonTimeout) == ErrorCode.OK;
-            } while (!setsSucceeded && tries++ < maxTries);
-            if (!setsSucceeded)
+            if (!success)
             {
                 log("Could not initialize limit switches", Logger.LogLevel.ERROR);
                 return false;
