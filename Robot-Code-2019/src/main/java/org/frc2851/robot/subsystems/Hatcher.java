@@ -8,7 +8,6 @@ import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
-import org.frc2851.robot.Robot;
 
 /**
  * Represents the Hatcher subsystem
@@ -17,7 +16,7 @@ public class Hatcher extends Subsystem
 {
 
     private DoubleSolenoid mExtendSol, mActuateSol;
-    private Controller mController = Robot.operator;
+    private Controller mController = Constants.operator;
     private Constants mConstants = Constants.getInstance();
 
     private static Hatcher _instance = new Hatcher();

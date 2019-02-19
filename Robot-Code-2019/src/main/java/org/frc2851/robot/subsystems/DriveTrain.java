@@ -60,7 +60,7 @@ public class DriveTrain extends Subsystem
     private PigeonIMU mPigeon;
     private DoubleSolenoid mShifterSolenoid;
 
-    private Controller mController = Robot.driver;
+    private Controller mController = Constants.driver;
     private Constants mConstants = Constants.getInstance();
     private DriveGear mCurrentGear = mConstants.dt_defaultDriveGear;
 
@@ -80,7 +80,7 @@ public class DriveTrain extends Subsystem
     @Override
     protected boolean init()
     {
-        configureController(Robot.driver);
+        configureController(Constants.driver);
         try
         {
             mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftMaster);

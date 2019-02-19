@@ -78,7 +78,7 @@ public class Elevator extends Subsystem
 
     private Constants mConst = Constants.getInstance();
     private TalonSRX mTalon;
-    private Controller mController = (mConst.singleControllerMode) ? Robot.driver : Robot.operator;
+    private Controller mController = (mConst.singleControllerMode) ? Constants.driver : Constants.operator;
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
     private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
 

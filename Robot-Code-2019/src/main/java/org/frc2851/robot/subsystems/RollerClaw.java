@@ -3,7 +3,6 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -31,7 +30,7 @@ public class RollerClaw extends Subsystem
     }
 
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = Robot.driver;
+    private Controller mController = Constants.driver;
 
     private TalonSRX _motor;
 

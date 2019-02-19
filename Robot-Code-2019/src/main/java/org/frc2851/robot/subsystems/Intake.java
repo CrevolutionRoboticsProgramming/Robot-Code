@@ -12,7 +12,6 @@ import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
-import org.frc2851.robot.Robot;
 
 /**
  * Represents the cargo intake subsystem
@@ -37,7 +36,7 @@ public class Intake extends Subsystem
     }
 
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
+    private Controller mController = (mConstants.singleControllerMode) ? Constants.driver : Constants.operator;
     private TalonSRX intakeTalon;
     private DoubleSolenoid intakeSol;
 

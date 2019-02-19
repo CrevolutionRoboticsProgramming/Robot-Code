@@ -15,7 +15,6 @@ import org.frc2851.robot.subsystems.*;
 public class Robot extends CrevoRobot
 {
 
-    public static Controller driver, operator;
     private SendableChooser driveModeSelector = new SendableChooser();
 
 
@@ -25,15 +24,13 @@ public class Robot extends CrevoRobot
     private Robot()
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
-        configControllers();
         addSubsystem(DriveTrain.getInstance());
 //        addSubsystem(Elevator.getInstance());
         //addSubsystem(Hatcher.getInstance());
         //addSubsystem(Intake.getInstance());
 //        addSubsystem(RollerClaw.getInstance());
 //        addSubsystem(Climber.getInstance());
-        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values())
-            driveModeSelector.addOption(m.name(), m);
+        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
         driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);
         SmartDashboard.putData("Drive Selection", driveModeSelector);
     }
@@ -41,15 +38,6 @@ public class Robot extends CrevoRobot
     public void teleopInit()
     {
         DriveTrain.setDriveMode((DriveTrain.DriveControlMode) driveModeSelector.getSelected());
-    }
-
-    /**
-     * Configures the controllers
-     */
-    private static void configControllers()
-    {
-        driver = new Controller(0);
-        operator = new Controller(1);
     }
 
     /**

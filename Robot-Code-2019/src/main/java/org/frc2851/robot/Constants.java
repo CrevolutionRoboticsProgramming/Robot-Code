@@ -3,6 +3,7 @@ package org.frc2851.robot;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
+import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.robot.subsystems.DriveTrain;
 
@@ -30,6 +31,9 @@ public class Constants
 
     public final int magEncCPR = 4096;
     public boolean singleControllerMode = false;
+
+    public static Controller driver = new Controller(0);
+    public static Controller operator = new Controller(1);
 
     /************ Motor Controllers and Others ************/
     // CAN Bus

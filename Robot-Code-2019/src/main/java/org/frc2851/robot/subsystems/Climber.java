@@ -49,7 +49,7 @@ public class Climber extends Subsystem
     }
 
     private Constants mConst = Constants.getInstance();
-    private Controller mController = Robot.driver;
+    private Controller mController = Constants.driver;
     private static Climber mInstance = null;
 
     private DigitalInput mGForwardLimit, mGReverseLimit, mPForwardLimit, mPReverseLimit;
