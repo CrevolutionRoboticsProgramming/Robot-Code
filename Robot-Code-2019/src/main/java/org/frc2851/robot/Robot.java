@@ -2,6 +2,7 @@ package org.frc2851.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Axis;
@@ -31,6 +32,7 @@ public class Robot extends CrevoRobot
         //addSubsystem(Intake.getInstance());
         for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
         driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);
+        SmartDashboard.putData("Drive Selection", driveModeSelector);
     }
 
     public void teleopInit()
