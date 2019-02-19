@@ -94,9 +94,14 @@ public class Constants
     public final Axis.AxisID elevatorDirectControl = Axis.AxisID.RIGHT_Y;
 
     // Climber
-    public final int gorillaMaster = 8;
-    public final int gorillaSlave = 9;
-    public final int screwMaster = 10;
+    public final int cl_gorillaMaster = 8;
+    public final int cl_gorillaSlave = 9;
+    public final int cl_pogoMaster = 10;
+
+    public final int cl_pogoLimitRemoteID = cl_gorillaSlave;
+    public final boolean cl_useTalonLimit = false;
+    public final double cl_reverseThresholdCurrent = 20;
+
     public final int gorillaLimitOut = 1;
     public final int gorillaLimitIn = 2;
     public final int screwLimitOut = 3;
