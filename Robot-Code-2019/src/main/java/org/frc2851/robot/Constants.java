@@ -76,16 +76,16 @@ public class Constants
     public final PID el_posPID = new PID(0, 0, 0, 0);
 
     // Climber
-    public final int gorillaMaster = 9;
-    public final int gorillaSlave = 10;
-    public final int screwMaster = 11;
+    public final int gorillaMaster = 8;
+    public final int gorillaSlave = 9;
+    public final int screwMaster = 10;
     public final int gorillaLimitOut = 1;
     public final int gorillaLimitIn = 2;
     public final int screwLimitOut = 3;
     public final int screwLimitIn = 4;
 
     // Intake
-    public final int intakeMaster = 0;
+    public final int intakeMaster = 12;
     public final int intakeForward = 0;
     public final int intakeReverse = 1;
 
@@ -96,7 +96,7 @@ public class Constants
     public final int actuateHatcherReverse = 0;
 
     // RollerClaw
-    public final int rollerClawTalon = 1;
+    public final int rollerClawTalon = 11;
     public final int rollerClawLimitSwitch = 0;
 
     public final int talonTimeout = 20;

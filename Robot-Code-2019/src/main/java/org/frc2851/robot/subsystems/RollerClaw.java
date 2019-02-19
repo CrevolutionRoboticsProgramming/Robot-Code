@@ -20,8 +20,18 @@ import org.frc2851.robot.Robot;
  */
 public class RollerClaw extends Subsystem
 {
+    private enum IntakeState
+    {
+        INTAKE(0.5), OUTTAKE(-0.5), IDLE(0), HOLD(0.1);
+
+        double power;
+        IntakeState(double power) {
+            this.power = power;
+        }
+    }
+
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = Robot.operator;
+    private Controller mController = Robot.driver;
 
     private TalonSRX _motor;
 
@@ -58,14 +68,14 @@ public class RollerClaw extends Subsystem
     {
         try
         {
-            _motor = TalonSRXFactory.createDefaultMasterTalonSRX(mConstants.rollerClawTalon);
+            _motor = TalonSRXFactory.createDefaultMasterTalonSRX(7);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, roller claw init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
 
-        mLimitSwitch = new DigitalInput(mConstants.rollerClawLimitSwitch);
+//        mLimitSwitch = new DigitalInput(mConstants.rollerClawLimitSwitch);
 
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
         mController.config(Axis.AxisID.LEFT_TRIGGER);
@@ -87,6 +97,8 @@ public class RollerClaw extends Subsystem
     {
         return new Command()
         {
+            IntakeState lastState = IntakeState.IDLE;
+
             @Override
             public String getName()
             {
@@ -109,37 +121,52 @@ public class RollerClaw extends Subsystem
             @Override
             public void update()
             {
-                double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
-                        -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
 
-                _motor.set(ControlMode.PercentOutput, output);
-
-                isIntaking = output > 0;
-
-                if (isIntaking && !lastIntakeState)
+                if (Robot.isRunning())
                 {
-                    log("Began Intaking", Logger.LogLevel.DEBUG);
-                } else if (!isIntaking && lastIntakeState)
-                {
-                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
+                    IntakeState state;
+
+                    if (mController.get(Axis.AxisID.LEFT_TRIGGER) > 0.5) state = IntakeState.OUTTAKE;
+                    else if (mController.get(Axis.AxisID.RIGHT_TRIGGER) > 0.5) state = IntakeState.INTAKE;
+                    else if (/*mLimitSwitch.get()*/ false) state = IntakeState.HOLD;
+                    else state = IntakeState.IDLE;
+
+                    if (state != lastState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
+                    _motor.set(ControlMode.PercentOutput, 0.5);
+                    lastState = state;
                 }
-                lastIntakeState = isIntaking;
 
-                isOuttaking = output < 0;
-
-                if (isOuttaking && !lastOuttakeState)
-                {
-                    log("Began Outtaking", Logger.LogLevel.DEBUG);
-                } else if (!isOuttaking && lastOuttakeState)
-                {
-                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
-                }
-                lastOuttakeState = isOuttaking;
-
-                if (mLimitSwitch.get())
-                {
-                    _motor.set(ControlMode.PercentOutput, 0.1);
-                }
+//                double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
+//                        -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
+//
+//                _motor.set(ControlMode.PercentOutput, output);
+//
+//                isIntaking = output > 0;
+//
+//                if (isIntaking && !lastIntakeState)
+//                {
+//                    log("Began Intaking", Logger.LogLevel.DEBUG);
+//                } else if (!isIntaking && lastIntakeState)
+//                {
+//                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
+//                }
+//                lastIntakeState = isIntaking;
+//
+//                isOuttaking = output < 0;
+//
+//                if (isOuttaking && !lastOuttakeState)
+//                {
+//                    log("Began Outtaking", Logger.LogLevel.DEBUG);
+//                } else if (!isOuttaking && lastOuttakeState)
+//                {
+//                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
+//                }
+//                lastOuttakeState = isOuttaking;
+//
+//                if (mLimitSwitch.get())
+//                {
+//                    _motor.set(ControlMode.PercentOutput, 0.1);
+//                }
             }
 
             @Override
