@@ -112,6 +112,7 @@ public class Constants
     public final int intakeReverse = 1;
 
     // On the operator controller
+    public final Button.ButtonID intakeExtendButton = Button.ButtonID.Y;
     public final Button.ButtonID intakeIntakeButton = Button.ButtonID.RIGHT_BUMPER;
     public final Button.ButtonID intakeOuttakeButton = Button.ButtonID.LEFT_BUMPER;
 

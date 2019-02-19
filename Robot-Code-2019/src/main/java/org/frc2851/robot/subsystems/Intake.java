@@ -83,7 +83,7 @@ public class Intake extends Subsystem
     @Override
     protected boolean init()
     {
-        mController.config(Button.ButtonID.Y, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.intakeExtendButton, Button.ButtonMode.TOGGLE);
         mController.config(mConstants.intakeIntakeButton, Button.ButtonMode.RAW);
         mController.config(mConstants.intakeOuttakeButton, Button.ButtonMode.RAW);
 
@@ -141,7 +141,7 @@ public class Intake extends Subsystem
             public void update()
             {
                 // Double Solenoid
-                if(mController.get(Button.ButtonID.Y))
+                if(mController.get(mConstants.intakeExtendButton))
                 {
                     solenoidState = DoubleSolenoid.Value.kForward;
                 } else
