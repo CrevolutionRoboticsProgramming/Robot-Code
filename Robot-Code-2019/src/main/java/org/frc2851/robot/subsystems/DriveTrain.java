@@ -158,7 +158,7 @@ public class DriveTrain extends Subsystem
     {
         if (!zeroSensors()) log("Failed to zero sensors", Logger.LogLevel.ERROR);
         setLeftRightMotorOutputs(0, 0);
-        setNeutralMode(TALON_NEUTRAL_MODE);
+        setNeutralMode(mConstants.dt_defaultNeutralMode);
     }
 
     private boolean zeroSensors()

@@ -32,6 +32,7 @@ public class Constants
     public boolean singleControllerMode = false;
 
     /************ Motor Controllers and Others ************/
+    // CAN Bus
     public final int pdp = 0;
     public final int dt_leftMaster = 1;
     public final int dt_leftSlaveA = 2;
@@ -46,6 +47,25 @@ public class Constants
     public final int rc_talon = 11;
     public final int in_talon = 12;
     public final int pcm = 13;
+
+    // Pneumatics
+    public final int in_solenoidForward = 0;
+    public final int in_solenoidReverse = 1;
+    public final int ht_extendForward = 2;
+    public final int ht_extendReverse = 3;
+    public final int ht_actuateForward = 4;
+    public final int ht_actuateReverse = 5;
+    public final int dt_shifterForwardChannel = 6;
+    public final int dt_shifterReverseChannel = 7;
+
+    // DIO
+    public final int rc_limitSwitch = 0; // Normally Open; Closed when ball in RC
+    public final int cl_gorillaForwardLimit = 1;
+    public final int cl_gorillaReverseLimit = 2;
+    public final int cl_pogoForwardLimit = 3;
+    public final int cl_pogoReverseLimit = 4;
+    public final int el_forwardLimit = 5; // Closed at max height
+    public final int el_reverseLimit = 6; // Closed at min height
 
     /************ Controller Buttons and Axis ************/
     // Drivetrain - Driver Controller
@@ -86,8 +106,6 @@ public class Constants
 
     // Shifters
     public final DriveTrain.DriveGear dt_defaultDriveGear = DriveTrain.DriveGear.HIGH;
-    public final int dt_shifterForwardChannel = 6;
-    public final int dt_shifterReverseChannel = 7;
 
     // Physical Dimensions
     public final double dt_width = 2.5;
@@ -120,23 +138,14 @@ public class Constants
     public final boolean cl_useTalonLimit = false;
     public final double cl_reverseThresholdCurrent = 20;
 
-    public final int cl_gorillaForwardLimit = 1;
-    public final int cl_gorillaReverseLimit = 2;
-    public final int cl_pogoForwardLimit = 3;
-    public final int cl_pogoReverseLimit = 4;
-
     /************ Intake ************/
-    public final int in_solenoidForward = 0;
-    public final int in_solenoidReverse = 1;
-
-
-    /************ Hatcher ************/
-    public final int extendHatcherForward = 2;
-    public final int extendHatcherReverse = 3;
-    public final int actuateHatcherForward = 4;
-    public final int actuateHatcherReverse = 5;
+    public final double in_intakeSpeed = 0.5;
+    public final double in_outtakeSpeed = 0.5;
 
     /************ Roller Claw ************/
-    public final int rollerClawLimitSwitch = 0;
+    public final double rc_intakeSpeed = 0.5;
+    public final double rc_outtakeSpeed = -0.5;
+    public final double rc_holdSpeed = 0.1;
+
     public final int talonTimeout = 20;
 }

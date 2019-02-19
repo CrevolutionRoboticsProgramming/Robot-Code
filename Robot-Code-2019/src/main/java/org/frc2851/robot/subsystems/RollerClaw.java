@@ -75,7 +75,7 @@ public class RollerClaw extends Subsystem
             return false;
         }
 
-//        mLimitSwitch = new DigitalInput(mConstants.rollerClawLimitSwitch);
+//        mLimitSwitch = new DigitalInput(mConstants.rc_limitSwitch);
 
         mController.config(Axis.AxisID.RIGHT_TRIGGER);
         mController.config(Axis.AxisID.LEFT_TRIGGER);

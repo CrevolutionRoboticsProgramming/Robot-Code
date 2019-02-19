@@ -60,8 +60,8 @@ public class Hatcher extends Subsystem
     @Override
     public boolean init()
     {
-        mExtendSol = new DoubleSolenoid(mConstants.pcm, mConstants.extendHatcherForward, mConstants.extendHatcherReverse);
-        mActuateSol = new DoubleSolenoid(mConstants.pcm, mConstants.actuateHatcherForward, mConstants.actuateHatcherReverse);
+        mExtendSol = new DoubleSolenoid(mConstants.pcm, mConstants.ht_extendForward, mConstants.ht_extendReverse);
+        mActuateSol = new DoubleSolenoid(mConstants.pcm, mConstants.ht_actuateForward, mConstants.ht_actuateReverse);
 
         mController.config(mConstants.ht_extend, Button.ButtonMode.RAW);
         mController.config(mConstants.ht_actuate, Button.ButtonMode.TOGGLE);
