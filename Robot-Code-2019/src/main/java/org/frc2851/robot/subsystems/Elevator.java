@@ -193,7 +193,7 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double rawInput = mController.get(mConst.elevatorDirectControl) * 0.5;
+                    double rawInput = mController.get(mConst.elevatorDirectControl) * 0.1;
                     lastPos = desiredPosition;
                     getDesiredPosition();
                     boolean updatePos = lastPos != desiredPosition;
