@@ -37,13 +37,22 @@ public class Elevator extends Subsystem
 
         private final ControlMode controlMode;
         private final int slotID;
-        ElevatorControlMode(ControlMode controlMode, int slotID) {
+
+        ElevatorControlMode(ControlMode controlMode, int slotID)
+        {
             this.controlMode = controlMode;
             this.slotID = slotID;
         }
 
-        ControlMode getMode() { return controlMode; }
-        int getSlotID() { return slotID; }
+        ControlMode getMode()
+        {
+            return controlMode;
+        }
+
+        int getSlotID()
+        {
+            return slotID;
+        }
     }
 
     public enum ElevatorPosition
@@ -52,14 +61,20 @@ public class Elevator extends Subsystem
         LOW_CARGO(0), MID_CARGO(0), HIGH_CARGO(0);
 
         private final int pos;
-        ElevatorPosition(int pos) {
+
+        ElevatorPosition(int pos)
+        {
             this.pos = pos;
         }
 
-        public int getPos() { return pos; }
+        public int getPos()
+        {
+            return pos;
+        }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return "[" + this.name() + ", " + pos + "]";
         }
     }
@@ -76,7 +91,12 @@ public class Elevator extends Subsystem
     boolean mTuning = true;
 
     private static Elevator mInstance;
-    private Elevator() { super("Elevator"); }
+
+    private Elevator()
+    {
+        super("Elevator");
+    }
+
     public static Elevator getInstance()
     {
         if (mInstance == null) mInstance = new Elevator();
@@ -85,20 +105,23 @@ public class Elevator extends Subsystem
 
     /**
      * Initilizes the motors and the loggers.
+     *
      * @return
      */
     @Override
     protected boolean init()
     {
-        try {
+        try
+        {
             mTalon = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.el_talon);
-        } catch (TalonCommunicationErrorException e) {
+        } catch (TalonCommunicationErrorException e)
+        {
             log("Could not initialize motor, elevator init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
 //        mCanifier = new CANifier(mConst.elevatorCanifier);
 
-        mTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative,0, mConst.talonTimeout);
+        mTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConst.talonTimeout);
 //        mTalon.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
 //                mCanifier.getDeviceID(), mConst.talonTimeout);
 
@@ -133,21 +156,30 @@ public class Elevator extends Subsystem
         boolean setSucceeded = true;
         int retryCounter = 0;
         final int maxRetries = 5;
-        do {
+        do
+        {
             setSucceeded &= mTalon.setSelectedSensorPosition(50, 0, mConst.talonTimeout) == ErrorCode.OK;
         } while (!setSucceeded || retryCounter++ < maxRetries);
     }
 
     @Override
-    public Command getDefaultCommand() {
-        return new Command() {
+    public Command getDefaultCommand()
+    {
+        return new Command()
+        {
             ElevatorPosition desiredPosition = null, lastPos;
 
             @Override
-            public String getName() { return "Default"; }
+            public String getName()
+            {
+                return "Default";
+            }
 
             @Override
-            public boolean isFinished() { return false; }
+            public boolean isFinished()
+            {
+                return false;
+            }
 
             @Override
             public boolean init()
@@ -159,7 +191,8 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
-                if (Robot.isRunning()) {
+                if (Robot.isRunning())
+                {
                     double rawInput = mController.get(Axis.AxisID.RIGHT_Y) * 0.5;
                     lastPos = desiredPosition;
                     getDesiredPosition();
@@ -192,7 +225,9 @@ public class Elevator extends Subsystem
             }
 
             @Override
-            public void stop() { }
+            public void stop()
+            {
+            }
 
             void getDesiredPosition()
             {
@@ -214,7 +249,8 @@ public class Elevator extends Subsystem
 
     public Command setPosition(int counts, String posName)
     {
-        return new Command() {
+        return new Command()
+        {
             boolean isFinished = false;
 
             @Override
@@ -232,7 +268,8 @@ public class Elevator extends Subsystem
             @Override
             public boolean init()
             {
-                if (counts == -1) {
+                if (counts == -1)
+                {
                     log("Could not read setpoint!", Logger.LogLevel.ERROR);
                     return false;
                 }
@@ -250,7 +287,8 @@ public class Elevator extends Subsystem
                             mConst.el_posPID.getI(),
                             mConst.el_posPID.getD(),
                             mConst.el_posPID.getF());
-                } else {
+                } else
+                {
                     TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(),
                             mTunePrefs.getDouble("magP", 0),
                             mTunePrefs.getDouble("magI", 0),
@@ -268,8 +306,10 @@ public class Elevator extends Subsystem
                 int maxRetries = 5;
                 int count = 0;
 
-                if (mClosedLoopStategy == ElevatorControlMode.MOTION_MAGIC) {
-                    do {
+                if (mClosedLoopStategy == ElevatorControlMode.MOTION_MAGIC)
+                {
+                    do
+                    {
                         setsSucceeded &= mTalon.configMotionCruiseVelocity(mConst.el_maxVelocity, mConst.talonTimeout) == ErrorCode.OK;
                         setsSucceeded &= mTalon.configMotionAcceleration(mConst.el_maxAcceleration, mConst.talonTimeout) == ErrorCode.OK;
                     } while (!setsSucceeded || count++ < maxRetries);
@@ -320,6 +360,7 @@ public class Elevator extends Subsystem
         return new Command()
         {
             double startTime;
+
             @Override
             public String getName()
             {
@@ -353,7 +394,8 @@ public class Elevator extends Subsystem
         };
     }
 
-    private double applyDeadband(double input, double deadband) {
+    private double applyDeadband(double input, double deadband)
+    {
         return (Math.abs(input) < deadband) ? 0 : input;
     }
 

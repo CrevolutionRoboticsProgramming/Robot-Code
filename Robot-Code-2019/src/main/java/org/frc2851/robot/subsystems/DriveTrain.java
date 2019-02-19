@@ -31,13 +31,15 @@ public class DriveTrain extends Subsystem
         HIGH(DoubleSolenoid.Value.kForward), LOW(DoubleSolenoid.Value.kReverse);
 
         private final DoubleSolenoid.Value val;
+
         DriveGear(DoubleSolenoid.Value val)
         {
             this.val = val;
         }
     }
 
-    public enum DriveControlMode {
+    public enum DriveControlMode
+    {
         TANK, FPS, FPS_CURVE, ARCADE
     }
 
@@ -79,7 +81,8 @@ public class DriveTrain extends Subsystem
     protected boolean init()
     {
         configureController(Robot.driver);
-        try {
+        try
+        {
             mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftMaster);
             mLeftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveA);
             mLeftSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveB);
@@ -94,7 +97,8 @@ public class DriveTrain extends Subsystem
             rightMotors.add(mRightMaster);
             rightMotors.add(mRightSlaveA);
             rightMotors.add(mRightSlaveB);
-        } catch (TalonCommunicationErrorException e) {
+        } catch (TalonCommunicationErrorException e)
+        {
             log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
@@ -112,7 +116,8 @@ public class DriveTrain extends Subsystem
         mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
 
         // Pigeon Configuration
-        if (mConstants.dt_usePigeon) {
+        if (mConstants.dt_usePigeon)
+        {
             mPigeon = new PigeonIMU(0); // TODO: Add to config file
             mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
@@ -165,7 +170,8 @@ public class DriveTrain extends Subsystem
         boolean setsSucceeded = true;
         int tries = 0;
         final int maxTries = 5;
-        do {
+        do
+        {
             setsSucceeded &= mLeftMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mRightMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout) == ErrorCode.OK;
         } while (!setsSucceeded && tries++ < maxTries);
@@ -183,10 +189,16 @@ public class DriveTrain extends Subsystem
             final double TURN_MULT = 1;
 
             @Override
-            public String getName() { return "Teleop"; }
+            public String getName()
+            {
+                return "Teleop";
+            }
 
             @Override
-            public boolean isFinished() { return false; }
+            public boolean isFinished()
+            {
+                return false;
+            }
 
             @Override
             public boolean init()
@@ -239,7 +251,8 @@ public class DriveTrain extends Subsystem
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 reset();
             }
         };
@@ -247,32 +260,39 @@ public class DriveTrain extends Subsystem
 
     public Command driveTime(double time, double leftPower, double rightPower)
     {
-        return new Command() {
+        return new Command()
+        {
             double startTime;
+
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "DriveTime[T: " + time + ", L: " + leftPower + ", R: " + rightPower + "]";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return (Timer.getFPGATimestamp() - startTime) > time;
             }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 startTime = Timer.getFPGATimestamp();
                 return true;
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
                 mLeftMaster.set(ControlMode.PercentOutput, leftPower);
                 mRightMaster.set(ControlMode.PercentOutput, rightPower);
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 mLeftMaster.set(ControlMode.PercentOutput, 0);
                 mRightMaster.set(ControlMode.PercentOutput, 0);
             }
@@ -296,12 +316,14 @@ public class DriveTrain extends Subsystem
             final double turnCoeff = 3600.0d / UNITS_PER_ROTATION;
 
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "DriveDistanceMotionProfile[" + distance + "]";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return Math.abs(targetPos - mRightMaster.getSelectedSensorPosition(0)) < 1024;
             }
 
@@ -329,7 +351,8 @@ public class DriveTrain extends Subsystem
                     mLeftMaster.configSelectedFeedbackCoefficient(3600.0d / 8192.0d, 1, mConstants.talonTimeout);
 
                     mLeftMaster.selectProfileSlot(mConstants.dt_gyroPidSlot, 1);
-                } else {
+                } else
+                {
                     mLeftMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, mConstants.talonTimeout);
                     mLeftMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, mConstants.talonTimeout);
                     mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, 1, mConstants.talonTimeout);
@@ -351,13 +374,17 @@ public class DriveTrain extends Subsystem
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
                 mLeftMaster.set(ControlMode.MotionMagic, targetPos, DemandType.AuxPID, targetAngle);
                 mRightMaster.follow(mLeftMaster, FollowerType.AuxOutput1);
             }
 
             @Override
-            public void stop() { reset(); }
+            public void stop()
+            {
+                reset();
+            }
         };
     }
 
@@ -365,13 +392,19 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            int counts = (int)(((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
+            int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
 
             @Override
-            public String getName() { return "TurnAngle[" + angle + "]"; }
+            public String getName()
+            {
+                return "TurnAngle[" + angle + "]";
+            }
 
             @Override
-            public boolean isFinished() { return mLeftMaster.getClosedLoopError(0) < 512; }
+            public boolean isFinished()
+            {
+                return mLeftMaster.getClosedLoopError(0) < 512;
+            }
 
             @Override
             public boolean init()
@@ -403,29 +436,35 @@ public class DriveTrain extends Subsystem
     // TODO: Implement turn to angle gyro
     public Command turnToAngleGyro(double angle, double maxOut)
     {
-        return new Command() {
+        return new Command()
+        {
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "TurnToAngleGyro[Ang: " + angle + ", Max: " + maxOut + "]";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return false;
             }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 return false;
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
 
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
 
             }
         };
@@ -439,7 +478,10 @@ public class DriveTrain extends Subsystem
             boolean profileNull = false;
 
             @Override
-            public String getName() { return "MotionProfile[" + leftProfile + ", " + rightProfile + "]"; }
+            public String getName()
+            {
+                return "MotionProfile[" + leftProfile + ", " + rightProfile + "]";
+            }
 
             @Override
             public boolean isFinished()
@@ -455,10 +497,12 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
-                try {
+                try
+                {
                     left = new MotionProfileExecutor(Robot.getMotionProfile(leftProfile), mLeftMaster, false);
                     right = new MotionProfileExecutor(Robot.getMotionProfile(rightProfile), mRightMaster, false);
-                } catch (NullPointerException e) {
+                } catch (NullPointerException e)
+                {
                     return false;
                 }
 
@@ -468,7 +512,8 @@ public class DriveTrain extends Subsystem
                 //TODO: Feedback Coeff
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
-                if (mConstants.dt_usePigeon) {
+                if (mConstants.dt_usePigeon)
+                {
                     mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, 0, mConstants.talonTimeout);
                     mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, 1, mConstants.talonTimeout);
 
@@ -501,13 +546,21 @@ public class DriveTrain extends Subsystem
         };
     }
 
-    public Command setDriveGear(DriveGear gear) {
-        return new Command() {
+    public Command setDriveGear(DriveGear gear)
+    {
+        return new Command()
+        {
             @Override
-            public String getName() { return "SetDriveGear[" + gear.name() + "]"; }
+            public String getName()
+            {
+                return "SetDriveGear[" + gear.name() + "]";
+            }
 
             @Override
-            public boolean isFinished() { return true; }
+            public boolean isFinished()
+            {
+                return true;
+            }
 
             @Override
             public boolean init()
@@ -517,10 +570,14 @@ public class DriveTrain extends Subsystem
             }
 
             @Override
-            public void update() { }
+            public void update()
+            {
+            }
 
             @Override
-            public void stop() { }
+            public void stop()
+            {
+            }
         };
     }
 
@@ -537,7 +594,8 @@ public class DriveTrain extends Subsystem
         boolean setsSucceeded = true;
         int tries = 0;
         final int maxRetries = 5;
-        do {
+        do
+        {
             setsSucceeded &= mLeftMaster.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mLeftMaster.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mLeftMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
@@ -575,7 +633,7 @@ public class DriveTrain extends Subsystem
 
     private int distanceToCounts(double distance)
     {
-        return (int)(distance / (mConstants.magEncCPR * mConstants.dt_wheelDiameter * Math.PI));
+        return (int) (distance / (mConstants.magEncCPR * mConstants.dt_wheelDiameter * Math.PI));
     }
 
     private double applyDeadband(double val, double deadband)
@@ -589,5 +647,7 @@ public class DriveTrain extends Subsystem
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
     }
 
-    public static void setDriveMode(DriveControlMode mode) { }
+    public static void setDriveMode(DriveControlMode mode)
+    {
+    }
 }

@@ -30,7 +30,8 @@ public class Robot extends CrevoRobot
         addSubsystem(Elevator.getInstance());
         //addSubsystem(Hatcher.getInstance());
         //addSubsystem(Intake.getInstance());
-        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
+        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values())
+            driveModeSelector.addOption(m.name(), m);
         driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);
         SmartDashboard.putData("Drive Selection", driveModeSelector);
     }
@@ -58,7 +59,8 @@ public class Robot extends CrevoRobot
     /**
      * Main method for code execution
      */
-    public static void main(String... args) {
+    public static void main(String... args)
+    {
         RobotBase.startRobot(Robot::new);
     }
 }

@@ -13,8 +13,9 @@ import org.frc2851.robot.Robot;
 /**
  * Represents the Hatcher subsystem
  */
-public class Hatcher extends Subsystem {
-    
+public class Hatcher extends Subsystem
+{
+
     private Button.ButtonID hatcherExtend = Button.ButtonID.RIGHT_BUMPER;
     private Button.ButtonID hatcherActuate = Button.ButtonID.LEFT_BUMPER;
 
@@ -29,32 +30,38 @@ public class Hatcher extends Subsystem {
     /**
      * Initializes the Hatcher class with the name "Hatcher"
      */
-    private Hatcher() {
+    private Hatcher()
+    {
         super("Hatcher");
     }
 
     /**
      * Returns the sole instance of the Hatcher class
+     *
      * @return The instance of the Hatcher class
      */
-    public static Hatcher getInstance() {
+    public static Hatcher getInstance()
+    {
         return _instance;
     }
 
     /**
      * Resets the solenoids
      */
-    private void reset() {
+    private void reset()
+    {
         mExtendSol.set(DoubleSolenoid.Value.kOff);
         mActuateSol.set(DoubleSolenoid.Value.kOff);
     }
 
     /**
      * Initializes the controller, solenoids, and logging
+     *
      * @return A boolean representing whether initialization has succeeded
      */
     @Override
-    public boolean init() {
+    public boolean init()
+    {
         mExtendSol = new DoubleSolenoid(mConstants.pcmID, mConstants.extendHatcherForward, mConstants.extendHatcherReverse);
         mActuateSol = new DoubleSolenoid(mConstants.pcmID, mConstants.actuateHatcherForward, mConstants.actuateHatcherReverse);
 
@@ -68,24 +75,30 @@ public class Hatcher extends Subsystem {
 
     /**
      * Returns a command representing user control over the hatcher
+     *
      * @return A command representing user control over the hatcher
      */
     @Override
-    public Command getDefaultCommand() {
-        return new Command() {
+    public Command getDefaultCommand()
+    {
+        return new Command()
+        {
 
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "Teleop";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return false;
             }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 reset();
 
                 BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
@@ -95,28 +108,37 @@ public class Hatcher extends Subsystem {
             }
 
             @Override
-            public void update() {
-                if (mController.get(hatcherExtend)) {
+            public void update()
+            {
+                if (mController.get(hatcherExtend))
+                {
                     mExtendSol.set(DoubleSolenoid.Value.kForward);
-                    if(!lastExtendState) {
+                    if (!lastExtendState)
+                    {
                         log("Extended", Logger.LogLevel.DEBUG);
                     }
-                } else {
+                } else
+                {
                     mExtendSol.set(DoubleSolenoid.Value.kReverse);
-                    if(lastExtendState) {
+                    if (lastExtendState)
+                    {
                         log("Retracted", Logger.LogLevel.DEBUG);
                     }
                 }
                 lastExtendState = mController.get(hatcherExtend);
 
-                if (mController.get(hatcherActuate)) {
+                if (mController.get(hatcherActuate))
+                {
                     mActuateSol.set(DoubleSolenoid.Value.kReverse);
-                    if(!lastActuateState) {
+                    if (!lastActuateState)
+                    {
                         log("Actuated Out", Logger.LogLevel.DEBUG);
                     }
-                } else {
+                } else
+                {
                     mActuateSol.set(DoubleSolenoid.Value.kForward);
-                    if(lastActuateState) {
+                    if (lastActuateState)
+                    {
                         log("Actuated In", Logger.LogLevel.DEBUG);
                     }
                 }
@@ -124,7 +146,8 @@ public class Hatcher extends Subsystem {
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 reset();
             }
 

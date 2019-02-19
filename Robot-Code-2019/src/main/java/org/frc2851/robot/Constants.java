@@ -12,14 +12,18 @@ public class Constants
 
     /**
      * Gets the sole instance of the Constants class
+     *
      * @return The instance of the Constants class
      */
-    public static Constants getInstance() {
+    public static Constants getInstance()
+    {
         if (mInstance == null) mInstance = new Constants();
         return mInstance;
     }
 
-    private Constants() { }
+    private Constants()
+    {
+    }
 
     public final int magEncCPR = 4096;
     public final int pcmID = 0;

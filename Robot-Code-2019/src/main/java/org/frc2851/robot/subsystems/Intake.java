@@ -17,7 +17,8 @@ import org.frc2851.robot.Robot;
 /**
  * Represents the cargo intake subsystem
  */
-public class Intake extends Subsystem {
+public class Intake extends Subsystem
+{
 
     private Constants mConstants = Constants.getInstance();
     private Controller mController = (mConstants.singleControllerMode) ? Robot.driver : Robot.operator;
@@ -28,16 +29,19 @@ public class Intake extends Subsystem {
 
     /**
      * Returns the sole instance of the Intake class
+     *
      * @return The instance of the Intake class
      */
-    public static Intake getInstance() {
+    public static Intake getInstance()
+    {
         return mInstance;
     }
 
     /**
      * Initializes the Intake class with the name "Intake"
      */
-    private Intake() {
+    private Intake()
+    {
         super("Intake");
     }
 
@@ -47,24 +51,29 @@ public class Intake extends Subsystem {
     /**
      * Resets the motor and solenoid
      */
-    private void reset() {
+    private void reset()
+    {
         intakeTalon.set(ControlMode.PercentOutput, 0);
         intakeSol.set(DoubleSolenoid.Value.kOff);
     }
 
     /**
      * Initializes the controller, motor, solenoid, and logging
+     *
      * @return A boolean representing whether the initialization has succeeded
      */
     @Override
-    protected boolean init() {
+    protected boolean init()
+    {
         mController.config(Button.ButtonID.Y, Button.ButtonMode.TOGGLE);
         mController.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.RAW);
 
-        try {
+        try
+        {
             intakeTalon = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.intakeMaster);
-        } catch (TalonCommunicationErrorException e) {
+        } catch (TalonCommunicationErrorException e)
+        {
             log("Could not initialize motor, intake init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
@@ -83,69 +92,87 @@ public class Intake extends Subsystem {
 
     /**
      * Returns a command representing user control over the intake
+     *
      * @return A command representing user control over the intake
      */
     @Override
-    public Command getDefaultCommand() {
-        return new Command() {
+    public Command getDefaultCommand()
+    {
+        return new Command()
+        {
             @Override
-            public String getName() {
+            public String getName()
+            {
                 return "Teleop";
             }
 
             @Override
-            public boolean isFinished() {
+            public boolean isFinished()
+            {
                 return false;
             }
 
             @Override
-            public boolean init() {
+            public boolean init()
+            {
                 reset();
 
                 return true;
             }
 
             @Override
-            public void update() {
+            public void update()
+            {
                 // DoubleSolenoid
-                if (mController.get(Button.ButtonID.Y)) {
+                if (mController.get(Button.ButtonID.Y))
+                {
                     intakeSol.set(DoubleSolenoid.Value.kForward);
-                    if (!lastDeployState) {
+                    if (!lastDeployState)
+                    {
                         log("Intake Deployed", Logger.LogLevel.DEBUG);
                     }
-                } else {
+                } else
+                {
                     intakeSol.set(DoubleSolenoid.Value.kReverse);
                 }
                 lastDeployState = intakeSol.get() == DoubleSolenoid.Value.kForward;
 
                 // Motor
-                if (mController.get(Button.ButtonID.RIGHT_BUMPER)) {
+                if (mController.get(Button.ButtonID.RIGHT_BUMPER))
+                {
                     intakeTalon.set(ControlMode.PercentOutput, 1);
-                    if (lastIntakeState) {
+                    if (lastIntakeState)
+                    {
                         log("Began Intaking", Logger.LogLevel.DEBUG);
                     }
-                } else if (lastIntakeState) {
+                } else if (lastIntakeState)
+                {
                     log("Stopped Intaking", Logger.LogLevel.DEBUG);
                 }
                 lastIntakeState = mController.get(Button.ButtonID.RIGHT_BUMPER);
 
-                if (mController.get(Button.ButtonID.LEFT_BUMPER)) {
+                if (mController.get(Button.ButtonID.LEFT_BUMPER))
+                {
                     intakeTalon.set(ControlMode.PercentOutput, -1);
-                    if (lastIntakeState) {
+                    if (lastIntakeState)
+                    {
                         log("Began Outtaking", Logger.LogLevel.DEBUG);
                     }
-                } else if (lastOuttakeState) {
+                } else if (lastOuttakeState)
+                {
                     log("Stopped Outtaking", Logger.LogLevel.DEBUG);
                 }
                 lastOuttakeState = mController.get(Button.ButtonID.LEFT_BUMPER);
 
-                if (!mController.get(Button.ButtonID.RIGHT_BUMPER) && !mController.get(Button.ButtonID.LEFT_BUMPER)) {
+                if (!mController.get(Button.ButtonID.RIGHT_BUMPER) && !mController.get(Button.ButtonID.LEFT_BUMPER))
+                {
                     intakeTalon.set(ControlMode.PercentOutput, 0);
                 }
             }
 
             @Override
-            public void stop() {
+            public void stop()
+            {
                 reset();
             }
         };
