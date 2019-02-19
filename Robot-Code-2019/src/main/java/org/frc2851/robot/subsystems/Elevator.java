@@ -193,7 +193,7 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double rawInput = mController.get(Axis.AxisID.RIGHT_Y) * 0.5;
+                    double rawInput = mController.get(mConst.elevatorDirectControl) * 0.5;
                     lastPos = desiredPosition;
                     getDesiredPosition();
                     boolean updatePos = lastPos != desiredPosition;
@@ -208,7 +208,7 @@ public class Elevator extends Subsystem
 //                    return;
 //                }
 //
-//                if (/*desiredPosition != null && updatePos*/ mController.get(Button.ButtonID.A))
+//                if (/*desiredPosition != null && updatePos*/ mController.get(mConst.elevatorMidCargo))
 //                {
 //                    setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
 //                }
@@ -231,17 +231,17 @@ public class Elevator extends Subsystem
 
             void getDesiredPosition()
             {
-                if (mController.get(Button.ButtonID.START))
+                if (mController.get(mConst.elevatorLowHatch))
                     desiredPosition = ElevatorPosition.LOW_HATCH;
-                else if (mController.get(Button.ButtonID.X))
+                else if (mController.get(mConst.elevatorMidHatch))
                     desiredPosition = ElevatorPosition.MID_HATCH;
-                else if (mController.get(Button.ButtonID.Y))
+                else if (mController.get(mConst.elevatorHighHatch))
                     desiredPosition = ElevatorPosition.HIGH_HATCH;
-                else if (mController.get(Button.ButtonID.B))
+                else if (mController.get(mConst.elevatorLowCargo))
                     desiredPosition = ElevatorPosition.LOW_CARGO;
-                else if (mController.get(Button.ButtonID.A))
+                else if (mController.get(mConst.elevatorMidCargo))
                     desiredPosition = ElevatorPosition.MID_CARGO;
-                else if (mController.get(Button.ButtonID.SELECT))
+                else if (mController.get(mConst.elevatorHighCargo))
                     desiredPosition = ElevatorPosition.HIGH_CARGO;
             }
         };
@@ -411,12 +411,12 @@ public class Elevator extends Subsystem
          * Right Y - Manual elevator control
          */
 
-        controller.config(Button.ButtonID.A, Button.ButtonMode.ON_PRESS);
-        controller.config(Button.ButtonID.B, Button.ButtonMode.ON_PRESS);
-        controller.config(Button.ButtonID.X, Button.ButtonMode.ON_PRESS);
-        controller.config(Button.ButtonID.Y, Button.ButtonMode.ON_PRESS);
-        controller.config(Button.ButtonID.START, Button.ButtonMode.ON_PRESS);
-        controller.config(Button.ButtonID.SELECT, Button.ButtonMode.ON_PRESS);
-        controller.config(Axis.AxisID.RIGHT_Y, x -> -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier));
+        controller.config(mConst.elevatorMidCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.elevatorLowCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.elevatorMidHatch, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.elevatorHighHatch, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.elevatorLowHatch, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.elevatorHighCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.elevatorDirectControl, x -> -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier));
     }
 }

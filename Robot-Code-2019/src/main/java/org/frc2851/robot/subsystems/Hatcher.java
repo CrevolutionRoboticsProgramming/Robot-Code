@@ -16,16 +16,14 @@ import org.frc2851.robot.Robot;
 public class Hatcher extends Subsystem
 {
 
-    private Button.ButtonID hatcherExtend = Button.ButtonID.RIGHT_BUMPER;
-    private Button.ButtonID hatcherActuate = Button.ButtonID.LEFT_BUMPER;
-
     private DoubleSolenoid mExtendSol, mActuateSol;
     private Controller mController = Robot.operator;
     private Constants mConstants = Constants.getInstance();
 
     private static Hatcher _instance = new Hatcher();
 
-    private boolean lastExtendState, lastActuateState;
+    private DoubleSolenoid.Value extendState = DoubleSolenoid.Value.kOff, lastExtendState = DoubleSolenoid.Value.kOff;
+    private DoubleSolenoid.Value actuateState = DoubleSolenoid.Value.kOff, lastActuateState = DoubleSolenoid.Value.kOff;
 
     /**
      * Initializes the Hatcher class with the name "Hatcher"
@@ -65,8 +63,8 @@ public class Hatcher extends Subsystem
         mExtendSol = new DoubleSolenoid(mConstants.pcmID, mConstants.extendHatcherForward, mConstants.extendHatcherReverse);
         mActuateSol = new DoubleSolenoid(mConstants.pcmID, mConstants.actuateHatcherForward, mConstants.actuateHatcherReverse);
 
-        mController.config(hatcherExtend, Button.ButtonMode.RAW);
-        mController.config(hatcherActuate, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.hatcherExtendButton, Button.ButtonMode.RAW);
+        mController.config(mConstants.hatcherActuateButton, Button.ButtonMode.TOGGLE);
 
         BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
         BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
@@ -87,7 +85,6 @@ public class Hatcher extends Subsystem
     {
         return new Command()
         {
-
             @Override
             public String getName()
             {
@@ -110,39 +107,36 @@ public class Hatcher extends Subsystem
             @Override
             public void update()
             {
-                if (mController.get(hatcherExtend))
+                if (mController.get(mConstants.hatcherExtendButton))
                 {
-                    mExtendSol.set(DoubleSolenoid.Value.kForward);
-                    if (!lastExtendState)
-                    {
-                        log("Extended", Logger.LogLevel.DEBUG);
-                    }
+                    extendState = DoubleSolenoid.Value.kForward;
                 } else
                 {
-                    mExtendSol.set(DoubleSolenoid.Value.kReverse);
-                    if (lastExtendState)
-                    {
-                        log("Retracted", Logger.LogLevel.DEBUG);
-                    }
+                    extendState = DoubleSolenoid.Value.kReverse;
                 }
-                lastExtendState = mController.get(hatcherExtend);
 
-                if (mController.get(hatcherActuate))
+                if (mController.get(mConstants.hatcherActuateButton))
                 {
-                    mActuateSol.set(DoubleSolenoid.Value.kReverse);
-                    if (!lastActuateState)
-                    {
-                        log("Actuated Out", Logger.LogLevel.DEBUG);
-                    }
+                    actuateState = DoubleSolenoid.Value.kReverse;
                 } else
                 {
-                    mActuateSol.set(DoubleSolenoid.Value.kForward);
-                    if (lastActuateState)
-                    {
-                        log("Actuated In", Logger.LogLevel.DEBUG);
-                    }
+                    actuateState = DoubleSolenoid.Value.kForward;
                 }
-                lastActuateState = mController.get(hatcherActuate);
+
+                mExtendSol.set(extendState);
+                mActuateSol.set(actuateState);
+
+                if (extendState != lastExtendState)
+                {
+                    log("Extend solenoid set to " + extendState.toString(), Logger.LogLevel.DEBUG);
+                }
+                if (actuateState != lastActuateState)
+                {
+                    log("Actuate solenoid set to " + actuateState.toString(), Logger.LogLevel.DEBUG);
+                }
+
+                lastExtendState = extendState;
+                lastActuateState = actuateState;
             }
 
             @Override
