@@ -166,11 +166,11 @@ public class Intake extends Subsystem
 
                 if (motorState != lastMotorState)
                 {
-                    log("Motor state changed to: " + motorState.toString(), Logger.LogLevel.DEBUG);
+                    log("Motor set to " + motorState.toString(), Logger.LogLevel.DEBUG);
                 }
                 if (solenoidState != lastSolenoidState)
                 {
-                    log("Solenoid state changed to: " + solenoidState.toString(), Logger.LogLevel.DEBUG);
+                    log("Solenoid set to " + solenoidState.toString(), Logger.LogLevel.DEBUG);
                 }
 
                 lastMotorState = motorState;
