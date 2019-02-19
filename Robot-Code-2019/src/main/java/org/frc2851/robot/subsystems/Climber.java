@@ -174,26 +174,29 @@ public class Climber extends Subsystem
             @Override
             public void update()
             {
-                // TODO: Implement limit switch with connectivity check (Climber)
-                GorillaState gState = GorillaState.NEUTRAL;
-                PogoState pState = PogoState.NEUTRAL;
+                if (Robot.isRunning())
+                {
+                    // TODO: Implement limit switch with connectivity check (Climber)
+                    GorillaState gState = GorillaState.NEUTRAL;
+                    PogoState pState = PogoState.NEUTRAL;
 
-                // Poll Buttons
-                if (mController.get(Button.ButtonID.A)) gState = GorillaState.FORWARD;
-                else if (mController.get(Button.ButtonID.B)) gState = GorillaState.REVERSE;
+                    // Poll Buttons
+                    if (mController.get(Button.ButtonID.A)) gState = GorillaState.FORWARD;
+                    else if (mController.get(Button.ButtonID.B)) gState = GorillaState.REVERSE;
 
-                if (mController.get(Button.ButtonID.X)) pState = PogoState.FORWARD;
-                else if (mController.get(Button.ButtonID.Y)) pState = PogoState.REVERSE;
+                    if (mController.get(Button.ButtonID.X)) pState = PogoState.FORWARD;
+                    else if (mController.get(Button.ButtonID.Y)) pState = PogoState.REVERSE;
 
-                // Logging
-                if (gState != lastGState) log("Updated Gorilla State: " + gState.name(), Logger.LogLevel.DEBUG);
-                if (pState != lastPState) log("Updated Pogo State: " + pState.name(), Logger.LogLevel.DEBUG);
-                lastGState = gState;
-                lastPState = pState;
+                    // Logging
+                    if (gState != lastGState) log("Updated Gorilla State: " + gState.name(), Logger.LogLevel.DEBUG);
+                    if (pState != lastPState) log("Updated Pogo State: " + pState.name(), Logger.LogLevel.DEBUG);
+                    lastGState = gState;
+                    lastPState = pState;
 
-                // Talon Set
-                mGorillaMaster.set(ControlMode.PercentOutput, gState.power);
-                mPogoMaster.set(ControlMode.PercentOutput, pState.power);
+                    // Talon Set
+                    mGorillaMaster.set(ControlMode.PercentOutput, gState.power);
+                    mPogoMaster.set(ControlMode.PercentOutput, pState.power);
+                }
 
 
 //                // Gorilla arm
