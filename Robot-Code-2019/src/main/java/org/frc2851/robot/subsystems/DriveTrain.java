@@ -37,11 +37,6 @@ public class DriveTrain extends Subsystem
         }
     }
 
-    public enum DriveDistanceStrategy
-    {
-        MOTION_MAGIC, PID
-    }
-
     public enum DriveControlMode {
         TANK, FPS, FPS_CURVE, ARCADE
     }
@@ -253,6 +248,7 @@ public class DriveTrain extends Subsystem
     public Command driveTime(double time, double leftPower, double rightPower)
     {
         return new Command() {
+            double startTime;
             @Override
             public String getName() {
                 return "DriveTime[T: " + time + ", L: " + leftPower + ", R: " + rightPower + "]";
@@ -260,22 +256,25 @@ public class DriveTrain extends Subsystem
 
             @Override
             public boolean isFinished() {
-                return false;
+                return (Timer.getFPGATimestamp() - startTime) > time;
             }
 
             @Override
             public boolean init() {
-                return false;
+                startTime = Timer.getFPGATimestamp();
+                return true;
             }
 
             @Override
             public void update() {
-
+                mLeftMaster.set(ControlMode.PercentOutput, leftPower);
+                mRightMaster.set(ControlMode.PercentOutput, rightPower);
             }
 
             @Override
             public void stop() {
-
+                mLeftMaster.set(ControlMode.PercentOutput, 0);
+                mRightMaster.set(ControlMode.PercentOutput, 0);
             }
         };
     }
@@ -285,68 +284,7 @@ public class DriveTrain extends Subsystem
         return driveTime(time, power, power);
     }
 
-    public Command driveDistance(double distance, double maxOutput, DriveDistanceStrategy strategy, int allowableError)
-    {
-        return new Command() {
-            PID leftPID, rightPID, turnPID;
-
-            @Override
-            public String getName()
-            {
-                return "DriveDistance[D: " + distance + ", MaxOut: " + maxOutput + "S: " + strategy.name() + "]";
-            }
-
-            @Override
-            public boolean isFinished()
-            {
-
-                return false;
-            }
-
-            @Override
-            public boolean init()
-            {
-                setNominalAndPeakOutputs(0, maxOutput);
-                switch (strategy)
-                {
-                    case MOTION_MAGIC:
-                    {
-
-                    }
-
-                    case PID:
-                    {
-                        mLeftMaster.selectProfileSlot(0, mRawSlotDrive);
-                        mRightMaster.selectProfileSlot(0, mRawSlotDrive);
-                        // TODO: Look into auxiliary pid with raw control
-//                        mLeftMaster.selectProfileSlot(1, mRawSlotTurn);
-//                        mRightMaster.selectProfileSlot(1, mRawSlotTurn);
-                    }
-                }
-                return false;
-            }
-
-            @Override
-            public void update()
-            {
-
-            }
-
-            @Override
-            public void stop()
-            {
-
-            }
-        };
-    }
-
-    public Command driveDistance(double distance, DriveDistanceStrategy strategy)
-    {
-        // TODO: Replace 1 with default max out
-        return driveDistance(distance, mConstants.dt_peakOut, strategy, 1024);
-    }
-
-    public Command driveDistanceMotionProfile(double distance)
+    public Command driveDistance(double distance)
     {
         return new Command()
         {
@@ -423,7 +361,7 @@ public class DriveTrain extends Subsystem
         };
     }
 
-    public Command turnToAngleEncoder(double angle)
+    public Command turnToAngleEncoder(double angle, double maxOut)
     {
         return new Command()
         {
@@ -439,10 +377,12 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
-                setPID(mLeftMaster, 0, new PID(0, 0, 0, 0));
-                setPID(mRightMaster, 0, new PID(0, 0, 0, 0));
+                setPID(mLeftMaster, 0, mLeftRawPID);
+                setPID(mRightMaster, 0, mRightRawPID);
                 mLeftMaster.set(ControlMode.Position, targetPos);
                 mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
+
+                setNominalAndPeakOutputs(0, maxOut);
                 return true;
             }
 
@@ -456,6 +396,37 @@ public class DriveTrain extends Subsystem
             public void stop()
             {
                 reset();
+            }
+        };
+    }
+
+    // TODO: Implement turn to angle gyro
+    public Command turnToAngleGyro(double angle, double maxOut)
+    {
+        return new Command() {
+            @Override
+            public String getName() {
+                return "TurnToAngleGyro[Ang: " + angle + ", Max: " + maxOut + "]";
+            }
+
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+
+            @Override
+            public boolean init() {
+                return false;
+            }
+
+            @Override
+            public void update() {
+
+            }
+
+            @Override
+            public void stop() {
+
             }
         };
     }
