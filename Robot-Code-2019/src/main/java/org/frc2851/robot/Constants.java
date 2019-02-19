@@ -1,5 +1,7 @@
 package org.frc2851.robot;
 
+import org.frc2851.crevolib.io.Axis;
+import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.robot.subsystems.DriveTrain;
 
@@ -62,6 +64,12 @@ public class Constants
     public final double dt_peakOut = 1;
     public final double dt_nominalOut = 0;
 
+    // On the driver controller
+    public final Button.ButtonID dtCurvatureToggle = Button.ButtonID.RIGHT_BUMPER;
+    public final Button.ButtonID dtGearToggle = Button.ButtonID.LEFT_BUMPER;
+
+    // Also has the two driver sticks all to itself for various purposes
+
     // Elevator
     public final int el_talon = 7;
 //    public final int elevatorCanifier = 11;
@@ -75,6 +83,16 @@ public class Constants
     public final PID el_motionPID = new PID(0, 0, 0, 0);
     public final PID el_posPID = new PID(0, 0, 0, 0);
 
+    // On the operator controller
+    public final Button.ButtonID elevatorLowHatch = Button.ButtonID.START;
+    public final Button.ButtonID elevatorMidHatch = Button.ButtonID.X;
+    public final Button.ButtonID elevatorHighHatch = Button.ButtonID.Y;
+    public final Button.ButtonID elevatorLowCargo = Button.ButtonID.B;
+    public final Button.ButtonID elevatorMidCargo = Button.ButtonID.A;
+    public final Button.ButtonID elevatorHighCargo = Button.ButtonID.SELECT;
+
+    public final Axis.AxisID elevatorDirectControl = Axis.AxisID.RIGHT_Y;
+
     // Climber
     public final int gorillaMaster = 9;
     public final int gorillaSlave = 10;
@@ -84,10 +102,18 @@ public class Constants
     public final int screwLimitOut = 3;
     public final int screwLimitIn = 4;
 
+    // On the driver controller
+    public final Button.ButtonID climberGorillaButton = Button.ButtonID.A;
+    public final Button.ButtonID climberScrewButton = Button.ButtonID.B;
+
     // Intake
     public final int intakeMaster = 0;
     public final int intakeForward = 0;
     public final int intakeReverse = 1;
+
+    // On the operator controller
+    public final Button.ButtonID intakeIntakeButton = Button.ButtonID.RIGHT_BUMPER;
+    public final Button.ButtonID intakeOuttakeButton = Button.ButtonID.LEFT_BUMPER;
 
     // Hatcher
     public final int extendHatcherForward = 0;
@@ -95,9 +121,17 @@ public class Constants
     public final int actuateHatcherForward = 0;
     public final int actuateHatcherReverse = 0;
 
+    // On the operator controller
+    public final Button.ButtonID hatcherExtendButton = Button.ButtonID.Y;
+    public final Button.ButtonID hatcherActuateButton = Button.ButtonID.X;
+
     // RollerClaw
     public final int rollerClawTalon = 1;
     public final int rollerClawLimitSwitch = 0;
+
+    // On the operator controller
+    public final Axis.AxisID rollerClawIntake = Axis.AxisID.RIGHT_TRIGGER;
+    public final Axis.AxisID rollerClawOuttake = Axis.AxisID.LEFT_TRIGGER;
 
     public final int talonTimeout = 20;
 }

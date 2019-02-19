@@ -218,8 +218,8 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                boolean curvatureToggle = mController.get(Button.ButtonID.RIGHT_BUMPER);
-                boolean gearToggle = mController.get(Button.ButtonID.LEFT_BUMPER);
+                boolean curvatureToggle = mController.get(mConstants.dtCurvatureToggle);
+                boolean gearToggle = mController.get(mConstants.dtGearToggle);
 
                 DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
 //                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
@@ -627,8 +627,8 @@ public class DriveTrain extends Subsystem
         controller.config(Axis.AxisID.LEFT_X, x -> applyDeadband(x, 0.15)); // Throttle
         controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(x, 0.15)); // Throttle
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
-        controller.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.TOGGLE); // Curvature
-        controller.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.TOGGLE); // Shifter
+        controller.config(mConstants.dtCurvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
+        controller.config(mConstants.dtGearToggle, Button.ButtonMode.TOGGLE); // Shifter
     }
 
     private int distanceToCounts(double distance)

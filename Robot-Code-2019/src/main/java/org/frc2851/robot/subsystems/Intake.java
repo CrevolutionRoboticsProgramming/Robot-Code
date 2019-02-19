@@ -84,8 +84,8 @@ public class Intake extends Subsystem
     protected boolean init()
     {
         mController.config(Button.ButtonID.Y, Button.ButtonMode.TOGGLE);
-        mController.config(Button.ButtonID.RIGHT_BUMPER, Button.ButtonMode.RAW);
-        mController.config(Button.ButtonID.LEFT_BUMPER, Button.ButtonMode.RAW);
+        mController.config(mConstants.intakeIntakeButton, Button.ButtonMode.RAW);
+        mController.config(mConstants.intakeOuttakeButton, Button.ButtonMode.RAW);
 
         try
         {
@@ -150,10 +150,10 @@ public class Intake extends Subsystem
                 }
 
                 // Motor
-                if (mController.get(Button.ButtonID.RIGHT_BUMPER))
+                if (mController.get(mConstants.intakeIntakeButton))
                 {
                     motorState = IntakeMotorState.INTAKING;
-                } else if (mController.get(Button.ButtonID.LEFT_BUMPER))
+                } else if (mController.get(mConstants.intakeOuttakeButton))
                 {
                     motorState = IntakeMotorState.OUTTAKING;
                 } else

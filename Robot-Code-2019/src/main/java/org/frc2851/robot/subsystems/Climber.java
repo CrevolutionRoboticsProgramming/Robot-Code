@@ -77,8 +77,8 @@ public class Climber extends Subsystem
     @Override
     public boolean init()
     {
-        mController.config(Button.ButtonID.A, Button.ButtonMode.TOGGLE);
-        mController.config(Button.ButtonID.B, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.climberGorillaButton, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.climberScrewButton, Button.ButtonMode.TOGGLE);
 
         try
         {
@@ -164,7 +164,7 @@ public class Climber extends Subsystem
             public void update()
             {
                 // Gorilla arm
-                if (mController.get(Button.ButtonID.A))
+                if (mController.get(mConstants.climberGorillaButton))
                 {
                     if (!gorillaLimitOut.get())
                     {
@@ -176,7 +176,7 @@ public class Climber extends Subsystem
                 }
 
                 // Screw drive
-                if (mController.get(Button.ButtonID.B))
+                if (mController.get(mConstants.climberScrewButton))
                 {
                     if (!screwLimitOut.get())
                     {
