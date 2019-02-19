@@ -96,15 +96,15 @@ public class Climber extends Subsystem
         screwLimitOut = new DigitalInput(mConstants.screwLimitOut);
         screwLimitIn = new DigitalInput(mConstants.screwLimitIn);
 
-        BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> _screwMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Slave", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Screw", "Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Slave", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Screw", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Gorilla Output", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Slave Gorilla Output", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Screw Output", BadLog.UNITLESS, () -> _screwMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Gorilla Voltage", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Slave Gorilla Voltage", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Screw Voltage", "Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Gorilla Current", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Slave Gorilla Current", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Screw Current", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
 
         return true;
     }
