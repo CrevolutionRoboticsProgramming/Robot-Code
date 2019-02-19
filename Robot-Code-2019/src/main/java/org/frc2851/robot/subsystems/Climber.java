@@ -23,6 +23,22 @@ import org.frc2851.robot.Robot;
  */
 public class Climber extends Subsystem
 {
+    public enum ClimberState
+    {
+        EXTENDING(1.0), RETRACTING(-1.0), NEUTRAL(0.0);
+
+        private double output;
+
+        ClimberState(double output)
+        {
+            this.output = output;
+        }
+
+        public double getOutput()
+        {
+            return output;
+        }
+    }
 
     private Constants mConstants = Constants.getInstance();
     private Controller mController = Robot.driver;
@@ -30,7 +46,8 @@ public class Climber extends Subsystem
 
     private DigitalInput gorillaLimitOut, gorillaLimitIn, screwLimitOut, screwLimitIn;
 
-    private boolean lastGorillaState, lastScrewState;
+    private ClimberState gorillaState = ClimberState.NEUTRAL, lastGorillaState = ClimberState.NEUTRAL;
+    private ClimberState screwState = ClimberState.NEUTRAL, lastScrewState = ClimberState.NEUTRAL;
 
     /**
      * Returns the sole instance of the Climber class
@@ -151,42 +168,39 @@ public class Climber extends Subsystem
                 {
                     if (!gorillaLimitOut.get())
                     {
-                        _gorillaMaster.set(ControlMode.PercentOutput, 1.0);
-                        if (!lastGorillaState)
-                        {
-                            log("Lowered Gorilla", Logger.LogLevel.DEBUG);
-                        }
+                        gorillaState = ClimberState.EXTENDING;
                     }
                 } else if (!gorillaLimitIn.get())
                 {
-                    _gorillaMaster.set(ControlMode.PercentOutput, -1.0);
-                    if (lastGorillaState)
-                    {
-                        log("Raised Gorilla", Logger.LogLevel.DEBUG);
-                    }
+                    gorillaState = ClimberState.RETRACTING;
                 }
-                lastGorillaState = mController.get(Button.ButtonID.A);
 
                 // Screw drive
                 if (mController.get(Button.ButtonID.B))
                 {
                     if (!screwLimitOut.get())
                     {
-                        _screwMaster.set(ControlMode.PercentOutput, 1.0);
-                        if (!lastScrewState)
-                        {
-                            log("Enabled Screw", Logger.LogLevel.DEBUG);
-                        }
+                        screwState = ClimberState.EXTENDING;
                     }
                 } else if (!screwLimitIn.get())
                 {
-                    _screwMaster.set(ControlMode.PercentOutput, -1.0);
-                    if (lastScrewState)
-                    {
-                        log("Disabled Screw", Logger.LogLevel.DEBUG);
-                    }
+                    screwState = ClimberState.RETRACTING;
                 }
-                lastScrewState = mController.get(Button.ButtonID.B);
+
+                _gorillaMaster.set(ControlMode.PercentOutput, gorillaState.getOutput());
+                _screwMaster.set(ControlMode.PercentOutput, screwState.getOutput());
+
+                if (lastGorillaState != gorillaState)
+                {
+                    log("Gorilla arm set to " + gorillaState.toString(), Logger.LogLevel.DEBUG);
+                }
+                if (lastScrewState != screwState)
+                {
+                    log("Screw set to " + screwState.toString(), Logger.LogLevel.DEBUG);
+                }
+
+                lastGorillaState = gorillaState;
+                lastScrewState = screwState;
             }
 
             @Override
