@@ -1,5 +1,6 @@
 package org.frc2851.robot.subsystems;
 
+import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -104,16 +105,15 @@ public class Climber extends Subsystem
         screwLimitOut = new DigitalInput(mConstants.screwLimitOut);
         screwLimitIn = new DigitalInput(mConstants.screwLimitIn);
 
-//        BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-//        BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> mGorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-//        BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> mPogoMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-//        BadLog.createTopic("Climber/Master", "Voltage:", () -> mGorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-//        BadLog.createTopic("Climber/Slave", "Voltage:", () -> mGorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-//        BadLog.createTopic("Climber/Screw", "Voltage:", () -> mPogoMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
-//        BadLog.createTopic("Climber/Master", "Amperes:", () -> mGorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-//        BadLog.createTopic("Climber/Slave", "Amperes:", () -> mGorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-//        BadLog.createTopic("Climber/Screw", "Amperes:", () -> mPogoMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
-
+        BadLog.createTopic("Climber/Master Gorilla Output", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Slave Gorilla Output", BadLog.UNITLESS, () -> mGorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Screw Output", BadLog.UNITLESS, () -> mPogoMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Gorilla Voltage", "Voltage:", () -> mGorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Slave Gorilla Voltage", "Voltage:", () -> mGorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+        BadLog.createTopic("Climber/Screw Voltage", "Voltage:", () -> mPogoMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
+        BadLog.createTopic("Climber/Master Gorilla Current", "Amperes:", () -> mGorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Climber/Slave Gorilla Current", "Amperes:", () -> mGorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+//        BadLog.createTopic("Climber/Screw Current", "Amperes:", () -> mPogoMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
         return true;
     }
 

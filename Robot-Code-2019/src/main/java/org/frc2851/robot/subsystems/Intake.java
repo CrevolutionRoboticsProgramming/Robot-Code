@@ -83,7 +83,7 @@ public class Intake extends Subsystem
     @Override
     protected boolean init()
     {
-        mController.config(Button.ButtonID.Y, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.intakeExtendButton, Button.ButtonMode.TOGGLE);
         mController.config(mConstants.intakeIntakeButton, Button.ButtonMode.RAW);
         mController.config(mConstants.intakeOuttakeButton, Button.ButtonMode.RAW);
 
@@ -102,7 +102,7 @@ public class Intake extends Subsystem
         BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
         BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
         BadLog.createTopic("Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
-        BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
+        BadLog.createTopic("Intake Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
 
         return true;
     }
@@ -141,7 +141,7 @@ public class Intake extends Subsystem
             public void update()
             {
                 // Double Solenoid
-                if(mController.get(Button.ButtonID.Y))
+                if(mController.get(mConstants.intakeExtendButton))
                 {
                     solenoidState = DoubleSolenoid.Value.kForward;
                 } else
