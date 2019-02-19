@@ -65,6 +65,7 @@ public class TalonSRXFactory
 
     /**
      * Creates a standard talon with the default configuration
+     *
      * @param id CAN bus id
      * @return Configured talon
      */
@@ -75,6 +76,7 @@ public class TalonSRXFactory
 
     /**
      * Creates a standard wpi_talon with the default configuration
+     *
      * @param id CAN bus id
      * @return Configured talon
      */
@@ -85,6 +87,7 @@ public class TalonSRXFactory
 
     /**
      * Creates a master talon with the default configuration
+     *
      * @param id CAN bus id
      * @return Configured talon
      */
@@ -95,6 +98,7 @@ public class TalonSRXFactory
 
     /**
      * Creates a master wpi_talon with the default configuration
+     *
      * @param id CAN bus id
      * @return Configured talon
      */
@@ -105,6 +109,7 @@ public class TalonSRXFactory
 
     /**
      * Creates a master talon with the fast configuration
+     *
      * @param id CAN bus id
      * @return Configured talon
      */
@@ -115,6 +120,7 @@ public class TalonSRXFactory
 
     /**
      * Creates a master wpi_talon with the fast configuration
+     *
      * @param id CAN bus id
      * @return Configured talon
      */
@@ -125,7 +131,8 @@ public class TalonSRXFactory
 
     /**
      * Creates a slave talon with the default configuration
-     * @param id CAN bus id
+     *
+     * @param id     CAN bus id
      * @param master The master talon
      * @return Configured talon
      */
@@ -138,7 +145,8 @@ public class TalonSRXFactory
 
     /**
      * Creates a slave wpi_talon with the default configuration
-     * @param id CAN bus id
+     *
+     * @param id     CAN bus id
      * @param master The master talon
      * @return Configured talon
      */
@@ -173,35 +181,71 @@ public class TalonSRXFactory
 
     private static boolean configureTalon(TalonSRX talon, Configuration config)
     {
-        boolean setSucceeded = true;
+        boolean setSucceeded;
         int retryCounter = 0;
 
-        do {
-            setSucceeded &= talon.clearMotionProfileHasUnderrun(talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.clearStickyFaults(talonTimeout) == ErrorCode.OK;
+        setSucceeded = runTalonConfig(
+                () -> talon.clearMotionProfileHasUnderrun(talonTimeout),
+                () -> talon.clearStickyFaults(talonTimeout),
+                () -> talon.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS),
+                () -> talon.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, talonTimeout),
+                () -> talon.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, talonTimeout),
+                () -> talon.setIntegralAccumulator(0, 0, talonTimeout),
+                () -> talon.setIntegralAccumulator(0, 1, talonTimeout),
+                () -> talon.configPeakOutputForward(config.MAX_OUT, talonTimeout),
+                () -> talon.configPeakOutputReverse(-config.MAX_OUT, talonTimeout),
+                () -> talon.configNominalOutputForward(config.NOMINAL_OUT, talonTimeout),
+                () -> talon.configNominalOutputReverse(-config.NOMINAL_OUT, talonTimeout),
+                () -> talon.configContinuousCurrentLimit(config.CURRENT_LIMIT, talonTimeout),
+                () -> talon.configForwardSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout),
+                () -> talon.configReverseSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout),
+                () -> talon.setSelectedSensorPosition(0, 0, talonTimeout),
+                () -> talon.configVelocityMeasurementPeriod(config.VELOCITY_MEASUREMENT_PERIOD, talonTimeout),
+                () -> talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout)
+        );
 
-            setSucceeded &= talon.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS) == ErrorCode.OK;
-            setSucceeded &= talon.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, talonTimeout) == ErrorCode.OK;
+//        do
+//        {
+//            setSucceeded &= talon.clearMotionProfileHasUnderrun(talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.clearStickyFaults(talonTimeout) == ErrorCode.OK;
+//
+//            setSucceeded &= talon.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS) == ErrorCode.OK;
+//            setSucceeded &= talon.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, talonTimeout) == ErrorCode.OK;
+//
+//            setSucceeded &= talon.setIntegralAccumulator(0, 0, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.setIntegralAccumulator(0, 1, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configPeakOutputForward(config.MAX_OUT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configPeakOutputReverse(-config.MAX_OUT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configNominalOutputForward(config.NOMINAL_OUT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configNominalOutputReverse(-config.NOMINAL_OUT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configContinuousCurrentLimit(config.CURRENT_LIMIT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configForwardSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configReverseSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.setSelectedSensorPosition(0, 0, talonTimeout) == ErrorCode.OK;
+////            setSucceeded &= talon.setSelectedSensorPosition(0, 1, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configVelocityMeasurementPeriod(config.VELOCITY_MEASUREMENT_PERIOD, talonTimeout) == ErrorCode.OK;
+//            setSucceeded &= talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout) == ErrorCode.OK;
+//        } while (!setSucceeded && retryCounter++ < kMaxRetry);
 
-            setSucceeded &= talon.setIntegralAccumulator(0, 0, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.setIntegralAccumulator(0, 1, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configPeakOutputForward(config.MAX_OUT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configPeakOutputReverse(-config.MAX_OUT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configNominalOutputForward(config.NOMINAL_OUT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configNominalOutputReverse(-config.NOMINAL_OUT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configContinuousCurrentLimit(config.CURRENT_LIMIT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configForwardSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configReverseSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.setSelectedSensorPosition(0, 0, talonTimeout) == ErrorCode.OK;
-            //setSucceeded &= talon.setSelectedSensorPosition(0, 1, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configVelocityMeasurementPeriod(config.VELOCITY_MEASUREMENT_PERIOD, talonTimeout) == ErrorCode.OK;
-            setSucceeded &= talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout) == ErrorCode.OK;
-        } while (!setSucceeded && retryCounter++ < kMaxRetry);
-
-        if (!setSucceeded || retryCounter >= kMaxRetry) Logger.println("Failed to initialize Talon " + talon.getDeviceID() + "!!!!", Logger.LogLevel.ERROR);
+        if (!setSucceeded)
+            Logger.println("Failed to initialize Talon " + talon.getDeviceID() + "!!!!", Logger.LogLevel.ERROR);
         return setSucceeded;
     }
 
-    public static void setTalonTimeout(int timeoutMS) { talonTimeout = timeoutMS; }
+    public static boolean runTalonConfig(ErrorCodeSupplier... suppliers)
+    {
+        boolean setSucceeded = true;
+        int retryCounter = 0;
+        do
+            for (ErrorCodeSupplier s : suppliers) setSucceeded &= s.getErrorCode() == ErrorCode.OK;
+        while (!setSucceeded && retryCounter++ < kMaxRetry);
+
+        return setSucceeded;
+    }
+
+    public static void setTalonTimeout(int timeoutMS)
+    {
+        talonTimeout = timeoutMS;
+    }
 }
