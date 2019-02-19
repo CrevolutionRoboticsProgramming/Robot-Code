@@ -68,6 +68,10 @@ public class Hatcher extends Subsystem
         mController.config(hatcherExtend, Button.ButtonMode.RAW);
         mController.config(hatcherActuate, Button.ButtonMode.TOGGLE);
 
+        BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
+        BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
+
+
         reset();
 
         return true;
@@ -100,10 +104,6 @@ public class Hatcher extends Subsystem
             public boolean init()
             {
                 reset();
-
-                BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
-                BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
-
                 return true;
             }
 
