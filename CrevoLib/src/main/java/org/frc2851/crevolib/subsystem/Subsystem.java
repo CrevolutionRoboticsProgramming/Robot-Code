@@ -10,7 +10,7 @@ public abstract class Subsystem
 {
     private String mName;
     private Command mDefaultCommand = getDefaultCommand();
-    private CommandGroup mAuxilaryCommandGroup = new CommandGroup();
+    private CommandGroup mAuxilaryCommandGroup = null;
     private CommandState mDefaultState = new CommandState(), mAuxilaryState = new CommandState();
 
     /**
