@@ -134,7 +134,7 @@ public class Elevator extends Subsystem
         int retryCounter = 0;
         final int maxRetries = 5;
         do {
-            setSucceeded &= mTalon.setSelectedSensorPosition(0, 0, mConst.talonTimeout) == ErrorCode.OK;
+            setSucceeded &= mTalon.setSelectedSensorPosition(50, 0, mConst.talonTimeout) == ErrorCode.OK;
         } while (!setSucceeded || retryCounter++ < maxRetries);
     }
 
@@ -179,6 +179,13 @@ public class Elevator extends Subsystem
 //                {
 //                    setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
 //                }
+
+                    if (mTuning)
+                    {
+                        mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
+                        mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
+                        mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
+                    }
 
                     log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
                 }
