@@ -311,6 +311,7 @@ public class DriveTrain extends Subsystem
             double targetAngle;
             double targetPos;
 
+
             final double UNITS_PER_ROTATION = 10000.0d;
             // Scales the encoder difference reading to 3600 counts per rotation
             final double turnCoeff = 3600.0d / UNITS_PER_ROTATION;
@@ -410,8 +411,8 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
-                setPID(mLeftMaster, 0, mLeftRawPID);
-                setPID(mRightMaster, 0, mRightRawPID);
+                TalonSRXFactory.configurePIDF(mLeftMaster, 0, mLeftRawPID);
+                TalonSRXFactory.configurePIDF(mRightMaster, 0, mRightRawPID);
                 mLeftMaster.set(ControlMode.Position, targetPos);
                 mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
 
@@ -506,8 +507,8 @@ public class DriveTrain extends Subsystem
                     return false;
                 }
 
-                setPID(mLeftMaster, 0, mLeftMotionPID);
-                setPID(mRightMaster, 0, mRightMotionPID);
+                TalonSRXFactory.configurePIDF(mLeftMaster, 0, mLeftMotionPID);
+                TalonSRXFactory.configurePIDF(mRightMaster, 0, mRightMotionPID);
 
                 //TODO: Feedback Coeff
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
@@ -579,14 +580,6 @@ public class DriveTrain extends Subsystem
             {
             }
         };
-    }
-
-    private void setPID(TalonSRX talon, int slot, PID pid)
-    {
-        talon.config_kP(slot, pid.getP(), mConstants.talonTimeout);
-        talon.config_kI(slot, pid.getI(), mConstants.talonTimeout);
-        talon.config_kD(slot, pid.getD(), mConstants.talonTimeout);
-        talon.config_kF(slot, pid.getF(), mConstants.talonTimeout);
     }
 
     private boolean setNominalAndPeakOutputs(double nominal, double peak)

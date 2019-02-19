@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.VelocityMeasPeriod;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.motion.PID;
 
 /**
  * Creates talons with default configurations
@@ -157,14 +158,6 @@ public class TalonSRXFactory
         return talon;
     }
 
-    public static void configurePIDF(TalonSRX talon, int slot, double p, double i, double d, double f)
-    {
-        talon.config_kP(slot, p, talonTimeout);
-        talon.config_kI(slot, i, talonTimeout);
-        talon.config_kD(slot, d, talonTimeout);
-        talon.config_kF(slot, f, talonTimeout);
-    }
-
     private static TalonSRX createTalonSRX(int id, Configuration config) throws TalonCommunicationErrorException
     {
         TalonSRX talon = new TalonSRX(id);
@@ -231,6 +224,19 @@ public class TalonSRXFactory
         if (!setSucceeded)
             Logger.println("Failed to initialize Talon " + talon.getDeviceID() + "!!!!", Logger.LogLevel.ERROR);
         return setSucceeded;
+    }
+
+    public static void configurePIDF(TalonSRX talon, int slot, PID pid)
+    {
+        configurePIDF(talon, slot, pid.getP(), pid.getI(), pid.getP(), pid.getF());
+    }
+
+    public static void configurePIDF(TalonSRX talon, int slot, double p, double i, double d, double f)
+    {
+        talon.config_kP(slot, p, talonTimeout);
+        talon.config_kI(slot, i, talonTimeout);
+        talon.config_kD(slot, d, talonTimeout);
+        talon.config_kF(slot, f, talonTimeout);
     }
 
     public static boolean runTalonConfig(ErrorCodeSupplier... suppliers)
