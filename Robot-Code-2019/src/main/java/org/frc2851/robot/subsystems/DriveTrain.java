@@ -104,6 +104,7 @@ public class DriveTrain extends Subsystem
         }
 
         setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_nominalOut);
+        setNeutralMode(NeutralMode.Brake);
 
         // I don't know what safety does but the messages it throws annoy me.
         mLeftMaster.setSafetyEnabled(false);
@@ -113,7 +114,7 @@ public class DriveTrain extends Subsystem
         mRightSlaveA.setSafetyEnabled(false);
         mRightSlaveB.setSafetyEnabled(false);
 
-        mShifterSolenoid = new DoubleSolenoid(mConstants.pcmID, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
+        mShifterSolenoid = new DoubleSolenoid(mConstants.pcm, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
 
         // Pigeon Configuration
         if (mConstants.dt_usePigeon)
@@ -157,12 +158,7 @@ public class DriveTrain extends Subsystem
     {
         if (!zeroSensors()) log("Failed to zero sensors", Logger.LogLevel.ERROR);
         setLeftRightMotorOutputs(0, 0);
-        mLeftMaster.setNeutralMode(TALON_NEUTRAL_MODE);
-        mLeftSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
-        mLeftSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
-        mRightMaster.setNeutralMode(TALON_NEUTRAL_MODE);
-        mRightSlaveA.setNeutralMode(TALON_NEUTRAL_MODE);
-        mRightSlaveB.setNeutralMode(TALON_NEUTRAL_MODE);
+        setNeutralMode(TALON_NEUTRAL_MODE);
     }
 
     private boolean zeroSensors()
@@ -203,7 +199,6 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
-                // TODO: Set phases
                 reset();
 
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
@@ -218,30 +213,35 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                boolean curvatureToggle = mController.get(mConstants.dtCurvatureToggle);
-                boolean gearToggle = mController.get(mConstants.dtGearToggle);
+                if (Robot.isRunning())
+                {
+                    boolean curvatureToggle = mController.get(mConstants.dt_curvatureToggle);
+                    boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
-                DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
+                    DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
 //                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
-                mDriveControlMode = DriveControlMode.FPS;
-                switch (mDriveControlMode)
-                {
-                    case FPS:
-                        robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
-                        break;
+                    mShifterSolenoid.set(DriveGear.LOW.val);
 
-                    case FPS_CURVE:
-                        robotDrive.curvatureDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT, curvatureToggle);
-                        break;
+                    mDriveControlMode = DriveControlMode.FPS;
+                    switch (mDriveControlMode)
+                    {
+                        case FPS:
+                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
+                            break;
 
-                    case ARCADE:
-                        robotDrive.arcadeDrive(mController.get(Axis.AxisID.RIGHT_Y), mController.get(Axis.AxisID.RIGHT_X));
-                        break;
+                        case FPS_CURVE:
+                            robotDrive.curvatureDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT, curvatureToggle);
+                            break;
 
-                    case TANK:
-                        robotDrive.tankDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_Y));
-                        break;
+                        case ARCADE:
+                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.RIGHT_Y), mController.get(Axis.AxisID.RIGHT_X));
+                            break;
+
+                        case TANK:
+                            robotDrive.tankDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_Y));
+                            break;
+                    }
                 }
 
                 // Encoder Test
@@ -627,8 +627,8 @@ public class DriveTrain extends Subsystem
         controller.config(Axis.AxisID.LEFT_X, x -> applyDeadband(x, 0.15)); // Throttle
         controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(x, 0.15)); // Throttle
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
-        controller.config(mConstants.dtCurvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
-        controller.config(mConstants.dtGearToggle, Button.ButtonMode.TOGGLE); // Shifter
+        controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
+        controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
     }
 
     private int distanceToCounts(double distance)

@@ -83,21 +83,20 @@ public class Intake extends Subsystem
     @Override
     protected boolean init()
     {
-        mController.config(mConstants.intakeExtendButton, Button.ButtonMode.TOGGLE);
-        mController.config(mConstants.intakeIntakeButton, Button.ButtonMode.RAW);
-        mController.config(mConstants.intakeOuttakeButton, Button.ButtonMode.RAW);
+        mController.config(mConstants.in_extend, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.in_intake, Button.ButtonMode.RAW);
+        mController.config(mConstants.in_outake, Button.ButtonMode.RAW);
 
         try
         {
-            intakeTalon = TalonSRXFactory.createDefaultTalonSRX(mConstants.intakeMaster);
+            intakeTalon = TalonSRXFactory.createDefaultTalonSRX(mConstants.in_talon);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, intake init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
 
-        //TODO: Add second solenoid
-        intakeSol = new DoubleSolenoid(mConstants.pcmID, mConstants.intakeForward, mConstants.intakeReverse);
+        intakeSol = new DoubleSolenoid(mConstants.pcm, mConstants.in_solenoidForward, mConstants.in_solenoidReverse);
 
         BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
         BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
@@ -141,7 +140,7 @@ public class Intake extends Subsystem
             public void update()
             {
                 // Double Solenoid
-                if(mController.get(mConstants.intakeExtendButton))
+                if(mController.get(mConstants.in_extend))
                 {
                     solenoidState = DoubleSolenoid.Value.kForward;
                 } else
@@ -150,10 +149,10 @@ public class Intake extends Subsystem
                 }
 
                 // Motor
-                if (mController.get(mConstants.intakeIntakeButton))
+                if (mController.get(mConstants.in_intake))
                 {
                     motorState = IntakeMotorState.INTAKING;
-                } else if (mController.get(mConstants.intakeOuttakeButton))
+                } else if (mController.get(mConstants.in_outake))
                 {
                     motorState = IntakeMotorState.OUTTAKING;
                 } else

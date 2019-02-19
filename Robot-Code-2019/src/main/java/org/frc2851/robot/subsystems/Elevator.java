@@ -4,13 +4,10 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
 import org.frc2851.crevolib.drivers.TalonSRXFactory;
-import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
@@ -114,6 +111,7 @@ public class Elevator extends Subsystem
         try
         {
             mTalon = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.el_talon);
+            mTalon.setNeutralMode(NeutralMode.Brake);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, elevator init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -193,7 +191,7 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double rawInput = mController.get(mConst.elevatorDirectControl) * 0.1;
+                    double rawInput = mController.get(mConst.el_rawControl);
                     lastPos = desiredPosition;
                     getDesiredPosition();
                     boolean updatePos = lastPos != desiredPosition;
@@ -208,7 +206,7 @@ public class Elevator extends Subsystem
 //                    return;
 //                }
 //
-//                if (/*desiredPosition != null && updatePos*/ mController.get(mConst.elevatorMidCargo))
+//                if (/*desiredPosition != null && updatePos*/ mController.get(mConst.el_midCargo))
 //                {
 //                    setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
 //                }
@@ -231,17 +229,17 @@ public class Elevator extends Subsystem
 
             void getDesiredPosition()
             {
-                if (mController.get(mConst.elevatorLowHatch))
+                if (mController.get(mConst.el_lowHatch))
                     desiredPosition = ElevatorPosition.LOW_HATCH;
-                else if (mController.get(mConst.elevatorMidHatch))
+                else if (mController.get(mConst.el_midHatch))
                     desiredPosition = ElevatorPosition.MID_HATCH;
-                else if (mController.get(mConst.elevatorHighHatch))
+                else if (mController.get(mConst.el_highHatch))
                     desiredPosition = ElevatorPosition.HIGH_HATCH;
-                else if (mController.get(mConst.elevatorLowCargo))
+                else if (mController.get(mConst.el_lowCargo))
                     desiredPosition = ElevatorPosition.LOW_CARGO;
-                else if (mController.get(mConst.elevatorMidCargo))
+                else if (mController.get(mConst.el_midCargo))
                     desiredPosition = ElevatorPosition.MID_CARGO;
-                else if (mController.get(mConst.elevatorHighCargo))
+                else if (mController.get(mConst.el_highCargo))
                     desiredPosition = ElevatorPosition.HIGH_CARGO;
             }
         };
@@ -411,12 +409,12 @@ public class Elevator extends Subsystem
          * Right Y - Manual elevator control
          */
 
-        controller.config(mConst.elevatorMidCargo, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.elevatorLowCargo, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.elevatorMidHatch, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.elevatorHighHatch, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.elevatorLowHatch, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.elevatorHighCargo, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.elevatorDirectControl, x -> -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier));
+        controller.config(mConst.el_midCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_lowCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_midHatch, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_highHatch, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_lowHatch, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_highCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_rawControl, x -> -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier));
     }
 }

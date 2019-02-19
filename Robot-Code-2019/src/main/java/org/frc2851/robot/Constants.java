@@ -1,5 +1,6 @@
 package org.frc2851.robot;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.motion.PID;
@@ -28,53 +29,84 @@ public class Constants
     }
 
     public final int magEncCPR = 4096;
-    public final int pcmID = 0;
-
     public boolean singleControllerMode = false;
 
-    // Drivetrain
+    /************ Motor Controllers and Others ************/
+    public final int pdp = 0;
     public final int dt_leftMaster = 1;
     public final int dt_leftSlaveA = 2;
     public final int dt_leftSlaveB = 3;
     public final int dt_rightMaster = 4;
     public final int dt_rightSlaveA = 5;
     public final int dt_rightSlaveB = 6;
+    public final int el_talon = 7;
+    public final int cl_gorillaMaster = 8;
+    public final int cl_gorillaSlave = 9;
+    public final int cl_pogoMaster = 10;
+    public final int rc_talon = 11;
+    public final int in_talon = 12;
+    public final int pcm = 13;
 
+    /************ Controller Buttons and Axis ************/
+    // Drivetrain - Driver Controller
+    public final Button.ButtonID dt_curvatureToggle = Button.ButtonID.RIGHT_BUMPER;
+    public final Button.ButtonID dt_gearToggle = Button.ButtonID.LEFT_BUMPER;
+
+    // Elevator - Operator Controller
+    public final Button.ButtonID el_lowHatch = Button.ButtonID.START;
+    public final Button.ButtonID el_midHatch = Button.ButtonID.X;
+    public final Button.ButtonID el_highHatch = Button.ButtonID.Y;
+    public final Button.ButtonID el_lowCargo = Button.ButtonID.B;
+    public final Button.ButtonID el_midCargo = Button.ButtonID.A;
+    public final Button.ButtonID el_highCargo = Button.ButtonID.SELECT;
+    public final Axis.AxisID el_rawControl = Axis.AxisID.RIGHT_Y;
+
+    // Gorilla Arm / Pogo - Driver Controller
+    public final Button.ButtonID cl_gorillaForward = Button.ButtonID.A;
+    public final Button.ButtonID cl_pogoForward = Button.ButtonID.B;
+
+    // Hatcher - Operator Controller
+    public final Button.ButtonID ht_extend = Button.ButtonID.Y;
+    public final Button.ButtonID ht_actuate = Button.ButtonID.X;
+
+    // Intake - Operator Controller
+    public final Button.ButtonID in_extend = Button.ButtonID.Y;
+    public final Button.ButtonID in_intake = Button.ButtonID.RIGHT_BUMPER;
+    public final Button.ButtonID in_outake = Button.ButtonID.LEFT_BUMPER;
+
+    public final Axis.AxisID rc_intake = Axis.AxisID.RIGHT_TRIGGER;
+    public final Axis.AxisID rc_outtake = Axis.AxisID.LEFT_TRIGGER;
+
+    /************ Drivetrain ************/
+    // Pigeon
     public final int dt_pigeonID = 42;
     public final int dt_pigeonRemoteOrdinalLeft = 0;
     public final int dt_pigeonRemoteOrdinalRight = 0;
     public final boolean dt_usePigeon = false;
 
+    // Shifters
     public final DriveTrain.DriveGear dt_defaultDriveGear = DriveTrain.DriveGear.HIGH;
-    public final int dt_shifterForwardChannel = 7;
-    public final int dt_shifterReverseChannel = 8;
+    public final int dt_shifterForwardChannel = 6;
+    public final int dt_shifterReverseChannel = 7;
 
+    // Physical Dimensions
     public final double dt_width = 2.5;
     public final double dt_wheelDiameter = 1.0d / 3.0d;
 
+    // Closed Loop Constants
     public final int dt_drivePidSlot = 0;
     public final int dt_gyroPidSlot = 1;
     public final int dt_encTurnPidSlot = 2;
-
-    // Units (Average Counts per 100ms)
-    // TODO: Experimentally determine values
     public final int dt_motionMagicMaxAcceleration = 15000;
     public final int dt_motionMagicMaxVelocity = 3000;
 
+    // Defaults
     public final double dt_peakOut = 1;
     public final double dt_nominalOut = 0;
+    public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
 
-    // On the driver controller
-    public final Button.ButtonID dtCurvatureToggle = Button.ButtonID.RIGHT_BUMPER;
-    public final Button.ButtonID dtGearToggle = Button.ButtonID.LEFT_BUMPER;
-
-    // Also has the two driver sticks all to itself for various purposes
-
-    // Elevator
-    public final int el_talon = 7;
-//    public final int elevatorCanifier = 11;
-
-    public final double el_rawMultiplier = 0.8;
+    /************ Elevator ************/
+    public final double el_rawMultiplier = 0.1;
 
     public final int el_maxVelocity = 0;
     public final int el_maxAcceleration = 0;
@@ -83,61 +115,28 @@ public class Constants
     public final PID el_motionPID = new PID(0, 0, 0, 0);
     public final PID el_posPID = new PID(0, 0, 0, 0);
 
-    // On the operator controller
-    public final Button.ButtonID elevatorLowHatch = Button.ButtonID.START;
-    public final Button.ButtonID elevatorMidHatch = Button.ButtonID.X;
-    public final Button.ButtonID elevatorHighHatch = Button.ButtonID.Y;
-    public final Button.ButtonID elevatorLowCargo = Button.ButtonID.B;
-    public final Button.ButtonID elevatorMidCargo = Button.ButtonID.A;
-    public final Button.ButtonID elevatorHighCargo = Button.ButtonID.SELECT;
-
-    public final Axis.AxisID elevatorDirectControl = Axis.AxisID.RIGHT_Y;
-
-    // Climber
-    public final int cl_gorillaMaster = 8;
-    public final int cl_gorillaSlave = 9;
-    public final int cl_pogoMaster = 10;
-
+    /************ Climber ************/
     public final int cl_pogoLimitRemoteID = cl_gorillaSlave;
     public final boolean cl_useTalonLimit = false;
     public final double cl_reverseThresholdCurrent = 20;
 
-    public final int gorillaLimitOut = 1;
-    public final int gorillaLimitIn = 2;
-    public final int screwLimitOut = 3;
-    public final int screwLimitIn = 4;
+    public final int cl_gorillaForwardLimit = 1;
+    public final int cl_gorillaReverseLimit = 2;
+    public final int cl_pogoForwardLimit = 3;
+    public final int cl_pogoReverseLimit = 4;
 
-    // On the driver controller
-    public final Button.ButtonID climberGorillaButton = Button.ButtonID.A;
-    public final Button.ButtonID climberScrewButton = Button.ButtonID.B;
+    /************ Intake ************/
+    public final int in_solenoidForward = 0;
+    public final int in_solenoidReverse = 1;
 
-    // Intake
-    public final int intakeMaster = 12;
-    public final int intakeForward = 0;
-    public final int intakeReverse = 1;
 
-    // On the operator controller
-    public final Button.ButtonID intakeExtendButton = Button.ButtonID.Y;
-    public final Button.ButtonID intakeIntakeButton = Button.ButtonID.RIGHT_BUMPER;
-    public final Button.ButtonID intakeOuttakeButton = Button.ButtonID.LEFT_BUMPER;
+    /************ Hatcher ************/
+    public final int extendHatcherForward = 2;
+    public final int extendHatcherReverse = 3;
+    public final int actuateHatcherForward = 4;
+    public final int actuateHatcherReverse = 5;
 
-    // Hatcher
-    public final int extendHatcherForward = 0;
-    public final int extendHatcherReverse = 0;
-    public final int actuateHatcherForward = 0;
-    public final int actuateHatcherReverse = 0;
-
-    // On the operator controller
-    public final Button.ButtonID hatcherExtendButton = Button.ButtonID.Y;
-    public final Button.ButtonID hatcherActuateButton = Button.ButtonID.X;
-
-    // RollerClaw
-    public final int rollerClawTalon = 11;
+    /************ Roller Claw ************/
     public final int rollerClawLimitSwitch = 0;
-
-    // On the operator controller
-    public final Axis.AxisID rollerClawIntake = Axis.AxisID.RIGHT_TRIGGER;
-    public final Axis.AxisID rollerClawOuttake = Axis.AxisID.LEFT_TRIGGER;
-
     public final int talonTimeout = 20;
 }

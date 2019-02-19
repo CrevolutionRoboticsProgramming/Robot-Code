@@ -84,8 +84,8 @@ public class Climber extends Subsystem
     @Override
     public boolean init()
     {
-        mController.config(mConst.climberGorillaButton, Button.ButtonMode.RAW);
-        mController.config(mConst.climberScrewButton, Button.ButtonMode.RAW);
+        mController.config(mConst.cl_gorillaForward, Button.ButtonMode.RAW);
+        mController.config(mConst.cl_pogoForward, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.X, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.Y, Button.ButtonMode.RAW);
 
@@ -123,10 +123,10 @@ public class Climber extends Subsystem
             }
         } else
         {
-            mGForwardLimit = new DigitalInput(mConst.gorillaLimitOut);
-            mGReverseLimit = new DigitalInput(mConst.gorillaLimitIn);
-            mPForwardLimit = new DigitalInput(mConst.screwLimitOut);
-            mPReverseLimit = new DigitalInput(mConst.screwLimitIn);
+            mGForwardLimit = new DigitalInput(mConst.cl_gorillaForwardLimit);
+            mGReverseLimit = new DigitalInput(mConst.cl_gorillaReverseLimit);
+            mPForwardLimit = new DigitalInput(mConst.cl_pogoForwardLimit);
+            mPReverseLimit = new DigitalInput(mConst.cl_pogoReverseLimit);
         }
 
         BadLog.createTopic("Climber/Master Gorilla Output", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");

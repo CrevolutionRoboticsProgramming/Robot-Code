@@ -60,11 +60,11 @@ public class Hatcher extends Subsystem
     @Override
     public boolean init()
     {
-        mExtendSol = new DoubleSolenoid(mConstants.pcmID, mConstants.extendHatcherForward, mConstants.extendHatcherReverse);
-        mActuateSol = new DoubleSolenoid(mConstants.pcmID, mConstants.actuateHatcherForward, mConstants.actuateHatcherReverse);
+        mExtendSol = new DoubleSolenoid(mConstants.pcm, mConstants.extendHatcherForward, mConstants.extendHatcherReverse);
+        mActuateSol = new DoubleSolenoid(mConstants.pcm, mConstants.actuateHatcherForward, mConstants.actuateHatcherReverse);
 
-        mController.config(mConstants.hatcherExtendButton, Button.ButtonMode.RAW);
-        mController.config(mConstants.hatcherActuateButton, Button.ButtonMode.TOGGLE);
+        mController.config(mConstants.ht_extend, Button.ButtonMode.RAW);
+        mController.config(mConstants.ht_actuate, Button.ButtonMode.TOGGLE);
 
         BadLog.createTopic("Hatcher Actuated", BadLog.UNITLESS, () -> mActuateSol.get() == DoubleSolenoid.Value.kReverse ? 1.0 : 0.0, "hide", "join:hatcher/actuate Outputs");
         BadLog.createTopic("Hatcher Extended", BadLog.UNITLESS, () -> mExtendSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:hatcher/extend Outputs");
@@ -106,7 +106,7 @@ public class Hatcher extends Subsystem
             @Override
             public void update()
             {
-                if (mController.get(mConstants.hatcherExtendButton))
+                if (mController.get(mConstants.ht_extend))
                 {
                     extendState = DoubleSolenoid.Value.kForward;
                 } else
@@ -114,7 +114,7 @@ public class Hatcher extends Subsystem
                     extendState = DoubleSolenoid.Value.kReverse;
                 }
 
-                if (mController.get(mConstants.hatcherActuateButton))
+                if (mController.get(mConstants.ht_actuate))
                 {
                     actuateState = DoubleSolenoid.Value.kReverse;
                 } else
