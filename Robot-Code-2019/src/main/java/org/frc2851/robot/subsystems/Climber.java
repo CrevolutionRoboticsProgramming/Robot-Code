@@ -1,7 +1,7 @@
 package org.frc2851.robot.subsystems;
 
-import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
@@ -23,20 +23,27 @@ import org.frc2851.robot.Robot;
  */
 public class Climber extends Subsystem
 {
-    public enum ClimberState
+    public enum GorillaState
     {
-        EXTENDING(1.0), RETRACTING(-1.0), NEUTRAL(0.0);
+        FORWARD(0.5), REVERSE(-0.5), NEUTRAL(0);
 
-        private double output;
+        final double power;
 
-        ClimberState(double output)
+        GorillaState(double power)
         {
-            this.output = output;
+            this.power = power;
         }
+    }
 
-        public double getOutput()
+    public enum PogoState
+    {
+        FORWARD(0.5), REVERSE(-0.5), NEUTRAL(0);
+
+        final double power;
+
+        PogoState(double power)
         {
-            return output;
+            this.power = power;
         }
     }
 
@@ -46,8 +53,8 @@ public class Climber extends Subsystem
 
     private DigitalInput gorillaLimitOut, gorillaLimitIn, screwLimitOut, screwLimitIn;
 
-    private ClimberState gorillaState = ClimberState.NEUTRAL, lastGorillaState = ClimberState.NEUTRAL;
-    private ClimberState screwState = ClimberState.NEUTRAL, lastScrewState = ClimberState.NEUTRAL;
+//    private ClimberState gorillaState = ClimberState.NEUTRAL, lastGorillaState = ClimberState.NEUTRAL;
+//    private ClimberState screwState = ClimberState.NEUTRAL, lastScrewState = ClimberState.NEUTRAL;
 
     /**
      * Returns the sole instance of the Climber class
@@ -67,7 +74,8 @@ public class Climber extends Subsystem
         super("Climber");
     }
 
-    private WPI_TalonSRX _gorillaMaster, _gorillaSlave, _screwMaster;
+    private WPI_TalonSRX mGorillaMaster, mGorillaSlave /*mPogoMaster*/;
+    private VictorSPX mPogoMaster;
 
     /**
      * Initializes the controller, motors, and logging
@@ -82,9 +90,9 @@ public class Climber extends Subsystem
 
         try
         {
-            _gorillaMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.gorillaMaster);
-            _gorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, _gorillaMaster);
-            _screwMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.screwMaster);
+            mGorillaMaster = TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.gorillaMaster);
+            mGorillaSlave = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.gorillaSlave, mGorillaMaster);
+            mPogoMaster = new VictorSPX(10); //TalonSRXFactory.createDefaultWPI_TalonSRX(mConstants.screwMaster);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, climber init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -96,15 +104,15 @@ public class Climber extends Subsystem
         screwLimitOut = new DigitalInput(mConstants.screwLimitOut);
         screwLimitIn = new DigitalInput(mConstants.screwLimitIn);
 
-        BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> _gorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> _gorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> _screwMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master", "Voltage:", () -> _gorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Slave", "Voltage:", () -> _gorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Screw", "Voltage:", () -> _screwMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master", "Amperes:", () -> _gorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Slave", "Amperes:", () -> _gorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Screw", "Amperes:", () -> _screwMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
+//        BadLog.createTopic("Climber/Master", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+//        BadLog.createTopic("Climber/Slave", BadLog.UNITLESS, () -> mGorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+//        BadLog.createTopic("Climber/Screw", BadLog.UNITLESS, () -> mPogoMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
+//        BadLog.createTopic("Climber/Master", "Voltage:", () -> mGorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+//        BadLog.createTopic("Climber/Slave", "Voltage:", () -> mGorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
+//        BadLog.createTopic("Climber/Screw", "Voltage:", () -> mPogoMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
+//        BadLog.createTopic("Climber/Master", "Amperes:", () -> mGorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+//        BadLog.createTopic("Climber/Slave", "Amperes:", () -> mGorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+//        BadLog.createTopic("Climber/Screw", "Amperes:", () -> mPogoMaster.getOutputCurrent(), "hide", "join:Climber/Percent Output");
 
         return true;
     }
@@ -115,9 +123,9 @@ public class Climber extends Subsystem
     1=actuating screw*/
 /*private void TalonSet(double x,int select){
     if (select==0) {
-        _gorillaMaster.set(ControlMode.PercentOutput, x);
+        mGorillaMaster.set(ControlMode.PercentOutput, x);
     }else if(select==1){
-        _screwMaster.set(ControlMode.PercentOutput,x);
+        mPogoMaster.set(ControlMode.PercentOutput,x);
     }
 }*/
 
@@ -126,8 +134,8 @@ public class Climber extends Subsystem
      */
     private void reset()
     {
-        _gorillaMaster.set(ControlMode.PercentOutput, 0);
-        _screwMaster.set(ControlMode.PercentOutput, 0);
+        mGorillaMaster.set(ControlMode.PercentOutput, 0);
+        mPogoMaster.set(ControlMode.PercentOutput, 0);
         log("All motors zeroed", Logger.LogLevel.DEBUG);
     }
 
@@ -141,6 +149,9 @@ public class Climber extends Subsystem
     {
         return new Command()
         {
+            GorillaState lastGState = GorillaState.NEUTRAL;
+            PogoState lastPState = PogoState.NEUTRAL;
+
             @Override
             public String getName()
             {
@@ -163,44 +174,66 @@ public class Climber extends Subsystem
             @Override
             public void update()
             {
-                // Gorilla arm
-                if (mController.get(mConstants.climberGorillaButton))
-                {
-                    if (!gorillaLimitOut.get())
-                    {
-                        gorillaState = ClimberState.EXTENDING;
-                    }
-                } else if (!gorillaLimitIn.get())
-                {
-                    gorillaState = ClimberState.RETRACTING;
-                }
+                // TODO: Implement limit switch with connectivity check (Climber)
+                GorillaState gState = GorillaState.NEUTRAL;
+                PogoState pState = PogoState.NEUTRAL;
 
-                // Screw drive
-                if (mController.get(mConstants.climberScrewButton))
-                {
-                    if (!screwLimitOut.get())
-                    {
-                        screwState = ClimberState.EXTENDING;
-                    }
-                } else if (!screwLimitIn.get())
-                {
-                    screwState = ClimberState.RETRACTING;
-                }
+                // Poll Buttons
+                if (mController.get(Button.ButtonID.A)) gState = GorillaState.FORWARD;
+                else if (mController.get(Button.ButtonID.B)) gState = GorillaState.REVERSE;
 
-                _gorillaMaster.set(ControlMode.PercentOutput, gorillaState.getOutput());
-                _screwMaster.set(ControlMode.PercentOutput, screwState.getOutput());
+                if (mController.get(Button.ButtonID.X)) pState = PogoState.FORWARD;
+                else if (mController.get(Button.ButtonID.Y)) pState = PogoState.REVERSE;
 
-                if (lastGorillaState != gorillaState)
-                {
-                    log("Gorilla arm set to " + gorillaState.toString(), Logger.LogLevel.DEBUG);
-                }
-                if (lastScrewState != screwState)
-                {
-                    log("Screw set to " + screwState.toString(), Logger.LogLevel.DEBUG);
-                }
+                // Logging
+                if (gState != lastGState) log("Updated Gorilla State: " + gState.name(), Logger.LogLevel.DEBUG);
+                if (pState != lastPState) log("Updated Pogo State: " + pState.name(), Logger.LogLevel.DEBUG);
+                lastGState = gState;
+                lastPState = pState;
 
-                lastGorillaState = gorillaState;
-                lastScrewState = screwState;
+                // Talon Set
+                mGorillaMaster.set(ControlMode.PercentOutput, gState.power);
+                mPogoMaster.set(ControlMode.PercentOutput, pState.power);
+
+
+//                // Gorilla arm
+//                if (mController.get(mConstants.climberGorillaButton))
+//                {
+//                    if (!gorillaLimitOut.get())
+//                    {
+//                        gorillaState = ClimberState.EXTENDING;
+//                    }
+//                } else if (!gorillaLimitIn.get())
+//                {
+//                    gorillaState = ClimberState.RETRACTING;
+//                }
+//
+//                // Screw drive
+//                if (mController.get(mConstants.climberScrewButton))
+//                {
+//                    if (!screwLimitOut.get())
+//                    {
+//                        screwState = ClimberState.EXTENDING;
+//                    }
+//                } else if (!screwLimitIn.get())
+//                {
+//                    screwState = ClimberState.RETRACTING;
+//                }
+//
+//                mGorillaMaster.set(ControlMode.PercentOutput, gorillaState.getOutput());
+//                mPogoMaster.set(ControlMode.PercentOutput, screwState.getOutput());
+//
+//                if (lastGorillaState != gorillaState)
+//                {
+//                    log("Gorilla arm set to " + gorillaState.toString(), Logger.LogLevel.DEBUG);
+//                }
+//                if (lastScrewState != screwState)
+//                {
+//                    log("Screw set to " + screwState.toString(), Logger.LogLevel.DEBUG);
+//                }
+//
+//                lastGorillaState = gorillaState;
+//                lastScrewState = screwState;
             }
 
             @Override
