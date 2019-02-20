@@ -60,8 +60,8 @@ public class TalonSRXFactory
         mFastMasterConfiguration.STATUS_FRAME_FEEDBACK0_2_MS = 10;
 
 //        // Slave Configuration
-//        mDefaultSlaveConfiguration.STATUS_FRAME_GENERAL_1_MS = 100;
-//        mDefaultSlaveConfiguration.STATUS_FRAME_FEEDBACK0_2_MS = 100;
+        mDefaultSlaveConfiguration.STATUS_FRAME_GENERAL_1_MS = 100;
+        mDefaultSlaveConfiguration.STATUS_FRAME_FEEDBACK0_2_MS = 100;
     }
 
     /**
