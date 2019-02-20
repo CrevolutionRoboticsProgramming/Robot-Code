@@ -22,7 +22,7 @@ public class TalonSRXFactory
     private static class Configuration
     {
         public int MAX_OUT = 1;
-        public int NOMINAL_OUT = 1;
+        public int NOMINAL_OUT = 0;
         public NeutralMode NEUTRAL_MODE = NeutralMode.Brake;
         public boolean ENABLE_CURRENT_LIMIT = false;
         public boolean ENABLE_SOFT_LIMIT = false;
@@ -59,9 +59,9 @@ public class TalonSRXFactory
         mFastMasterConfiguration.STATUS_FRAME_GENERAL_1_MS = 5;
         mFastMasterConfiguration.STATUS_FRAME_FEEDBACK0_2_MS = 10;
 
-        // Slave Configuration
-        mDefaultSlaveConfiguration.STATUS_FRAME_GENERAL_1_MS = 100;
-        mDefaultSlaveConfiguration.STATUS_FRAME_FEEDBACK0_2_MS = 100;
+//        // Slave Configuration
+//        mDefaultSlaveConfiguration.STATUS_FRAME_GENERAL_1_MS = 100;
+//        mDefaultSlaveConfiguration.STATUS_FRAME_FEEDBACK0_2_MS = 100;
     }
 
     /**
