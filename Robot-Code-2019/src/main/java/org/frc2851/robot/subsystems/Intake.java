@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -36,8 +37,8 @@ public class Intake extends Subsystem
     }
 
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = (mConstants.singleControllerMode) ? Constants.driver : Constants.operator;
-    private TalonSRX intakeTalon;
+    private Controller mController = Constants.driver; //(mConstants.singleControllerMode) ? Constants.driver : Constants.operator;
+    private VictorSPX intakeTalon;
     private DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
@@ -86,21 +87,13 @@ public class Intake extends Subsystem
         mController.config(mConstants.in_intake, Button.ButtonMode.RAW);
         mController.config(mConstants.in_outake, Button.ButtonMode.RAW);
 
-        try
-        {
-            intakeTalon = TalonSRXFactory.createDefaultTalonSRX(mConstants.in_talon);
-        } catch (TalonCommunicationErrorException e)
-        {
-            log("Could not initialize motor, intake init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
-            return false;
-        }
+        intakeTalon = new VictorSPX(mConstants.in_talon);
 
         intakeSol = new DoubleSolenoid(mConstants.pcm, mConstants.in_solenoidForward, mConstants.in_solenoidReverse);
 
-        BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
-        BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
-        BadLog.createTopic("Intake Current", "A", () -> intakeTalon.getOutputCurrent(), "hide", "join:Intake/Current Outputs");
-        BadLog.createTopic("Intake Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
+//        BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
+//        BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
+//        BadLog.createTopic("Intake Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
 
         return true;
     }

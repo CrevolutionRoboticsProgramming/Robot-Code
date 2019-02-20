@@ -84,11 +84,11 @@ public class DriveTrain extends Subsystem
         try
         {
             mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftMaster);
-            mLeftSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveA);
-            mLeftSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftSlaveB);
+            mLeftSlaveA = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_leftSlaveA, mLeftMaster);
+            mLeftSlaveB = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_leftSlaveB, mLeftMaster);
             mRightMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightMaster);
-            mRightSlaveA = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightSlaveA);
-            mRightSlaveB = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_rightSlaveB);
+            mRightSlaveA = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_rightSlaveA, mRightMaster);
+            mRightSlaveB = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_rightSlaveB, mRightMaster);
 
             leftMotors.add(mLeftMaster);
             leftMotors.add(mLeftSlaveA);
@@ -103,8 +103,11 @@ public class DriveTrain extends Subsystem
             return false;
         }
 
-        setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_nominalOut);
+        setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
         setNeutralMode(NeutralMode.Brake);
+
+        mLeftSlaveA.setInverted(false);
+        mLeftSlaveB.setInverted(false);
 
         // I don't know what safety does but the messages it throws annoy me.
         mLeftMaster.setSafetyEnabled(false);
@@ -123,7 +126,7 @@ public class DriveTrain extends Subsystem
             mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
-        mLeftMotionPID = new PID(0, 0, 0, 0);
+//        mLeftMotionPID = new PID(0, 0, 0, 0);
 
         return true;
     }
@@ -180,7 +183,7 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            DifferentialDrive robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
+            DifferentialDrive robotDrive;
 
             final double TURN_MULT = 1;
 
@@ -200,12 +203,13 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 reset();
+                robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
 
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.setSensorPhase(true);
 
-                robotDrive.tankDrive(0, 0);
+//                robotDrive.tankDrive(0, 0);
                 robotDrive.setSafetyEnabled(false);
                 return true;
             }
@@ -221,13 +225,15 @@ public class DriveTrain extends Subsystem
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
 //                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
-                    mShifterSolenoid.set(DriveGear.LOW.val);
+                    mShifterSolenoid.set(DriveGear.HIGH.val);
 
                     mDriveControlMode = DriveControlMode.FPS;
                     switch (mDriveControlMode)
                     {
                         case FPS:
-                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
+//                            System.out.println(mController.get(Axis.AxisID.LEFT_Y) + ", " + mController.get(Axis.AxisID.RIGHT_X));
+                            System.out.println(mRightSlaveA.getMotorOutputPercent());
+                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), -mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
                             break;
 
                         case FPS_CURVE:
@@ -594,10 +600,30 @@ public class DriveTrain extends Subsystem
             setsSucceeded &= mLeftMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mLeftMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
 
+            setsSucceeded &= mLeftSlaveA.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftSlaveA.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftSlaveA.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftSlaveA.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+
+            setsSucceeded &= mLeftSlaveB.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftSlaveB.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftSlaveB.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mLeftSlaveB.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+
             setsSucceeded &= mRightMaster.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mRightMaster.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mRightMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
             setsSucceeded &= mRightMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+
+            setsSucceeded &= mRightSlaveA.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightSlaveA.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightSlaveA.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightSlaveA.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+
+            setsSucceeded &= mRightSlaveB.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightSlaveB.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightSlaveB.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+            setsSucceeded &= mRightSlaveB.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
         } while (!setsSucceeded && tries++ < maxRetries);
         return setsSucceeded;
     }

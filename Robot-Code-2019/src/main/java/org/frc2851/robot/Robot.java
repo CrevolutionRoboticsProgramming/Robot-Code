@@ -25,10 +25,10 @@ public class Robot extends CrevoRobot
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         addSubsystem(DriveTrain.getInstance());
-//        addSubsystem(Elevator.getInstance());
-        //addSubsystem(Hatcher.getInstance());
-        //addSubsystem(Intake.getInstance());
-//        addSubsystem(RollerClaw.getInstance());
+////        addSubsystem(Elevator.getInstance());
+//        addSubsystem(Hatcher.getInstance());
+        addSubsystem(Intake.getInstance());
+        addSubsystem(RollerClaw.getInstance());
 //        addSubsystem(Climber.getInstance());
         for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
         driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);

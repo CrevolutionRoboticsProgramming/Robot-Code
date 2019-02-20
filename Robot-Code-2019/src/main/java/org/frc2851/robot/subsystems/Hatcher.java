@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
@@ -14,6 +15,27 @@ import org.frc2851.robot.Constants;
  */
 public class Hatcher extends Subsystem
 {
+    private enum ActuationState
+    {
+        OPEN(DoubleSolenoid.Value.kForward), CLOSED(DoubleSolenoid.Value.kReverse);
+
+        final DoubleSolenoid.Value val;
+        ActuationState(DoubleSolenoid.Value val)
+        {
+            this.val = val;
+        }
+    }
+
+    private enum ExtensionState
+    {
+        STOWED(DoubleSolenoid.Value.kForward), EXTENDED(DoubleSolenoid.Value.kReverse);
+
+        final DoubleSolenoid.Value val;
+        ExtensionState(DoubleSolenoid.Value val)
+        {
+            this.val = val;
+        }
+    }
 
     private DoubleSolenoid mExtendSol, mActuateSol;
     private Controller mController = Constants.operator;
@@ -47,8 +69,8 @@ public class Hatcher extends Subsystem
      */
     private void reset()
     {
-        mExtendSol.set(DoubleSolenoid.Value.kOff);
-        mActuateSol.set(DoubleSolenoid.Value.kOff);
+//        mExtendSol.set(DoubleSolenoid.Value.kOff);
+//        mActuateSol.set(DoubleSolenoid.Value.kOff);
     }
 
     /**
@@ -83,6 +105,9 @@ public class Hatcher extends Subsystem
     {
         return new Command()
         {
+            ActuationState lastActuationState = ActuationState.CLOSED;
+            ExtensionState lastExtensionState = ExtensionState.STOWED;
+
             @Override
             public String getName()
             {
@@ -105,6 +130,21 @@ public class Hatcher extends Subsystem
             @Override
             public void update()
             {
+                ExtensionState extensionState = mController.get(mConstants.ht_extend) ? ExtensionState.EXTENDED : ExtensionState.STOWED;
+                ActuationState actuationState = mController.get(mConstants.ht_actuate) ? ActuationState.CLOSED : ActuationState.OPEN;
+
+                if (extensionState != lastExtensionState)
+                    log("Updated extension state: " + extensionState.name(), Logger.LogLevel.DEBUG);
+                if (actuationState != lastActuationState)
+                    log("Updated actuation state: " + extensionState.name(), Logger.LogLevel.DEBUG);
+
+                lastActuationState = actuationState;
+                lastExtensionState = extensionState;
+
+                mExtendSol.set(extensionState.val);
+                mActuateSol.set(actuationState.val);
+
+                /*
                 if (mController.get(mConstants.ht_extend))
                 {
                     extendState = DoubleSolenoid.Value.kForward;
@@ -135,6 +175,7 @@ public class Hatcher extends Subsystem
 
                 lastExtendState = extendState;
                 lastActuateState = actuateState;
+                */
             }
 
             @Override

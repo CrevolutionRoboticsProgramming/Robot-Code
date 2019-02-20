@@ -50,17 +50,17 @@ public class Constants
     public final int cl_pogoMaster = 10;
     public final int rc_talon = 11;
     public final int in_talon = 12;
-    public final int pcm = 13;
+    public final int pcm = 55;
 
     // Pneumatics
-    public final int in_solenoidForward = 0;
-    public final int in_solenoidReverse = 1;
-    public final int ht_extendForward = 2;
-    public final int ht_extendReverse = 3;
-    public final int ht_actuateForward = 4;
-    public final int ht_actuateReverse = 5;
-    public final int dt_shifterForwardChannel = 6;
-    public final int dt_shifterReverseChannel = 7;
+    public final int in_solenoidForward = 6;
+    public final int in_solenoidReverse = 7;
+    public final int ht_extendForward = 0;
+    public final int ht_extendReverse = 1;
+    public final int ht_actuateForward = 2;
+    public final int ht_actuateReverse = 3;
+    public final int dt_shifterForwardChannel = 4;
+    public final int dt_shifterReverseChannel = 5;
 
     // DIO
     public final int rc_limitSwitch = 0; // Normally Open; Closed when ball in RC

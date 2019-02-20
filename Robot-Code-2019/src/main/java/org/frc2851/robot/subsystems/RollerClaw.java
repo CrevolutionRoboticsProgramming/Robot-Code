@@ -3,6 +3,7 @@ package org.frc2851.robot.subsystems;
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -21,7 +22,7 @@ public class RollerClaw extends Subsystem
 {
     private enum IntakeState
     {
-        INTAKE(0.5), OUTTAKE(-0.5), IDLE(0), HOLD(0.1);
+        INTAKE(0.75), OUTTAKE(-0.75), IDLE(0), HOLD(0.1);
 
         double power;
         IntakeState(double power) {
@@ -30,9 +31,9 @@ public class RollerClaw extends Subsystem
     }
 
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = Constants.driver;
+    private Controller mController = Constants.operator;
 
-    private TalonSRX _motor;
+    private VictorSPX _motor;
 
     private static RollerClaw mInstance = new RollerClaw();
 
@@ -65,14 +66,8 @@ public class RollerClaw extends Subsystem
     @Override
     protected boolean init()
     {
-        try
-        {
-            _motor = TalonSRXFactory.createDefaultMasterTalonSRX(7);
-        } catch (TalonCommunicationErrorException e)
-        {
-            log("Could not initialize motor, roller claw init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
-            return false;
-        }
+
+        _motor = new VictorSPX(mConstants.rc_talon);
 
 //        mLimitSwitch = new DigitalInput(mConstants.rc_limitSwitch);
 
@@ -81,7 +76,7 @@ public class RollerClaw extends Subsystem
 
         BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> _motor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
         BadLog.createTopic("Roller Claw Voltage", "V", () -> _motor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
-        BadLog.createTopic("Roller Claw Current", "A", () -> _motor.getOutputCurrent(), "hide", "join:Roller Claw/Current Outputs");
+//        BadLog.createTopic("Roller Claw Current", "A", () -> _motor.getOutputCurrent(), "hide", "join:Roller Claw/Current Outputs");
 
         return true;
     }
@@ -131,7 +126,7 @@ public class RollerClaw extends Subsystem
                     else state = IntakeState.IDLE;
 
                     if (state != lastState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
-                    _motor.set(ControlMode.PercentOutput, 0.5);
+                    _motor.set(ControlMode.PercentOutput, state.power);
                     lastState = state;
                 }
 
