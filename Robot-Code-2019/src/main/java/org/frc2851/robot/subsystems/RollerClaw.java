@@ -131,7 +131,6 @@ public class RollerClaw extends Subsystem
                     else state = IntakeState.IDLE;
 
                     if (state != lastState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
-                    _motor.set(ControlMode.PercentOutput, 0.5);
                     lastState = state;
                 }
 
