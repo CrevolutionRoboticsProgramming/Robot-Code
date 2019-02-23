@@ -26,7 +26,7 @@ public class Climber extends Subsystem
 {
     public enum GorillaState
     {
-        FORWARD(0.5), REVERSE(-0.5), NEUTRAL(0);
+        FORWARD(0.1), REVERSE(-0.1), NEUTRAL(0);
 
         final double power;
 
@@ -96,7 +96,7 @@ public class Climber extends Subsystem
             mPogoMaster = new VictorSPX(mConst.cl_pogoMaster); //TalonSRXFactory.createDefaultWPI_TalonSRX(mConst.screwMaster);
 
             mGorillaMaster.setInverted(InvertType.InvertMotorOutput);
-            mGorillaSlave.setInverted(InvertType.FollowMaster);
+//            mGorillaSlave.setInverted(InvertType.FollowMaster);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, climber init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -129,14 +129,15 @@ public class Climber extends Subsystem
             mPReverseLimit = new DigitalInput(mConst.cl_pogoReverseLimit);
         }
 
-        BadLog.createTopic("Climber/Master Gorilla Output", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Slave Gorilla Output", BadLog.UNITLESS, () -> mGorillaSlave.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Screw Output", BadLog.UNITLESS, () -> mPogoMaster.getMotorOutputPercent(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master Gorilla Voltage", "Voltage:", () -> mGorillaMaster.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Slave Gorilla Voltage", "Voltage:", () -> mGorillaSlave.getBusVoltage(), "hide", "join:Climber/Voltage Outputs");
-        BadLog.createTopic("Climber/Screw Voltage", "Voltage:", () -> mPogoMaster.getBusVoltage(), "hide", "join:Climber/Percent Output");
-        BadLog.createTopic("Climber/Master Gorilla Current", "Amperes:", () -> mGorillaMaster.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
-        BadLog.createTopic("Climber/Slave Gorilla Current", "Amperes:", () -> mGorillaSlave.getOutputCurrent(), "hide", "join:Climber/Current Outputs");
+        BadLog.createTopic("Gorilla/Master Gorilla Output", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Gorilla/Percent");
+        BadLog.createTopic("Gorilla/Master Gorilla Voltage", "V", () -> mGorillaMaster.getMotorOutputVoltage(), "hide", "join:Gorilla/Voltage");
+        BadLog.createTopic("Gorilla/Slave Gorilla Voltage", "V", () -> mGorillaSlave.getMotorOutputVoltage(), "hide", "join:Gorilla/Voltage");
+        BadLog.createTopic("Gorilla/Master Gorilla Current", "I", () -> mGorillaMaster.getOutputCurrent(), "hide", "join:Gorilla/Current");
+        BadLog.createTopic("Gorilla/Slave Gorilla Current", "I", () -> mGorillaSlave.getOutputCurrent(), "hide", "join:Gorilla/Current");
+
+        BadLog.createTopic("Pogo/Pogo Output", BadLog.UNITLESS, () -> mPogoMaster.getMotorOutputPercent(), "hide", "join:Pogo/Percent");
+        BadLog.createTopic("Pogo/Pogo Voltage", "V", () -> mPogoMaster.getMotorOutputVoltage(), "hide", "join:Pogo/Voltage");
+
         return true;
     }
 
@@ -193,9 +194,9 @@ public class Climber extends Subsystem
                     PogoState pState = PogoState.NEUTRAL;
 
                     // Poll Buttons and Checks limit switches
-                    if (mController.get(Button.ButtonID.A) && (mConst.cl_useTalonLimit || !mGForwardLimit.get()))
+                    if (mController.get(Button.ButtonID.A) && (mConst.cl_useTalonLimit || mGForwardLimit.get()))
                         gState = GorillaState.FORWARD;
-                    else if (mController.get(Button.ButtonID.B) && (mConst.cl_useTalonLimit || !mGReverseLimit.get()))
+                    else if (mController.get(Button.ButtonID.B) && (mConst.cl_useTalonLimit || mGReverseLimit.get()))
                         gState = GorillaState.REVERSE;
 
                     if (mController.get(Button.ButtonID.X) && (mConst.cl_useTalonLimit || !mPForwardLimit.get()))
