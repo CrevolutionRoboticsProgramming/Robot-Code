@@ -223,16 +223,12 @@ public class DriveTrain extends Subsystem
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
-//                if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
-
-                    mShifterSolenoid.set(DriveGear.HIGH.val);
+                    if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
                     mDriveControlMode = DriveControlMode.FPS;
                     switch (mDriveControlMode)
                     {
                         case FPS:
-//                            System.out.println(mController.get(Axis.AxisID.LEFT_Y) + ", " + mController.get(Axis.AxisID.RIGHT_X));
-                            System.out.println(mRightSlaveA.getMotorOutputPercent());
                             robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), -mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
                             break;
 
@@ -249,11 +245,6 @@ public class DriveTrain extends Subsystem
                             break;
                     }
                 }
-
-                // Encoder Test
-//                String encTest = "Left(" + mLeftMaster.getSelectedSensorPosition(0) + "," + mLeftMaster.getSelectedSensorVelocity(0) +
-//                        "), Right(" + mRightMaster.getSelectedSensorPosition(0) + "," + mRightMaster.getSelectedSensorVelocity(0) + ")";
-//                System.out.println(encTest);
             }
 
             @Override
@@ -573,6 +564,7 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 mShifterSolenoid.set(gear.val);
+                mCurrentGear = gear;
                 return true;
             }
 
