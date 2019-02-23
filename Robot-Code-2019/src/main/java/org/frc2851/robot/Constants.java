@@ -48,9 +48,9 @@ public class Constants
     public final int cl_gorillaMaster = 8;
     public final int cl_gorillaSlave = 9;
     public final int cl_pogoMaster = 10;
-    public final int rc_talon = 11;
-    public final int in_talon = 12;
-    public final int pcm = 55;
+    public final int in_talon = 11;
+    public final int rc_talon = 12;
+    public final int pcm = 13;
 
     // Pneumatics
     public final int in_solenoidForward = 6;
@@ -87,19 +87,22 @@ public class Constants
 
     // Gorilla Arm / Pogo - Driver Controller
     public final Button.ButtonID cl_gorillaForward = Button.ButtonID.A;
-    public final Button.ButtonID cl_pogoForward = Button.ButtonID.B;
+    public final Button.ButtonID cl_gorillaReverse = Button.ButtonID.B;
+    public final Button.ButtonID cl_pogoForward = Button.ButtonID.X;
+    public final Button.ButtonID cl_pogoReverse = Button.ButtonID.Y;
 
     // Hatcher - Operator Controller
-    public final Button.ButtonID ht_extend = Button.ButtonID.Y;
-    public final Button.ButtonID ht_actuate = Button.ButtonID.X;
+    public final Button.ButtonID ht_extend = Button.ButtonID.Y; // Conflict (Elevator)
+    public final Button.ButtonID ht_actuate = Button.ButtonID.X; // Conflict (Elevator)
 
-    // Intake - Operator Controller
-    public final Button.ButtonID in_extend = Button.ButtonID.Y;
-    public final Button.ButtonID in_intake = Button.ButtonID.RIGHT_BUMPER;
-    public final Button.ButtonID in_outake = Button.ButtonID.LEFT_BUMPER;
+    // Intake - Driver Controller
+    public final Button.ButtonID in_extend = Button.ButtonID.RIGHT_BUMPER;
+    public final Button.ButtonID in_intake = Button.ButtonID.RIGHT_TRIGGER;
+    public final Button.ButtonID in_outake = Button.ButtonID.LEFT_TRIGGER;
 
-    public final Axis.AxisID rc_intake = Axis.AxisID.RIGHT_TRIGGER;
-    public final Axis.AxisID rc_outtake = Axis.AxisID.LEFT_TRIGGER;
+    // Roller Claw - Driver Controller
+    public final Button.ButtonID rc_intake = Button.ButtonID.RIGHT_TRIGGER;
+    public final Button.ButtonID rc_outtake = Button.ButtonID.LEFT_TRIGGER;
 
     /************ Drivetrain ************/
     // Pigeon

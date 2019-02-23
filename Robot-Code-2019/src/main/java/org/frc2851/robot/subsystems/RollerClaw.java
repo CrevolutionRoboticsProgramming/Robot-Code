@@ -2,12 +2,8 @@ package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DigitalInput;
-import org.frc2851.crevolib.Logger;
-import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
-import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
@@ -31,17 +27,12 @@ public class RollerClaw extends Subsystem
     }
 
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = Constants.operator;
+    private Controller mController = Constants.driver;
 
     private VictorSPX _motor;
+    private DigitalInput mLimitSwitch = new DigitalInput(mConstants.rc_limitSwitch);
 
     private static RollerClaw mInstance = new RollerClaw();
-
-    // Positioned at the back of the roller claw; if pressed, we have a cargo, so we run the motors at 0.1 speed to keep it in
-    private DigitalInput mLimitSwitch;
-
-    private boolean isIntaking, lastIntakeState;
-    private boolean isOuttaking, lastOuttakeState;
 
     private RollerClaw()
     {
@@ -118,49 +109,16 @@ public class RollerClaw extends Subsystem
 
                 if (Robot.isRunning())
                 {
-                    IntakeState state;
+                    IntakeState state = IntakeState.IDLE;
 
-                    if (mController.get(Axis.AxisID.LEFT_TRIGGER) > 0.5) state = IntakeState.OUTTAKE;
-                    else if (mController.get(Axis.AxisID.RIGHT_TRIGGER) > 0.5) state = IntakeState.INTAKE;
-                    else if (/*mLimitSwitch.get()*/ false) state = IntakeState.HOLD;
-                    else state = IntakeState.IDLE;
+                    if (mController.get(mConstants.rc_outtake)) state = IntakeState.OUTTAKE;
+                    else if (mController.get(mConstants.rc_intake)) state = IntakeState.INTAKE;
+                    else if (mLimitSwitch.get()) state = IntakeState.HOLD;
 
-                    if (state != lastState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
+//                    if (state != lastState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
                     _motor.set(ControlMode.PercentOutput, state.power);
                     lastState = state;
                 }
-
-//                double output = .5 * mController.get(Axis.AxisID.RIGHT_TRIGGER) +
-//                        -.5 * mController.get(Axis.AxisID.LEFT_TRIGGER);
-//
-//                _motor.set(ControlMode.PercentOutput, output);
-//
-//                isIntaking = output > 0;
-//
-//                if (isIntaking && !lastIntakeState)
-//                {
-//                    log("Began Intaking", Logger.LogLevel.DEBUG);
-//                } else if (!isIntaking && lastIntakeState)
-//                {
-//                    log("Stopped Intaking", Logger.LogLevel.DEBUG);
-//                }
-//                lastIntakeState = isIntaking;
-//
-//                isOuttaking = output < 0;
-//
-//                if (isOuttaking && !lastOuttakeState)
-//                {
-//                    log("Began Outtaking", Logger.LogLevel.DEBUG);
-//                } else if (!isOuttaking && lastOuttakeState)
-//                {
-//                    log("Stopped Outtaking", Logger.LogLevel.DEBUG);
-//                }
-//                lastOuttakeState = isOuttaking;
-//
-//                if (mLimitSwitch.get())
-//                {
-//                    _motor.set(ControlMode.PercentOutput, 0.1);
-//                }
             }
 
             @Override
@@ -169,5 +127,10 @@ public class RollerClaw extends Subsystem
                 _motor.set(ControlMode.PercentOutput, 0);
             }
         };
+    }
+
+    public boolean hasCargo()
+    {
+        return mLimitSwitch.get();
     }
 }

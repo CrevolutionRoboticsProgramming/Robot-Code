@@ -2,12 +2,8 @@ package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
-import org.frc2851.crevolib.Logger;
-import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
-import org.frc2851.crevolib.drivers.TalonSRXFactory;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
@@ -29,24 +25,29 @@ public class Intake extends Subsystem
         {
             this.output = output;
         }
+    }
 
-        public double getOutput()
+    public enum IntakeExtensionState
+    {
+        EXTENDED(DoubleSolenoid.Value.kForward), RETRACTED(DoubleSolenoid.Value.kReverse);
+
+        private final DoubleSolenoid.Value val;
+
+        IntakeExtensionState(DoubleSolenoid.Value val)
         {
-            return output;
+            this.val = val;
         }
     }
 
     private Constants mConstants = Constants.getInstance();
-    private Controller mController = Constants.driver; //(mConstants.singleControllerMode) ? Constants.driver : Constants.operator;
+    private Controller mController = Constants.driver;
     private VictorSPX intakeTalon;
     private DoubleSolenoid intakeSol;
 
     private static Intake mInstance = new Intake();
 
-    private IntakeMotorState motorState = IntakeMotorState.OFF,
-        lastMotorState = IntakeMotorState.OFF;
-    private DoubleSolenoid.Value solenoidState = DoubleSolenoid.Value.kOff,
-        lastSolenoidState = DoubleSolenoid.Value.kOff;
+    private IntakeMotorState lastMotorState = IntakeMotorState.OFF;
+    private IntakeExtensionState lastExtensionState = IntakeExtensionState.RETRACTED;
 
     /**
      * Returns the sole instance of the Intake class
@@ -91,10 +92,8 @@ public class Intake extends Subsystem
 
         intakeSol = new DoubleSolenoid(mConstants.pcm, mConstants.in_solenoidForward, mConstants.in_solenoidReverse);
 
-//        BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
-//        BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
-//        BadLog.createTopic("Intake Extended", BadLog.UNITLESS, () -> intakeSol.get() == DoubleSolenoid.Value.kForward ? 1.0 : 0.0, "hide", "join:Intake/Percent Outputs");
-
+        BadLog.createTopic("Intake Percent", BadLog.UNITLESS, () -> intakeTalon.getMotorOutputPercent(), "hide", "join:Intake/Percent Outputs");
+        BadLog.createTopic("Intake Voltage", "V", () -> intakeTalon.getBusVoltage(), "hide", "join:Intake/Voltage Outputs");
         return true;
     }
 
@@ -131,41 +130,20 @@ public class Intake extends Subsystem
             @Override
             public void update()
             {
-                // Double Solenoid
-                if(mController.get(mConstants.in_extend))
-                {
-                    solenoidState = DoubleSolenoid.Value.kForward;
-                } else
-                {
-                    solenoidState = DoubleSolenoid.Value.kReverse;
-                }
+                // Poll State
+                IntakeMotorState motorState = IntakeMotorState.OFF;
 
-                // Motor
-                if (mController.get(mConstants.in_intake))
-                {
-                    motorState = IntakeMotorState.INTAKING;
-                } else if (mController.get(mConstants.in_outake))
-                {
-                    motorState = IntakeMotorState.OUTTAKING;
-                } else
-                {
-                    motorState = IntakeMotorState.OFF;
-                }
+                IntakeExtensionState extensionState = (mController.get(Button.ButtonID.RIGHT_BUMPER)) ?
+                        IntakeExtensionState.EXTENDED : IntakeExtensionState.RETRACTED;
 
-                intakeSol.set(solenoidState);
-                intakeTalon.set(ControlMode.PercentOutput, motorState.getOutput());
+                if (mController.get(Button.ButtonID.RIGHT_TRIGGER)) motorState = IntakeMotorState.INTAKING;
+                else if (mController.get(Button.ButtonID.LEFT_TRIGGER)) motorState = IntakeMotorState.OUTTAKING;
 
-                if (motorState != lastMotorState)
-                {
-                    log("Motor set to " + motorState.toString(), Logger.LogLevel.DEBUG);
-                }
-                if (solenoidState != lastSolenoidState)
-                {
-                    log("Solenoid set to " + solenoidState.toString(), Logger.LogLevel.DEBUG);
-                }
+                intakeSol.set(extensionState.val);
+                intakeTalon.set(ControlMode.PercentOutput, motorState.output);
 
                 lastMotorState = motorState;
-                lastSolenoidState = solenoidState;
+                lastExtensionState = extensionState;
             }
 
             @Override
