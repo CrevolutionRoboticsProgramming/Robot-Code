@@ -92,8 +92,8 @@ public class Constants
     public final Button.ButtonID cl_pogoReverse = Button.ButtonID.Y;
 
     // Hatcher - Operator Controller
-    public final Button.ButtonID ht_extend = Button.ButtonID.Y; // Conflict (Elevator)
-    public final Button.ButtonID ht_actuate = Button.ButtonID.X; // Conflict (Elevator)
+    public final Button.ButtonID ht_extend = Button.ButtonID.A;
+    public final Button.ButtonID ht_actuate = Button.ButtonID.B;
 
     // Intake - Driver Controller
     public final Button.ButtonID in_extend = Button.ButtonID.RIGHT_BUMPER;
