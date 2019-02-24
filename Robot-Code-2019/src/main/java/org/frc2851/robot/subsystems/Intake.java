@@ -17,7 +17,7 @@ public class Intake extends Subsystem
 {
     public enum IntakeMotorState
     {
-        INTAKING(1.0), OUTTAKING(-1.0), OFF(0.0);
+        INTAKING(1.0), OUTTAKING(-1.0), IDLE(0.0);
 
         private final double output;
 
@@ -31,11 +31,11 @@ public class Intake extends Subsystem
     {
         EXTENDED(DoubleSolenoid.Value.kForward), RETRACTED(DoubleSolenoid.Value.kReverse);
 
-        private final DoubleSolenoid.Value val;
+        private final DoubleSolenoid.Value value;
 
-        IntakeExtensionState(DoubleSolenoid.Value val)
+        IntakeExtensionState(DoubleSolenoid.Value value)
         {
-            this.val = val;
+            this.value = value;
         }
     }
 
@@ -46,8 +46,8 @@ public class Intake extends Subsystem
 
     private static Intake mInstance = new Intake();
 
-    private IntakeMotorState lastMotorState = IntakeMotorState.OFF;
-    private IntakeExtensionState lastExtensionState = IntakeExtensionState.RETRACTED;
+    private IntakeMotorState mMotorState = IntakeMotorState.IDLE;
+    private IntakeExtensionState mExtensionState = IntakeExtensionState.RETRACTED;
 
     /**
      * Returns the sole instance of the Intake class
@@ -73,7 +73,6 @@ public class Intake extends Subsystem
     private void reset()
     {
         intakeTalon.set(ControlMode.PercentOutput, 0);
-        intakeSol.set(DoubleSolenoid.Value.kOff);
     }
 
     /**
@@ -110,7 +109,7 @@ public class Intake extends Subsystem
             @Override
             public String getName()
             {
-                return "Teleop";
+                return "Default";
             }
 
             @Override
@@ -130,20 +129,9 @@ public class Intake extends Subsystem
             @Override
             public void update()
             {
-                // Poll State
-                IntakeMotorState motorState = IntakeMotorState.OFF;
-
-                IntakeExtensionState extensionState = (mController.get(Button.ButtonID.RIGHT_BUMPER)) ?
-                        IntakeExtensionState.EXTENDED : IntakeExtensionState.RETRACTED;
-
-                if (mController.get(Button.ButtonID.RIGHT_TRIGGER)) motorState = IntakeMotorState.INTAKING;
-                else if (mController.get(Button.ButtonID.LEFT_TRIGGER)) motorState = IntakeMotorState.OUTTAKING;
-
-                intakeSol.set(extensionState.val);
-                intakeTalon.set(ControlMode.PercentOutput, motorState.output);
-
-                lastMotorState = motorState;
-                lastExtensionState = extensionState;
+                pollController();
+                intakeSol.set(mExtensionState.value);
+                intakeTalon.set(ControlMode.PercentOutput, mMotorState.output);
             }
 
             @Override
@@ -151,6 +139,29 @@ public class Intake extends Subsystem
             {
                 reset();
             }
+
+            void pollController()
+            {
+                IntakeMotorState polledMotorState = IntakeMotorState.IDLE;
+                if (mController.get(Button.ButtonID.RIGHT_TRIGGER)) polledMotorState = IntakeMotorState.INTAKING;
+                else if (mController.get(Button.ButtonID.LEFT_TRIGGER)) polledMotorState = IntakeMotorState.OUTTAKING;
+
+                IntakeExtensionState polledExtensionState = (mController.get(Button.ButtonID.RIGHT_BUMPER)) ?
+                        IntakeExtensionState.EXTENDED : IntakeExtensionState.RETRACTED;
+
+                mMotorState = polledMotorState;
+                mExtensionState = polledExtensionState;
+            }
         };
+    }
+
+    public IntakeMotorState getMotorState()
+    {
+        return mMotorState;
+    }
+
+    public IntakeExtensionState getExtensionState()
+    {
+        return mExtensionState;
     }
 }
