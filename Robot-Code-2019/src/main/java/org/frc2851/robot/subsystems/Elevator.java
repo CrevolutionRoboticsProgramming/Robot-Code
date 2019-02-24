@@ -4,6 +4,7 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.drivers.TalonCommunicationErrorException;
@@ -29,8 +30,7 @@ public class Elevator extends Subsystem
     {
         DIRECT(ControlMode.PercentOutput, -1),
         MOTION_MAGIC(ControlMode.MotionMagic, 0),
-        POS_PID(ControlMode.Position, 1),
-        CURRENT(ControlMode.Current, 2);
+        POS_PID(ControlMode.Position, 1);
 
         private final ControlMode controlMode;
         private final int slotID;
@@ -76,9 +76,12 @@ public class Elevator extends Subsystem
         }
     }
 
-    private Constants mConst = Constants.getInstance();
     private TalonSRX mTalon;
-    private Controller mController = (mConst.singleControllerMode) ? Constants.driver : Constants.operator;
+    private DigitalInput mForwardLimit, mReverseLimit;
+
+    private Constants mConst = Constants.getInstance();
+    private Controller mController = Constants.operator;
+
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
     private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
 
@@ -117,11 +120,12 @@ public class Elevator extends Subsystem
             log("Could not initialize motor, elevator init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
             return false;
         }
-//        mCanifier = new CANifier(mConst.elevatorCanifier);
 
         mTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConst.talonTimeout);
-//        mTalon.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, LimitSwitchNormal.NormallyOpen,
-//                mCanifier.getDeviceID(), mConst.talonTimeout);
+
+        // Limit Switch Configuration
+        mForwardLimit = new DigitalInput(mConst.el_forwardLimit);
+        mReverseLimit = new DigitalInput(mConst.el_reverseLimit);
 
         if (!mTunePrefs.containsKey("magP")) mTunePrefs.putDouble("magP", 0);
         if (!mTunePrefs.containsKey("magI")) mTunePrefs.putDouble("magI", 0);
@@ -196,6 +200,9 @@ public class Elevator extends Subsystem
                     getDesiredPosition();
                     boolean updatePos = lastPos != desiredPosition;
 
+                    if (!mReverseLimit.get() && rawInput < 0) rawInput = 0;
+                    else if (!mForwardLimit.get() && rawInput > 0) rawInput = 0;
+
                     // Temporary: for initial testing
                     mTalon.set(ControlMode.PercentOutput, rawInput);
 
@@ -218,7 +225,7 @@ public class Elevator extends Subsystem
                         mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
                     }
 
-                    log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
+//                    log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
                 }
             }
 
