@@ -131,7 +131,7 @@ public class Constants
     public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
 
     /************ Elevator ************/
-    public final double el_rawMultiplier = 0.1;
+    public final double el_rawMultiplier = 1;
 
     public final int el_maxVelocity = 0;
     public final int el_maxAcceleration = 0;
