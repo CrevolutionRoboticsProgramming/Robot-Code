@@ -17,13 +17,6 @@ import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
-/**
- * controls the Elevator Motors
- */
-
-/*
- * TODO: Determine motor direction and set encoder phase accordingly
- */
 public class Elevator extends Subsystem
 {
     public enum ElevatorControlMode
@@ -103,11 +96,6 @@ public class Elevator extends Subsystem
         return mInstance;
     }
 
-    /**
-     * Initilizes the motors and the loggers.
-     *
-     * @return
-     */
     @Override
     protected boolean init()
     {
@@ -153,15 +141,14 @@ public class Elevator extends Subsystem
         return true;
     }
 
+    private void zeroSensors()
+    {
+        TalonSRXFactory.runTalonConfig(() -> mTalon.setSelectedSensorPosition(0, 0, mConst.talonTimeout));
+    }
+
     public void reset()
     {
-        boolean setSucceeded = true;
-        int retryCounter = 0;
-        final int maxRetries = 5;
-        do
-        {
-            setSucceeded &= mTalon.setSelectedSensorPosition(50, 0, mConst.talonTimeout) == ErrorCode.OK;
-        } while (!setSucceeded || retryCounter++ < maxRetries);
+        mTalon.set(ControlMode.PercentOutput, 0);
     }
 
     @Override
@@ -195,37 +182,35 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double rawInput = mController.get(mConst.el_rawControl);
+                    double output = mController.get(mConst.el_rawControl);
                     lastPos = desiredPosition;
                     getDesiredPosition();
                     boolean updatePos = lastPos != desiredPosition;
 
-                    if (!mReverseLimit.get() && rawInput < 0) rawInput = 0;
-                    else if (!mForwardLimit.get() && rawInput > 0) rawInput = 0;
+                    if (!mReverseLimit.get()) zeroSensors();
 
-                    // Temporary: for initial testing
-                    mTalon.set(ControlMode.PercentOutput, rawInput);
-
-//                if (rawInput != 0)
-//                {
-//                    Elevator.mInstance.stopAuxilaryCommand();
-//                    mTalon.set(ControlMode.PercentOutput, rawInput);
-//                    return;
-//                }
-//
-//                if (/*desiredPosition != null && updatePos*/ mController.get(mConst.el_midCargo))
-//                {
-//                    setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
-//                }
+                    if (output != 0)
+                    {
+                        Elevator.mInstance.stopAuxilaryCommand();
+                        mTalon.set(ControlMode.PercentOutput, output);
+                        return;
+                    } else if (!getAuxilaryCommandActivity())
+                    {
+                        mTalon.set(ControlMode.PercentOutput, 0);
+                    }
 
                     if (mTuning)
                     {
+                        if (mController.get(Button.ButtonID.A))
+                            setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
+
                         mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
                         mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
                         mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
+                    } else if (desiredPosition != null && updatePos)
+                    {
+                        setCommmandGroup(setPosition(desiredPosition));
                     }
-
-//                    log("Elevator Position: " + mTalon.getSelectedSensorPosition(0), Logger.LogLevel.DEBUG);
                 }
             }
 
@@ -339,6 +324,13 @@ public class Elevator extends Subsystem
                     mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
                     mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
                 }
+
+                if (!mReverseLimit.get() && mTalon.getMotorOutputPercent() < 0)
+                {
+                    isFinished = true;
+                    log("Failed to move to position, limit switch triggered while moving down.", Logger.LogLevel.ERROR);
+                }
+
                 isFinished = mTalon.getClosedLoopError() < mConst.el_allowedClosedLoopError;
             }
 
@@ -365,6 +357,7 @@ public class Elevator extends Subsystem
         return new Command()
         {
             double startTime;
+            boolean limitTriggered = false;
 
             @Override
             public String getName()
@@ -375,7 +368,7 @@ public class Elevator extends Subsystem
             @Override
             public boolean isFinished()
             {
-                return (Timer.getFPGATimestamp() - startTime) > time;
+                return (Timer.getFPGATimestamp() - startTime) > time || limitTriggered;
             }
 
             @Override
@@ -388,6 +381,7 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
+                limitTriggered = !mReverseLimit.get() && power < 0;
                 mTalon.set(ControlMode.PercentOutput, power);
             }
 
@@ -404,7 +398,7 @@ public class Elevator extends Subsystem
         return (Math.abs(input) < deadband) ? 0 : input;
     }
 
-    public void configureController(Controller controller)
+    private void configureController(Controller controller)
     {
         /*
          * A - Move Elevator to Mid Cargo
@@ -422,6 +416,11 @@ public class Elevator extends Subsystem
         controller.config(mConst.el_highHatch, Button.ButtonMode.ON_PRESS);
         controller.config(mConst.el_lowHatch, Button.ButtonMode.ON_PRESS);
         controller.config(mConst.el_highCargo, Button.ButtonMode.ON_PRESS);
-        controller.config(mConst.el_rawControl, x -> -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier));
+
+        // checks limit switches, applies deadband, and applies multiplier
+        controller.config(mConst.el_rawControl, (x) -> {
+            x = (!mReverseLimit.get() && x < 0) ? 0 : x;
+            return -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier);
+        });
     }
 }
