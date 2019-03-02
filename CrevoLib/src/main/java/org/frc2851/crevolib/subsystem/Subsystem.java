@@ -43,6 +43,8 @@ public abstract class Subsystem
         if (mAuxilaryCommandGroup.getSize() > 0) mAuxilaryState.isNull = false;
         mAuxilaryState.isInit = false;
         mAuxilaryState.isFinished = false;
+
+        log("Set aux command group: " + mAuxilaryCommandGroup.toString(), Logger.LogLevel.DEBUG);
     }
 
     /**
