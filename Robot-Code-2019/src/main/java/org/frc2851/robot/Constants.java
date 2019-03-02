@@ -153,6 +153,7 @@ public class Constants
     public final double rc_intakeSpeed = 0.5;
     public final double rc_outtakeSpeed = -0.5;
     public final double rc_holdSpeed = 0.1;
+    public final boolean rc_useLimit = false;
 
     public final int talonTimeout = 20;
 }

@@ -116,7 +116,7 @@ public class RollerClaw extends Subsystem
 
                 if (mController.get(mConstants.rc_outtake)) state = RollerClawState.OUTTAKE;
                 else if (mController.get(mConstants.rc_intake)) state = RollerClawState.INTAKE;
-                else if (mLimitSwitch.get()) state = RollerClawState.HOLD;
+                else if (mConstants.rc_useLimit && mLimitSwitch.get()) state = RollerClawState.HOLD;
 
                 if (state != mState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
 
