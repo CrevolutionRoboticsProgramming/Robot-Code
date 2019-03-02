@@ -104,6 +104,7 @@ public abstract class Subsystem
      */
     public synchronized void stopAuxilaryCommand()
     {
+        if (mAuxilaryCommandGroup == null) return;
         Command c = mAuxilaryCommandGroup.getCommand();
         c.stop();
         mAuxilaryCommandGroup = null;
@@ -146,5 +147,10 @@ public abstract class Subsystem
     public boolean getAuxilaryCommandActivity()
     {
         return !mAuxilaryState.isNull;
+    }
+
+    public String getName()
+    {
+        return mName;
     }
 }

@@ -1,6 +1,5 @@
 package org.frc2851.crevolib.subsystem;
 
-import badlog.lib.BadLog;
 import edu.wpi.first.wpilibj.Notifier;
 import org.frc2851.crevolib.Logger;
 
@@ -10,17 +9,26 @@ public class SubsystemManager
 {
     private Vector<Subsystem> _subsystems = new Vector<>();
     private Notifier _notifier;
-    private static SubsystemManager instance = new SubsystemManager();
+    private static SubsystemManager mInstance;
 
-    private SubsystemManager() {}
-    public static SubsystemManager getInstance() { return instance; }
+    private SubsystemManager()
+    {
+    }
+
+    public static SubsystemManager getInstance()
+    {
+        if (mInstance == null) mInstance = new SubsystemManager();
+        return mInstance;
+    }
 
     public void addSubsystem(Subsystem s)
     {
-        if (s == null) {
-            Logger.println("SubsystemManager: subsystem is null", Logger.LogLevel.ERROR);
+        if (s == null)
+        {
+            Logger.println("[SubsystemManager]: Subsystem is null", Logger.LogLevel.ERROR);
             return;
         }
+        Logger.println("[SubsystemManager]: Added " + s.getName(), Logger.LogLevel.DEBUG);
         _subsystems.add(s);
     }
 
@@ -31,7 +39,12 @@ public class SubsystemManager
 
     public void start()
     {
-        for (Subsystem s : _subsystems) s.init();
+        for (Subsystem s : _subsystems)
+        {
+            if (!s.init())
+                Logger.println("[SubsystemManger]: Could not initialize " + s.getName(), Logger.LogLevel.ERROR);
+            else Logger.println("[SubsystemManager]: Successfully initialized " + s.getName(), Logger.LogLevel.DEBUG);
+        }
 
         _notifier = new Notifier(this::run);
         _notifier.startPeriodic(0.005);

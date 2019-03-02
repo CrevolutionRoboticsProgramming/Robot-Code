@@ -34,16 +34,17 @@ public class CrevoRobot extends TimedRobot
 
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
+     *
      * @param subsystem Subsystem to be added
      */
     protected void addSubsystem(Subsystem subsystem)
     {
-        Logger.println("Registered Subsystem: " + subsystem.toString(), Logger.LogLevel.DEBUG);
         _subManager.addSubsystem(subsystem);
     }
 
     /**
      * Adds an autonomous phase into the robot's routine. It will also add it into the logger
+     *
      * @param auton
      */
     protected void addAuton(Auton auton)
@@ -72,9 +73,12 @@ public class CrevoRobot extends TimedRobot
         for (File f : files)
         {
             String name = f.getName().split("\\.")[0];
-            try {
+            try
+            {
                 _motionProfiles.put(name, new MotionProfile(f));
-            } catch (BadMotionProfileException ignored) { }
+            } catch (BadMotionProfileException ignored)
+            {
+            }
         }
 
         _subManager.start();
@@ -131,6 +135,7 @@ public class CrevoRobot extends TimedRobot
 
     /**
      * Returns a motion profile fetched from the motion profile directory.
+     *
      * @param name The full name of the file, excluding file extensions
      * @return The selected motion profile. If the motion profile specified does not exist,
      * the function returns {@code null}.
@@ -148,7 +153,8 @@ public class CrevoRobot extends TimedRobot
         badLog.updateTopics();
 
         currentTimeMillis = System.currentTimeMillis();
-        if (!this.isDisabled() || (currentTimeMillis - lastLog >= 1000)) {
+        if (!this.isDisabled() || (currentTimeMillis - lastLog >= 1000))
+        {
             lastLog = System.currentTimeMillis();
             badLog.log();
         }
@@ -156,7 +162,8 @@ public class CrevoRobot extends TimedRobot
         mIsEnabled = isEnabled();
     }
 
-    public static boolean isRunning() {
+    public static boolean isRunning()
+    {
         return mIsEnabled;
     }
 }
