@@ -14,10 +14,6 @@ import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
-// button id references for ME to use.(you can use them too if you want)
-/*A(1), B(2), X(3), Y(4), START(8), SELECT(7), LEFT_BUMPER(5), RIGHT_BUMPER(6),
-        LEFT_JOYSTICK(9), RIGHT_JOYSTICK(10);
-        LEFT_X(0), LEFT_Y(1), RIGHT_X(4), RIGHT_Y(5), LEFT_TRIGGER(2), RIGHT_TRIGGER(3);*/
 
 /**
  * Represents the climber subsystem
@@ -26,7 +22,7 @@ public class Climber extends Subsystem
 {
     public enum GorillaState
     {
-        FORWARD(0.1), REVERSE(-0.1), NEUTRAL(0);
+        FORWARD(-0.5), REVERSE(0.5), NEUTRAL(0);
 
         final double power;
 
@@ -38,7 +34,7 @@ public class Climber extends Subsystem
 
     public enum PogoState
     {
-        FORWARD(0.1), REVERSE(-0.1), NEUTRAL(0);
+        FORWARD(0.2), REVERSE(-0.2), NEUTRAL(0);
 
         final double power;
 
@@ -86,17 +82,22 @@ public class Climber extends Subsystem
     {
         mController.config(mConst.cl_gorillaForward, Button.ButtonMode.RAW);
         mController.config(mConst.cl_pogoForward, Button.ButtonMode.RAW);
-        mController.config(Button.ButtonID.X, Button.ButtonMode.RAW);
+        mController.config(Button.ButtonID.B, Button.ButtonMode.RAW);
         mController.config(Button.ButtonID.Y, Button.ButtonMode.RAW);
 
         try
         {
             mGorillaMaster = TalonSRXFactory.createDefaultTalonSRX(mConst.cl_gorillaMaster);
             mGorillaSlave = TalonSRXFactory.createPermanentSlaveTalonSRX(mConst.cl_gorillaSlave, mGorillaMaster);
-            mPogoMaster = new VictorSPX(mConst.cl_pogoMaster); //TalonSRXFactory.createDefaultWPI_TalonSRX(mConst.screwMaster);
+            mPogoMaster = new VictorSPX(mConst.cl_pogoMaster);
 
-            mGorillaMaster.setInverted(InvertType.InvertMotorOutput);
-//            mGorillaSlave.setInverted(InvertType.FollowMaster);
+            TalonSRXFactory.runTalonConfig(
+                    () -> mPogoMaster.configNominalOutputForward(0),
+                    () -> mPogoMaster.configNominalOutputReverse(0),
+                    () -> mPogoMaster.configPeakOutputForward(1),
+                    () -> mPogoMaster.configPeakOutputReverse(-1)
+            );
+
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, climber init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -104,30 +105,18 @@ public class Climber extends Subsystem
         }
 
         // Limit Switch Configuration
-
-        if (mConst.cl_useTalonLimit)
-        {
-            boolean success = TalonSRXFactory.runTalonConfig(
-                    () -> mGorillaMaster.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen),
-                    () -> mGorillaMaster.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen),
-                    () -> mPogoMaster.configForwardLimitSwitchSource(RemoteLimitSwitchSource.RemoteTalonSRX, LimitSwitchNormal.NormallyOpen,
-                            mConst.cl_pogoLimitRemoteID, mConst.talonTimeout),
-                    () -> mPogoMaster.configReverseLimitSwitchSource(RemoteLimitSwitchSource.RemoteTalonSRX, LimitSwitchNormal.NormallyOpen,
-                            mConst.cl_pogoLimitRemoteID, mConst.talonTimeout)
-            );
-
-            if (!success)
-            {
-                log("Could not initialize limit switches", Logger.LogLevel.ERROR);
-                return false;
-            }
-        } else
+        if (mConst.cl_useGorillaLimit)
         {
             mGForwardLimit = new DigitalInput(mConst.cl_gorillaForwardLimit);
             mGReverseLimit = new DigitalInput(mConst.cl_gorillaReverseLimit);
+        }
+
+        if (mConst.cl_usePogoLimit)
+        {
             mPForwardLimit = new DigitalInput(mConst.cl_pogoForwardLimit);
             mPReverseLimit = new DigitalInput(mConst.cl_pogoReverseLimit);
         }
+
 
         BadLog.createTopic("Gorilla/Master Gorilla Output", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Gorilla/Percent");
         BadLog.createTopic("Gorilla/Master Gorilla Voltage", "V", () -> mGorillaMaster.getMotorOutputVoltage(), "hide", "join:Gorilla/Voltage");
@@ -194,14 +183,14 @@ public class Climber extends Subsystem
                     PogoState pState = PogoState.NEUTRAL;
 
                     // Poll Buttons and Checks limit switches
-                    if (mController.get(Button.ButtonID.A) && (mConst.cl_useTalonLimit || mGForwardLimit.get()))
+                    if (mController.get(Button.ButtonID.A) && (!mConst.cl_useGorillaLimit || mGForwardLimit.get()))
                         gState = GorillaState.FORWARD;
-                    else if (mController.get(Button.ButtonID.B) && (mConst.cl_useTalonLimit || mGReverseLimit.get()))
+                    else if (mController.get(Button.ButtonID.B) && (!mConst.cl_useGorillaLimit || mGReverseLimit.get()))
                         gState = GorillaState.REVERSE;
 
-                    if (mController.get(Button.ButtonID.X) && (mConst.cl_useTalonLimit || !mPForwardLimit.get()))
+                    if (mController.get(Button.ButtonID.X) && (!mConst.cl_usePogoLimit || mPForwardLimit.get()))
                         pState = PogoState.FORWARD;
-                    else if (mController.get(Button.ButtonID.Y) && (mConst.cl_useTalonLimit || !mPReverseLimit.get()))
+                    else if (mController.get(Button.ButtonID.Y) && (!mConst.cl_usePogoLimit || mPReverseLimit.get()))
                         pState = PogoState.REVERSE;
 
                     // Logging
@@ -209,13 +198,6 @@ public class Climber extends Subsystem
                     if (pState != lastPState) log("Updated Pogo State: " + pState.name(), Logger.LogLevel.DEBUG);
                     lastGState = gState;
                     lastPState = pState;
-
-                    // TODO: Tune reverse threshold voltage
-//                    if (mGorillaMaster.getOutputCurrent() > mConst.cl_reverseThresholdCurrent && gState == GorillaState.REVERSE)
-//                    {
-//                        log("Current threshold reached, disabling gorilla arm", Logger.LogLevel.ERROR);
-//                        trippedCurrentDraw = true;
-//                    }
 
                     // Talon Set
                     if (!trippedCurrentDraw) mGorillaMaster.set(ControlMode.PercentOutput, gState.power);

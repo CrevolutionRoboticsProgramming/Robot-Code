@@ -141,9 +141,8 @@ public class Constants
     public final PID el_posPID = new PID(0, 0, 0, 0);
 
     /************ Climber ************/
-    public final int cl_pogoLimitRemoteID = cl_gorillaSlave;
-    public final boolean cl_useTalonLimit = false;
-    public final double cl_reverseThresholdCurrent = 20;
+    public final boolean cl_usePogoLimit = false;
+    public final boolean cl_useGorillaLimit = true;
 
     /************ Intake ************/
     public final double in_intakeSpeed = 0.5;
