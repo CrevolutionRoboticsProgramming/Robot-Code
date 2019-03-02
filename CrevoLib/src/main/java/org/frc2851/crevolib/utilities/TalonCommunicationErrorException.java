@@ -1,4 +1,4 @@
-package org.frc2851.crevolib.drivers;
+package org.frc2851.crevolib.utilities;
 
 public class TalonCommunicationErrorException extends Exception {
     private final int port;

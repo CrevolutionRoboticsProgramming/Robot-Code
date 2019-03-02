@@ -1,4 +1,4 @@
-package org.frc2851.crevolib.drivers;
+package org.frc2851.crevolib.utilities;
 
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.ControlFrame;

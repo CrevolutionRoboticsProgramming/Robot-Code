@@ -25,9 +25,9 @@ public class Robot extends CrevoRobot
 
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
-        addSubsystem(Hatcher.getInstance());
+//        addSubsystem(Hatcher.getmInstance());
         addSubsystem(Intake.getInstance());
-        addSubsystem(RollerClaw.getInstance());
+//        addSubsystem(RollerClaw.getmInstance());
         addSubsystem(Climber.getInstance());
 
         for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values())
