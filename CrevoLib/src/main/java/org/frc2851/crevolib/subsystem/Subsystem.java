@@ -59,13 +59,15 @@ public abstract class Subsystem
             Command auxCommand = mAuxilaryCommandGroup.getCommand();
             if (auxCommand != null && initCommand(auxCommand, mAuxilaryState))
             {
-                if (auxCommand.isFinished())
+                if (!auxCommand.isFinished())
                 {
                     auxCommand.update();
                 } else {
                     auxCommand.stop();
-                    if (!mAuxilaryCommandGroup.nextCommand())
+                    if (mAuxilaryCommandGroup.nextCommand())
                     {
+                        mAuxilaryState.isInit = false;
+                    } else {
                         log(mAuxilaryCommandGroup.toString() + " completed", Logger.LogLevel.DEBUG);
                         mAuxilaryCommandGroup = null;
                         mAuxilaryState.isNull = true;
@@ -97,6 +99,7 @@ public abstract class Subsystem
             return false;
         }
 
+        log("Started command: " + command.getName(), Logger.LogLevel.DEBUG);
         state.isInit = true;
         return true;
     }
