@@ -48,7 +48,8 @@ public class Elevator extends Subsystem
     public enum ElevatorPosition
     {
         LOW_HATCH(0), MID_HATCH(0), HIGH_HATCH(0),
-        LOW_CARGO(0), MID_CARGO(0), HIGH_CARGO(0);
+        LOW_CARGO(0), MID_CARGO(0), HIGH_CARGO(0),
+        UNKNOWN(0);
 
         private final int pos;
 
@@ -78,10 +79,12 @@ public class Elevator extends Subsystem
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
     private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
 
+    private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
+
     // Tuning
     CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
 
-    boolean mTuning = true;
+    boolean mTuning = false;
 
     private static Elevator mInstance;
 
@@ -156,7 +159,7 @@ public class Elevator extends Subsystem
     {
         return new Command()
         {
-            ElevatorPosition desiredPosition = null, lastPos;
+            ElevatorPosition desiredPosition = null;
 
             @Override
             public String getName()
@@ -183,33 +186,21 @@ public class Elevator extends Subsystem
                 if (Robot.isRunning())
                 {
                     double output = mController.get(mConst.el_rawControl);
-                    lastPos = desiredPosition;
                     getDesiredPosition();
-                    boolean updatePos = lastPos != desiredPosition;
+                    boolean updatePos = mCurrentPosition != desiredPosition;
 
                     if (!mReverseLimit.get()) zeroSensors();
 
                     if (output != 0)
                     {
-                        Elevator.mInstance.stopAuxilaryCommand();
+                        stopAuxilaryCommand();
+                        mCurrentPosition = ElevatorPosition.UNKNOWN;
                         mTalon.set(ControlMode.PercentOutput, output);
-                        return;
-                    } else if (!getAuxilaryCommandActivity())
-                    {
-                        mTalon.set(ControlMode.PercentOutput, 0);
-                    }
-
-                    if (mTuning)
-                    {
-                        if (mController.get(Button.ButtonID.A))
-                            setCommmandGroup(setPosition(mTunePrefs.getInt("el_set", -1), "tune"));
-
-                        mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
-                        mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
-                        mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
-                    } else if (desiredPosition != null && updatePos)
+                    } else if (updatePos)
                     {
                         setCommmandGroup(setPosition(desiredPosition));
+                    } else if (!getAuxilaryCommandActivity()) {
+                        mTalon.set(ControlMode.PercentOutput, 0);
                     }
                 }
             }
@@ -395,7 +386,15 @@ public class Elevator extends Subsystem
 
     private double applyDeadband(double input, double deadband)
     {
-        return (Math.abs(input) < deadband) ? 0 : input;
+        return applyDeadband(input, deadband, false);
+    }
+
+    private double applyDeadband(double input, double deadband, boolean rescale)
+    {
+        if (rescale)
+            return (input / Math.abs(input)) * ((Math.abs(input) - deadband) / (1 - deadband));
+        else
+            return (Math.abs(input) < deadband) ? 0 : input;
     }
 
     private void configureController(Controller controller)
@@ -419,7 +418,7 @@ public class Elevator extends Subsystem
 
         // checks limit switches, applies deadband, and applies multiplier
         controller.config(mConst.el_rawControl, (x) -> {
-            x = (!mReverseLimit.get() && x < 0) ? 0 : x;
+            x = (!mReverseLimit.get() && x > 0) ? 0 : x;
             return -(applyDeadband(x, 0.15) * mConst.el_rawMultiplier);
         });
     }
