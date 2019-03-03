@@ -176,14 +176,14 @@ public class Climber extends Subsystem
                     PogoState pState = PogoState.NEUTRAL;
 
                     // Poll Buttons and Checks limit switches
-                    if (mController.get(Button.ButtonID.A) && (!mConst.cl_useGorillaLimit || mGForwardLimit.get()))
+                    if (mController.get(mConst.cl_gorillaForward) && (!mConst.cl_useGorillaLimit || mGForwardLimit.get()))
                         gState = GorillaState.FORWARD;
-                    else if (mController.get(Button.ButtonID.B) && (!mConst.cl_useGorillaLimit || mGReverseLimit.get()))
+                    else if (mController.get(mConst.cl_gorillaReverse) && (!mConst.cl_useGorillaLimit || mGReverseLimit.get()))
                         gState = GorillaState.REVERSE;
 
-                    if (mController.get(Button.ButtonID.X) && (!mConst.cl_usePogoLimit || mPForwardLimit.get()))
+                    if (mController.get(mConst.cl_pogoForward) && (!mConst.cl_usePogoLimit || mPForwardLimit.get()))
                         pState = PogoState.FORWARD;
-                    else if (mController.get(Button.ButtonID.Y) && (!mConst.cl_usePogoLimit || mPReverseLimit.get()))
+                    else if (mController.get(mConst.cl_pogoReverse) && (!mConst.cl_usePogoLimit || mPReverseLimit.get()))
                         pState = PogoState.REVERSE;
 
                     // Logging
