@@ -34,7 +34,7 @@ public class Climber extends Subsystem
 
     public enum PogoState
     {
-        FORWARD(0.2), REVERSE(-0.2), NEUTRAL(0);
+        FORWARD(0.6), REVERSE(-0.6), NEUTRAL(0);
 
         final double power;
 
@@ -46,9 +46,19 @@ public class Climber extends Subsystem
 
     private Constants mConst = Constants.getInstance();
     private Controller mController = Constants.driver;
-    private static Climber mInstance = null;
+    private GorillaState mCurrentGState = GorillaState.NEUTRAL;
+    private PogoState mCurrentPState = PogoState.NEUTRAL;
 
     private DigitalInput mGForwardLimit, mGReverseLimit, mPForwardLimit, mPReverseLimit;
+    private TalonSRX mGorillaMaster, mGorillaSlave /*mPogoMaster*/;
+    private VictorSPX mPogoMaster;
+
+    private static Climber mInstance = null;
+
+    private Climber()
+    {
+        super("Climber");
+    }
 
     /**
      * Returns the sole instance of the Climber class
@@ -62,17 +72,6 @@ public class Climber extends Subsystem
     }
 
     /**
-     * Initializes the Climber class with the name "Climber"
-     */
-    private Climber()
-    {
-        super("Climber");
-    }
-
-    private TalonSRX mGorillaMaster, mGorillaSlave /*mPogoMaster*/;
-    private VictorSPX mPogoMaster;
-
-    /**
      * Initializes the controller, motors, and logging
      *
      * @return A boolean representing whether initialization has succeeded
@@ -81,9 +80,9 @@ public class Climber extends Subsystem
     public boolean init()
     {
         mController.config(mConst.cl_gorillaForward, Button.ButtonMode.RAW);
+        mController.config(mConst.cl_gorillaReverse, Button.ButtonMode.RAW);
         mController.config(mConst.cl_pogoForward, Button.ButtonMode.RAW);
-        mController.config(Button.ButtonID.B, Button.ButtonMode.RAW);
-        mController.config(Button.ButtonID.Y, Button.ButtonMode.RAW);
+        mController.config(mConst.cl_pogoReverse, Button.ButtonMode.RAW);
 
         try
         {
@@ -137,7 +136,6 @@ public class Climber extends Subsystem
     {
         mGorillaMaster.set(ControlMode.PercentOutput, 0);
         mPogoMaster.set(ControlMode.PercentOutput, 0);
-//        log("All motors zeroed", Logger.LogLevel.DEBUG);
     }
 
     /**
@@ -150,11 +148,6 @@ public class Climber extends Subsystem
     {
         return new Command()
         {
-            GorillaState lastGState = GorillaState.NEUTRAL;
-            PogoState lastPState = PogoState.NEUTRAL;
-
-            boolean trippedCurrentDraw = false;
-
             @Override
             public String getName()
             {
@@ -194,13 +187,13 @@ public class Climber extends Subsystem
                         pState = PogoState.REVERSE;
 
                     // Logging
-                    if (gState != lastGState) log("Updated Gorilla State: " + gState.name(), Logger.LogLevel.DEBUG);
-                    if (pState != lastPState) log("Updated Pogo State: " + pState.name(), Logger.LogLevel.DEBUG);
-                    lastGState = gState;
-                    lastPState = pState;
+                    if (gState != mCurrentGState) log("Updated Gorilla State: " + gState.name(), Logger.LogLevel.DEBUG);
+                    if (pState != mCurrentPState) log("Updated Pogo State: " + pState.name(), Logger.LogLevel.DEBUG);
+                    mCurrentGState = gState;
+                    mCurrentPState = pState;
 
                     // Talon Set
-                    if (!trippedCurrentDraw) mGorillaMaster.set(ControlMode.PercentOutput, gState.power);
+                    mGorillaMaster.set(ControlMode.PercentOutput, gState.power);
                     mPogoMaster.set(ControlMode.PercentOutput, pState.power);
                 }
             }
@@ -211,5 +204,15 @@ public class Climber extends Subsystem
                 reset();
             }
         };
+    }
+
+    public GorillaState getGorillaState()
+    {
+        return mCurrentGState;
+    }
+
+    public PogoState getPogoState()
+    {
+        return mCurrentPState;
     }
 }
