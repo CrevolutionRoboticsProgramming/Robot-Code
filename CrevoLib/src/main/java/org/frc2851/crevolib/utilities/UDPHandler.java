@@ -8,7 +8,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-public class JetsonCommunicator implements Runnable {
+public class UDPHandler implements Runnable {
 
     private int sendPort = 9001;
     private int receivePort = 9000;
@@ -22,13 +22,13 @@ public class JetsonCommunicator implements Runnable {
     private DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
     private DatagramSocket sendingSocket;
 
-    private static JetsonCommunicator _instance = new JetsonCommunicator();
+    private static UDPHandler _instance = new UDPHandler();
     private static Thread _thread = new Thread(_instance);
 
     /**
-     * Private constructor ensures that JetsonCommunicator cannot be instantiated outside of the JetsonCommunicator class
+     * Private constructor ensures that UDPHandler cannot be instantiated outside of the UDPHandler class
      */
-    private JetsonCommunicator() {
+    private UDPHandler() {
     }
 
     /**
@@ -76,10 +76,10 @@ public class JetsonCommunicator implements Runnable {
     }
 
     /**
-     * Returns the sole instance of the JetsonCommunicator class
-     * @return The instance of the JetsonCommunicator class
+     * Returns the sole instance of the UDPHandler class
+     * @return The instance of the UDPHandler class
      */
-    public static JetsonCommunicator getInstance() {
+    public static UDPHandler getInstance() {
         return _instance;
     }
 
