@@ -16,7 +16,8 @@ public class UDPHandler implements Runnable {
     private byte[] buffer = new byte[bufferSize];
     private String message = "";
 
-    private String sendIP = "10.28.51.204";
+    // Static IP of the offboard processor
+    private String sendIP = "10.28.51.18";
 
     private DatagramSocket serverSocket;
     private DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
