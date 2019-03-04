@@ -7,108 +7,127 @@ import java.util.HashMap;
  */
 public class Controller
 {
-    private HashMap<Button.ButtonID, Button> _buttons = new HashMap<>();
-    private HashMap<Axis.AxisID, Axis> _axis = new HashMap<>();
-    private final int channel;
+    private HashMap<Button.ButtonID, Button> mButtons = new HashMap<>();
+    private HashMap<Axis.AxisID, Axis> mAxis = new HashMap<>();
+    private final int mChannel;
 
     /**
-     * Creates a controller on the provided Driver Station channel
+     * Creates a controller on the provided Driver Station mChannel
+     *
      * @param channel Channel id
      */
     public Controller(int channel)
     {
-        this.channel = channel;
+        this.mChannel = channel;
     }
 
     /**
      * Returns the state of the given button
+     *
      * @param id The ButtonID
      * @return The state of the given button
      */
     public boolean get(Button.ButtonID id)
     {
-        if (!_buttons.containsKey(id))
+        if (!mButtons.containsKey(id))
         {
             System.out.println("Button[" + id.name() + "] is not configured");
             return false;
         }
-        return _buttons.get(id).get();
+        return mButtons.get(id).get();
     }
 
     /**
      * Returns the value of the given axis
-     * @param id The AxisID
+     *
+     * @param id     The AxisID
      * @param shaper The shaper function (should be given as a lambda expression)
      * @return The value of the given axis
      */
     @Deprecated
     public double get(Axis.AxisID id, InputShaper shaper)
     {
-        if (!_axis.containsKey(id))
+        if (!mAxis.containsKey(id))
         {
             System.out.println("Axis[" + id.name() + "] is not configured");
             return 0;
         }
-        return _axis.get(id).get(shaper);
+        return mAxis.get(id).get(shaper);
     }
 
     /**
      * Returns the value of the given axis
+     *
      * @param id The AxisID
      * @return The value of the given axis
      */
     public double get(Axis.AxisID id)
     {
-        if (!_axis.containsKey(id))
+        if (!mAxis.containsKey(id))
         {
             System.out.println("Axis[" + id.name() + "] is not configured");
             return 0;
         }
-        return _axis.get(id).get();
+        return mAxis.get(id).get();
     }
 
     /**
      * Configures the given button with the given mode
-     * @param id The ButtonID
+     *
+     * @param id   The ButtonID
      * @param mode The ButtonMode
      */
     public void config(Button.ButtonID id, Button.ButtonMode mode)
     {
-        if (!_buttons.containsKey(id)) _buttons.put(id, new Button(channel, id, mode));
+        if (!mButtons.containsKey(id)) mButtons.put(id, new Button(mChannel, id, mode));
     }
 
     /**
      * Configures the given button with the given mode
+     *
      * @param id The AxisID
      */
     public void config(Axis.AxisID id)
     {
-        if (!_axis.containsKey(id)) _axis.put(id, new Axis(channel, id));
+        if (!mAxis.containsKey(id)) mAxis.put(id, new Axis(mChannel, id));
     }
 
     /**
      * Configures the given button with the given mode
-     * @param id The AxisID
+     *
+     * @param id     The AxisID
      * @param shaper The shaper function
      */
     public void config(Axis.AxisID id, InputShaper shaper)
     {
-        if (!_axis.containsKey(id)) _axis.put(id, new Axis(channel, id, shaper));
+        if (!mAxis.containsKey(id)) mAxis.put(id, new Axis(mChannel, id, shaper));
     }
 
     /**
      * Sets the shaper function for the given axis
-     * @param id The AxisID
+     *
+     * @param id     The AxisID
      * @param shaper The shaper function
      */
     public void setShaper(Axis.AxisID id, InputShaper shaper)
     {
-        if (!_axis.containsKey(id))
+        if (!mAxis.containsKey(id))
         {
             System.out.println("Axis[" + id.name() + "] is not configured");
             return;
         }
 
-        _axis.get(id).setShaper(shaper);
+        mAxis.get(id).setShaper(shaper);
+    }
+
+    public void setDeadband(Axis.AxisID id, double deadband, boolean rescale)
+    {
+        if (!mAxis.containsKey(id))
+        {
+            System.out.println("Axis[" + id.name() + "] is not configured");
+            return;
+        }
+
+        mAxis.get(id).setDeadband(deadband, rescale);
     }
 }
