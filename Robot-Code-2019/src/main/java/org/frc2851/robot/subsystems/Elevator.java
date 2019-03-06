@@ -93,16 +93,14 @@ public class Elevator extends Subsystem
     private Constants mConst = Constants.getInstance();
 
     private TalonSRX mTalon;
-    private DigitalInput mForwardLimit, mReverseLimit;
+    private DigitalInput mLimitSwitch;
     private Controller mController = Constants.operator;
 
     private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
-    private ElevatorControlMode mClosedLoopStategy = ElevatorControlMode.MOTION_MAGIC;
     private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
 
     // Tuning
     CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
-
     private final boolean TUNING = true;
 
     private static Elevator mInstance;
@@ -135,8 +133,7 @@ public class Elevator extends Subsystem
         }
 
         // Limit Switch Configuration
-        mForwardLimit = new DigitalInput(mConst.el_forwardLimit);
-        mReverseLimit = new DigitalInput(mConst.el_reverseLimit);
+        mLimitSwitch = new DigitalInput(mConst.el_reverseLimit);
 
         configPreferences();
         configBadLog();
@@ -184,10 +181,12 @@ public class Elevator extends Subsystem
         controller.config(mConst.el_highHatch, Button.ButtonMode.ON_PRESS);
         controller.config(mConst.el_lowHatch, Button.ButtonMode.ON_PRESS);
         controller.config(mConst.el_highCargo, Button.ButtonMode.ON_PRESS);
+        controller.config(mConst.el_playerStation, Button.ButtonMode.ON_PRESS);
 
         // checks limit switches, applies deadband, and applies multiplier
         controller.config(mConst.el_rawControl, (x) -> {
-            x = (!mReverseLimit.get() && x > 0) ? 0 : x;
+            x = (Math.abs(x) < 0.15) ? 0 : x;
+            x = (!mLimitSwitch.get() && x > 0) ? 0 : x;
             return -(x * mConst.el_rawMultiplier);
         });
 //        controller.setDeadband(mConst.el_rawControl, 0.15, false);
@@ -240,16 +239,20 @@ public class Elevator extends Subsystem
 
                     mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
 
-                    if (updatePos)
+                    if (!mLimitSwitch.get())
                     {
-                        mCurrentPosition = desiredPosition;
-                        setCommmandGroup(setPositionMotionProfiling(desiredPosition));
+                        zeroSensors();
+                        if (output < 0) output = 0;
                     }
 
                     if (output != 0)
                     {
                         stopAuxilaryCommand();
                         mTalon.set(ControlMode.PercentOutput, output);
+                    } else if (updatePos)
+                    {
+                        setCommmandGroup(setPositionMotionProfiling(desiredPosition));
+                        mCurrentPosition = desiredPosition;
                     } else if (!getAuxilaryCommandActivity())
                     {
                         mTalon.set(ControlMode.PercentOutput, 0.1);
@@ -336,13 +339,14 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
-                hitLimit = pos.getPos() < mTalon.getSelectedSensorPosition(0) && !mReverseLimit.get();
+                hitLimit = pos.getPos() < mTalon.getSelectedSensorPosition(0) && !mLimitSwitch.get();
                 mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
             }
 
             @Override
             public void stop()
             {
+                if (hitLimit) zeroSensors();
                 mTalon.set(ControlMode.PercentOutput, 0);
             }
         };
@@ -444,7 +448,7 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
-                limitTriggered = !mReverseLimit.get() && power < 0;
+                limitTriggered = !mLimitSwitch.get() && power < 0;
                 mTalon.set(ControlMode.PercentOutput, power);
             }
 
