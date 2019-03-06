@@ -159,7 +159,8 @@ public class Elevator extends Subsystem
         if (!mTunePrefs.containsKey("posD")) mTunePrefs.putDouble("posD", 0);
         if (!mTunePrefs.containsKey("posF")) mTunePrefs.putDouble("posF", 0);
 
-        if (!mTunePrefs.containsKey("set")) mTunePrefs.putDouble("set", 0);
+        if (!mTunePrefs.containsKey("maxV")) mTunePrefs.putInt("maxV", 0);
+        if (!mTunePrefs.containsKey("maxA")) mTunePrefs.putInt("maxA", 0);
 
         mTunePrefs.putInt("pos", 0);
         mTunePrefs.putInt("vel", 0);
@@ -253,6 +254,9 @@ public class Elevator extends Subsystem
                     {
                         mTalon.set(ControlMode.PercentOutput, 0.1);
                     }
+
+                    mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
+                    mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
                 }
             }
 
@@ -333,6 +337,7 @@ public class Elevator extends Subsystem
             public void update()
             {
                 hitLimit = pos.getPos() < mTalon.getSelectedSensorPosition(0) && !mReverseLimit.get();
+                mTunePrefs.putInt("error", mTalon.getClosedLoopError(0));
             }
 
             @Override
