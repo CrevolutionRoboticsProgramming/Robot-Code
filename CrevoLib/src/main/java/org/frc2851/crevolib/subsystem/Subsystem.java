@@ -111,6 +111,7 @@ public abstract class Subsystem
     {
         if (mAuxilaryCommandGroup == null) return;
         Command c = mAuxilaryCommandGroup.getCommand();
+        log("Stopping " + mAuxilaryCommandGroup.toString() + " on command " + c.getName(), Logger.LogLevel.DEBUG);
         c.stop();
         mAuxilaryCommandGroup = null;
         mAuxilaryState.isNull = true;
