@@ -34,7 +34,7 @@ public class Climber extends Subsystem
 
     public enum PogoState
     {
-        FORWARD(0.6), REVERSE(-0.6), NEUTRAL(0);
+        FORWARD(1), REVERSE(-0.6), NEUTRAL(0);
 
         final double power;
 

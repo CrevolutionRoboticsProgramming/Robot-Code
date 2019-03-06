@@ -9,6 +9,7 @@ import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
@@ -53,6 +54,7 @@ public class DriveTrain extends Subsystem
 
     // Members
     private DriveControlMode mDriveControlMode = DriveControlMode.FPS;
+    private CustomPreferences mPrefs = new CustomPreferences("DriveTrain");
 
     private WPI_TalonSRX mLeftMaster, mLeftSlaveA, mLeftSlaveB, mRightMaster, mRightSlaveA, mRightSlaveB;
     private ArrayList<WPI_TalonSRX> leftMotors = new ArrayList<>(), rightMotors = new ArrayList<>();
@@ -89,6 +91,8 @@ public class DriveTrain extends Subsystem
             mRightSlaveA = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_rightSlaveA, mRightMaster);
             mRightSlaveB = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_rightSlaveB, mRightMaster);
 
+            mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
+
             leftMotors.add(mLeftMaster);
             leftMotors.add(mLeftSlaveA);
             leftMotors.add(mLeftSlaveB);
@@ -96,6 +100,14 @@ public class DriveTrain extends Subsystem
             rightMotors.add(mRightMaster);
             rightMotors.add(mRightSlaveA);
             rightMotors.add(mRightSlaveB);
+
+            mLeftMaster.setInverted(true);
+            mLeftSlaveA.setInverted(true);
+            mLeftSlaveB.setInverted(true);
+
+            mRightMaster.setInverted(true);
+            mRightSlaveA.setInverted(true);
+            mRightSlaveB.setInverted(true);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -104,9 +116,6 @@ public class DriveTrain extends Subsystem
 
         setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
         setNeutralMode(NeutralMode.Brake);
-
-        mLeftSlaveA.setInverted(false);
-        mLeftSlaveB.setInverted(false);
 
         // I don't know what safety does but the messages it throws annoy me.
         mLeftMaster.setSafetyEnabled(false);
@@ -126,6 +135,10 @@ public class DriveTrain extends Subsystem
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
 //        mLeftMotionPID = new PID(0, 0, 0, 0);
+
+        // Preferences
+        if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
+        if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
 
         return true;
     }
@@ -154,6 +167,8 @@ public class DriveTrain extends Subsystem
         BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(mLeftMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
         BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(mRightMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
         if (mConstants.dt_usePigeon) BadLog.createTopic("Drivetrain/Angle", "deg", () -> mPigeon.getFusedHeading());
+
+        zeroSensors();
     }
 
     private void reset()
@@ -182,9 +197,8 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
+            boolean debug = true;
             DifferentialDrive robotDrive;
-
-            final double TURN_MULT = 1;
 
             @Override
             public String getName()
@@ -201,6 +215,8 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
+                mController.config(Button.ButtonID.A, Button.ButtonMode.RAW);
+
                 reset();
                 robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
 
@@ -208,7 +224,6 @@ public class DriveTrain extends Subsystem
                 mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.setSensorPhase(true);
 
-//                robotDrive.tankDrive(0, 0);
                 robotDrive.setSafetyEnabled(false);
                 return true;
             }
@@ -218,6 +233,14 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
+                    if (debug)
+                    {
+                        mPrefs.putInt("Encoder Left", mLeftMaster.getSelectedSensorPosition());
+                        mPrefs.putInt("Encoder Right", mRightMaster.getSelectedSensorPosition());
+                        mPrefs.putDouble("Left Current Draw", mLeftMaster.getOutputCurrent() + mLeftSlaveA.getOutputCurrent() + mLeftSlaveB.getOutputCurrent());
+                        mPrefs.putDouble("Right Current Draw", mRightMaster.getOutputCurrent() + mRightSlaveA.getOutputCurrent() + mRightSlaveB.getOutputCurrent());
+                    }
+
                     boolean curvatureToggle = mController.get(mConstants.dt_curvatureToggle);
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
@@ -228,11 +251,11 @@ public class DriveTrain extends Subsystem
                     switch (mDriveControlMode)
                     {
                         case FPS:
-                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), -mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT);
+                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
                             break;
 
                         case FPS_CURVE:
-                            robotDrive.curvatureDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X) * TURN_MULT, curvatureToggle);
+                            robotDrive.curvatureDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X), curvatureToggle);
                             break;
 
                         case ARCADE:
@@ -633,9 +656,9 @@ public class DriveTrain extends Subsystem
 
     private void configureController(Controller controller)
     {
-        controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(x, 0.15)); // Throttle
+        controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(-x, 0.15)); // Throttle
         controller.config(Axis.AxisID.LEFT_X, x -> applyDeadband(x, 0.15)); // Throttle
-        controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(x, 0.15)); // Throttle
+        controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(-x, 0.15)); // Throttle
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
         controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter

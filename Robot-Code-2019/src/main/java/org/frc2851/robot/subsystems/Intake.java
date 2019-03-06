@@ -4,6 +4,7 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
@@ -129,9 +130,15 @@ public class Intake extends Subsystem
             @Override
             public void update()
             {
-                pollController();
-                intakeSol.set(mExtensionState.value);
-                intakeTalon.set(ControlMode.PercentOutput, mMotorState.output);
+                IntakeMotorState motorState = pollMotorState();
+                IntakeExtensionState extensionState = pollExtensionState();
+//                log("Updated extension state: " + extensionState.name(), Logger.LogLevel.DEBUG);
+                if (mExtensionState != extensionState) {
+
+                    setCommmandGroup(setExtensionState(extensionState));
+                }
+                intakeTalon.set(ControlMode.PercentOutput, motorState.output);
+                mMotorState = motorState;
             }
 
             @Override
@@ -140,17 +147,55 @@ public class Intake extends Subsystem
                 reset();
             }
 
-            void pollController()
+            IntakeMotorState pollMotorState()
             {
                 IntakeMotorState polledMotorState = IntakeMotorState.IDLE;
                 if (mController.get(Button.ButtonID.RIGHT_TRIGGER)) polledMotorState = IntakeMotorState.INTAKING;
                 else if (mController.get(Button.ButtonID.LEFT_TRIGGER)) polledMotorState = IntakeMotorState.OUTTAKING;
+                return polledMotorState;
+            }
 
-                IntakeExtensionState polledExtensionState = (mController.get(Button.ButtonID.RIGHT_BUMPER)) ?
-                        IntakeExtensionState.EXTENDED : IntakeExtensionState.RETRACTED;
+            IntakeExtensionState pollExtensionState()
+            {
+                return (mController.get(Button.ButtonID.RIGHT_BUMPER)) ? IntakeExtensionState.EXTENDED : IntakeExtensionState.RETRACTED;
+            }
+        };
+    }
 
-                mMotorState = polledMotorState;
-                mExtensionState = polledExtensionState;
+    public Command setExtensionState(IntakeExtensionState state)
+    {
+        return new Command()
+        {
+            @Override
+            public String getName()
+            {
+                return "SetExtensionState[" + state.name() + "]";
+            }
+
+            @Override
+            public boolean isFinished()
+            {
+                return true;
+            }
+
+            @Override
+            public boolean init()
+            {
+                log ("test", Logger.LogLevel.ERROR);
+                if (state == mExtensionState) return true;
+                intakeSol.set(state.value);
+                mExtensionState = state;
+                return true;
+            }
+
+            @Override
+            public void update()
+            {
+            }
+
+            @Override
+            public void stop()
+            {
             }
         };
     }

@@ -83,6 +83,7 @@ public class Constants
     public final Button.ButtonID el_lowCargo = Button.ButtonID.B;
     public final Button.ButtonID el_midCargo = Button.ButtonID.A;
     public final Button.ButtonID el_highCargo = Button.ButtonID.SELECT;
+    public final Button.ButtonID el_playerStation = Button.ButtonID.D_UP;
     public final Axis.AxisID el_rawControl = Axis.AxisID.RIGHT_Y;
 
     // Gorilla Arm / Pogo - Driver Controller
@@ -92,8 +93,8 @@ public class Constants
     public final Button.ButtonID cl_pogoReverse = Button.ButtonID.Y;
 
     // Hatcher - Operator Controller
-    public final Button.ButtonID ht_extend = Button.ButtonID.A;
-    public final Button.ButtonID ht_actuate = Button.ButtonID.B;
+    public final Button.ButtonID ht_extend = Button.ButtonID.LEFT_BUMPER;
+    public final Button.ButtonID ht_actuate = Button.ButtonID.RIGHT_BUMPER;
 
     // Intake - Driver Controller
     public final Button.ButtonID in_extend = Button.ButtonID.RIGHT_BUMPER;
@@ -132,6 +133,10 @@ public class Constants
 
     /************ Elevator ************/
     public final double el_rawMultiplier = 1;
+    public final double holdPower = 0.05;
+
+    public final int el_allowableHatchError = 500;
+    public final int el_allowableCargoError = 1500;
 
     public final int el_maxVelocity = 0;
     public final int el_maxAcceleration = 0;
