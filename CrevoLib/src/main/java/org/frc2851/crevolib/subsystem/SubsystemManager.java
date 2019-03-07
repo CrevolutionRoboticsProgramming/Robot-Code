@@ -50,8 +50,11 @@ public class SubsystemManager
         _notifier.startPeriodic(0.005);
     }
 
+    /**
+     * Stops auxiliary commands of all subsystems. Default commands continue to run.
+     */
     public void stopAllSubsystems()
     {
-        for (Subsystem s : _subsystems) s.stopAuxilaryCommand();
+        for (Subsystem s : _subsystems) s.stopAuxiliaryCommand();
     }
 }

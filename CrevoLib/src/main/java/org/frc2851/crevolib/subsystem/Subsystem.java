@@ -10,8 +10,8 @@ public abstract class Subsystem
 {
     private String mName;
     private Command mDefaultCommand = getDefaultCommand();
-    private CommandGroup mAuxilaryCommandGroup = null;
-    private CommandState mDefaultState = new CommandState(), mAuxilaryState = new CommandState();
+    private CommandGroup mAuxiliaryCommandGroup = null;
+    private CommandState mDefaultState = new CommandState(), mAuxiliaryState = new CommandState();
 
     /**
      * Runs once when the subsystem first starts
@@ -39,12 +39,12 @@ public abstract class Subsystem
      * @param commands
      */
     public void setCommmandGroup(Command... commands) {
-        mAuxilaryCommandGroup = new CommandGroup(commands);
-        if (mAuxilaryCommandGroup.getSize() > 0) mAuxilaryState.isNull = false;
-        mAuxilaryState.isInit = false;
-        mAuxilaryState.isFinished = false;
+        mAuxiliaryCommandGroup = new CommandGroup(commands);
+        if (mAuxiliaryCommandGroup.getSize() > 0) mAuxiliaryState.isNull = false;
+        mAuxiliaryState.isInit = false;
+        mAuxiliaryState.isFinished = false;
 
-        log("Set aux command group: " + mAuxilaryCommandGroup.toString(), Logger.LogLevel.DEBUG);
+        log("Set aux command group: " + mAuxiliaryCommandGroup.toString(), Logger.LogLevel.DEBUG);
     }
 
     /**
@@ -54,29 +54,29 @@ public abstract class Subsystem
     {
         if (mDefaultCommand != null && initCommand(mDefaultCommand, mDefaultState)) mDefaultCommand.update();
 
-        if (mAuxilaryCommandGroup != null)
+        if (mAuxiliaryCommandGroup != null)
         {
-            Command auxCommand = mAuxilaryCommandGroup.getCommand();
-            if (auxCommand != null && initCommand(auxCommand, mAuxilaryState))
+            Command auxCommand = mAuxiliaryCommandGroup.getCommand();
+            if (auxCommand != null && initCommand(auxCommand, mAuxiliaryState))
             {
                 if (!auxCommand.isFinished())
                 {
                     auxCommand.update();
                 } else {
                     auxCommand.stop();
-                    if (mAuxilaryCommandGroup.nextCommand())
+                    if (mAuxiliaryCommandGroup.nextCommand())
                     {
-                        mAuxilaryState.isInit = false;
+                        mAuxiliaryState.isInit = false;
                     } else {
-                        log(mAuxilaryCommandGroup.toString() + " completed", Logger.LogLevel.DEBUG);
-                        mAuxilaryCommandGroup = null;
-                        mAuxilaryState.isNull = true;
+                        log(mAuxiliaryCommandGroup.toString() + " completed", Logger.LogLevel.DEBUG);
+                        mAuxiliaryCommandGroup = null;
+                        mAuxiliaryState.isNull = true;
                     }
                 }
             } else {
-                log(mAuxilaryCommandGroup.toString() + "was unsuccessful", Logger.LogLevel.ERROR);
-                mAuxilaryCommandGroup = null;
-                mAuxilaryState.isNull = true;
+                log(mAuxiliaryCommandGroup.toString() + "was unsuccessful", Logger.LogLevel.ERROR);
+                mAuxiliaryCommandGroup = null;
+                mAuxiliaryState.isNull = true;
             }
         }
     }
@@ -107,14 +107,14 @@ public abstract class Subsystem
     /**
      * Stops the current Auxilary Command
      */
-    public synchronized void stopAuxilaryCommand()
+    public synchronized void stopAuxiliaryCommand()
     {
-        if (mAuxilaryCommandGroup == null) return;
-        Command c = mAuxilaryCommandGroup.getCommand();
-        log("Stopping " + mAuxilaryCommandGroup.toString() + " on command " + c.getName(), Logger.LogLevel.DEBUG);
+        if (mAuxiliaryCommandGroup == null) return;
+        Command c = mAuxiliaryCommandGroup.getCommand();
+        log("Stopping " + mAuxiliaryCommandGroup.toString() + " on command " + c.getName(), Logger.LogLevel.DEBUG);
         c.stop();
-        mAuxilaryCommandGroup = null;
-        mAuxilaryState.isNull = true;
+        mAuxiliaryCommandGroup = null;
+        mAuxiliaryState.isNull = true;
     }
 
     /**
@@ -150,9 +150,9 @@ public abstract class Subsystem
      * Returns true if the auxilary command is active
      * @return Is command active
      */
-    public boolean getAuxilaryCommandActivity()
+    public boolean getAuxiliaryCommandActivity()
     {
-        return !mAuxilaryState.isNull;
+        return !mAuxiliaryState.isNull;
     }
 
     public String getName()
