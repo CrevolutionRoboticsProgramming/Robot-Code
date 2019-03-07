@@ -129,4 +129,10 @@ public class PID extends SendableBase
         builder.addDoubleProperty("d", this::getD, this::setD);
         builder.addDoubleProperty("f", this::getF, this::setF);
     }
+
+    @Override
+    public String toString()
+    {
+        return "PID[" + p + ", " + i + ", " + d + ", " + f + "]";
+    }
 }
