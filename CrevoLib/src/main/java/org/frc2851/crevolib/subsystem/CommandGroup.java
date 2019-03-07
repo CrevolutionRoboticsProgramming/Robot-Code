@@ -5,9 +5,9 @@ import java.util.Vector;
 public class CommandGroup
 {
     private Vector<Command> mCommands = new Vector<>();
-    private final int kSize;
-    private int index = 0;
-    private boolean isEnabled = true;
+    private final int SIZE;
+    private int mIndex = 0;
+    private boolean mEnabled = true;
 
     public CommandGroup(Command... commands)
     {
@@ -18,23 +18,23 @@ public class CommandGroup
                 if (c == null) continue;
                 mCommands.add(c);
             }
-            kSize = mCommands.size();
+            SIZE = mCommands.size();
         } else
         {
-            kSize = 0;
+            SIZE = 0;
         }
     }
 
     Command getCommand()
     {
-        return (isEnabled && kSize != 0) ? mCommands.get(index) : null;
+        return (mEnabled && SIZE != 0) ? mCommands.get(mIndex) : null;
     }
 
     public boolean nextCommand()
     {
-        if (index + 1 < kSize)
+        if (mIndex + 1 < SIZE)
         {
-            index++;
+            mIndex++;
             return true;
         }
         return false;
@@ -42,23 +42,23 @@ public class CommandGroup
 
     public void stop()
     {
-        isEnabled = false;
+        mEnabled = false;
     }
 
     public void resume()
     {
-        isEnabled = true;
+        mEnabled = true;
     }
 
     public void reset()
     {
-        index = 0;
-        isEnabled = true;
+        mIndex = 0;
+        mEnabled = true;
     }
 
     public int getSize()
     {
-        return kSize;
+        return SIZE;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class CommandGroup
     {
         StringBuilder sb = new StringBuilder();
         sb.append("CommandGroup[");
-        if (index == 0)
+        if (SIZE == 0)
         {
             sb.append("null");
         } else
