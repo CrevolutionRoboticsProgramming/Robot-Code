@@ -215,8 +215,6 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
-                mController.config(Button.ButtonID.A, Button.ButtonMode.RAW);
-
                 reset();
                 robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
 
@@ -241,31 +239,12 @@ public class DriveTrain extends Subsystem
                         mPrefs.putDouble("Right Current Draw", mRightMaster.getOutputCurrent() + mRightSlaveA.getOutputCurrent() + mRightSlaveB.getOutputCurrent());
                     }
 
-                    boolean curvatureToggle = mController.get(mConstants.dt_curvatureToggle);
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
                     if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
-                    mDriveControlMode = DriveControlMode.FPS;
-                    switch (mDriveControlMode)
-                    {
-                        case FPS:
-                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
-                            break;
-
-                        case FPS_CURVE:
-                            robotDrive.curvatureDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X), curvatureToggle);
-                            break;
-
-                        case ARCADE:
-                            robotDrive.arcadeDrive(mController.get(Axis.AxisID.RIGHT_Y), mController.get(Axis.AxisID.RIGHT_X));
-                            break;
-
-                        case TANK:
-                            robotDrive.tankDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_Y));
-                            break;
-                    }
+                    robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
                 }
             }
 
@@ -678,9 +657,5 @@ public class DriveTrain extends Subsystem
     private double ctreVelToFPS(int ctreVel)
     {
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
-    }
-
-    public static void setDriveMode(DriveControlMode mode)
-    {
     }
 }

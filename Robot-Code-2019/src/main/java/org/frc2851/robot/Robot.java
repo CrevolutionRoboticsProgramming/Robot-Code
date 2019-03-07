@@ -13,8 +13,6 @@ import org.frc2851.robot.subsystems.*;
  */
 public class Robot extends CrevoRobot
 {
-    private SendableChooser driveModeSelector = new SendableChooser();
-
     static
     {
         TalonSRXFactory.setTalonTimeout(Constants.getInstance().talonTimeout);
@@ -30,15 +28,6 @@ public class Robot extends CrevoRobot
         addSubsystem(Intake.getInstance());
         addSubsystem(RollerClaw.getInstance());
         addSubsystem(Climber.getInstance());
-
-        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
-        driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);
-        SmartDashboard.putData("Drive Selection", driveModeSelector);
-    }
-
-    public void teleopInit()
-    {
-        DriveTrain.setDriveMode((DriveTrain.DriveControlMode) driveModeSelector.getSelected());
     }
 
     /**
