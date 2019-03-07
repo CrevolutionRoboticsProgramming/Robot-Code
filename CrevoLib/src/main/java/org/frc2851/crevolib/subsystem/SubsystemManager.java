@@ -49,4 +49,9 @@ public class SubsystemManager
         _notifier = new Notifier(this::run);
         _notifier.startPeriodic(0.005);
     }
+
+    public void stopAllSubsystems()
+    {
+        for (Subsystem s : _subsystems) s.stopAuxilaryCommand();
+    }
 }
