@@ -101,13 +101,8 @@ public class DriveTrain extends Subsystem
             rightMotors.add(mRightSlaveA);
             rightMotors.add(mRightSlaveB);
 
-            mLeftMaster.setInverted(true);
-            mLeftSlaveA.setInverted(true);
-            mLeftSlaveB.setInverted(true);
-
-            mRightMaster.setInverted(true);
-            mRightSlaveA.setInverted(true);
-            mRightSlaveB.setInverted(true);
+            for (WPI_TalonSRX talon : leftMotors) talon.setInverted(true);
+            for (WPI_TalonSRX talon : rightMotors) talon.setInverted(true);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -180,16 +175,10 @@ public class DriveTrain extends Subsystem
 
     private boolean zeroSensors()
     {
-        boolean setsSucceeded = true;
-        int tries = 0;
-        final int maxTries = 5;
-        do
-        {
-            setsSucceeded &= mLeftMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout) == ErrorCode.OK;
-        } while (!setsSucceeded && tries++ < maxTries);
-        return setsSucceeded;
-//        if (mConstants.dt_usePigeon) mPigeon.setYaw(0, mConstants.talonTimeout);
+        return TalonSRXFactory.runTalonConfig(
+                () -> mLeftMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout),
+                () -> mRightMaster.getSensorCollection().setQuadraturePosition(0, mConstants.talonTimeout)
+        );
     }
 
     @Override
