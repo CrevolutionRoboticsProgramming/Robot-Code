@@ -161,6 +161,7 @@ public class TalonSRXFactory
     private static TalonSRX createTalonSRX(int id, Configuration config) throws TalonCommunicationErrorException
     {
         TalonSRX talon = new TalonSRX(id);
+        talon.configFactoryDefault();
         if (!configureTalon(talon, config)) throw new TalonCommunicationErrorException(id);
         return talon;
     }
@@ -168,6 +169,7 @@ public class TalonSRXFactory
     private static WPI_TalonSRX createWPI_TalonSRX(int id, Configuration config) throws TalonCommunicationErrorException
     {
         WPI_TalonSRX talon = new WPI_TalonSRX(id);
+        talon.configFactoryDefault(talonTimeout);
         if (!configureTalon(talon, config)) throw new TalonCommunicationErrorException(id);
         return talon;
     }
@@ -175,7 +177,6 @@ public class TalonSRXFactory
     private static boolean configureTalon(TalonSRX talon, Configuration config)
     {
         boolean setSucceeded;
-        int retryCounter = 0;
 
         setSucceeded = runTalonConfig(
                 () -> talon.clearMotionProfileHasUnderrun(talonTimeout),
@@ -197,30 +198,6 @@ public class TalonSRXFactory
                 () -> talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout)
         );
 
-//        do
-//        {
-//            setSucceeded &= talon.clearMotionProfileHasUnderrun(talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.clearStickyFaults(talonTimeout) == ErrorCode.OK;
-//
-//            setSucceeded &= talon.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS) == ErrorCode.OK;
-//            setSucceeded &= talon.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, talonTimeout) == ErrorCode.OK;
-//
-//            setSucceeded &= talon.setIntegralAccumulator(0, 0, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.setIntegralAccumulator(0, 1, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configPeakOutputForward(config.MAX_OUT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configPeakOutputReverse(-config.MAX_OUT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configNominalOutputForward(config.NOMINAL_OUT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configNominalOutputReverse(-config.NOMINAL_OUT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configContinuousCurrentLimit(config.CURRENT_LIMIT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configForwardSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configReverseSoftLimitEnable(config.ENABLE_SOFT_LIMIT, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.setSelectedSensorPosition(0, 0, talonTimeout) == ErrorCode.OK;
-////            setSucceeded &= talon.setSelectedSensorPosition(0, 1, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configVelocityMeasurementPeriod(config.VELOCITY_MEASUREMENT_PERIOD, talonTimeout) == ErrorCode.OK;
-//            setSucceeded &= talon.configVelocityMeasurementWindow(config.VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW, talonTimeout) == ErrorCode.OK;
-//        } while (!setSucceeded && retryCounter++ < kMaxRetry);
-
         if (!setSucceeded)
             Logger.println("Failed to initialize Talon " + talon.getDeviceID() + "!!!!", Logger.LogLevel.ERROR);
         return setSucceeded;
@@ -228,7 +205,7 @@ public class TalonSRXFactory
 
     public static void configurePIDF(TalonSRX talon, int slot, PID pid)
     {
-        configurePIDF(talon, slot, pid.getP(), pid.getI(), pid.getP(), pid.getF());
+        configurePIDF(talon, slot, pid.getP(), pid.getI(), pid.getD(), pid.getF());
     }
 
     public static void configurePIDF(TalonSRX talon, int slot, double p, double i, double d, double f)
