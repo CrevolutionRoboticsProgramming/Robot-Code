@@ -31,7 +31,6 @@ public class CrevoRobot extends TimedRobot
 
     private static boolean mIsEnabled = false;
 
-
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
      *
@@ -105,6 +104,7 @@ public class CrevoRobot extends TimedRobot
     {
         Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
         _executor.stop();
+        _subManager.stopAllSubsystems();
     }
 
     // TODO: Move all periodic tasks into the robot manager
