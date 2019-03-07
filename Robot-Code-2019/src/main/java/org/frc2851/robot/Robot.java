@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.subsystems.*;
 
 /**
@@ -12,26 +13,25 @@ import org.frc2851.robot.subsystems.*;
  */
 public class Robot extends CrevoRobot
 {
-
     private SendableChooser driveModeSelector = new SendableChooser();
 
+    static
+    {
+        TalonSRXFactory.setTalonTimeout(Constants.getInstance().talonTimeout);
+    }
 
-    /**
-     * Initializes the Robot class
-     */
     private Robot()
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
 
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
-//        addSubsystem(Hatcher.getmInstance());
+        addSubsystem(Hatcher.getInstance());
         addSubsystem(Intake.getInstance());
-//        addSubsystem(RollerClaw.getmInstance());
+        addSubsystem(RollerClaw.getInstance());
         addSubsystem(Climber.getInstance());
 
-        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values())
-            driveModeSelector.addOption(m.name(), m);
+        for (DriveTrain.DriveControlMode m : DriveTrain.DriveControlMode.values()) driveModeSelector.addOption(m.name(), m);
         driveModeSelector.setDefaultOption("FPS", DriveTrain.DriveControlMode.FPS);
         SmartDashboard.putData("Drive Selection", driveModeSelector);
     }

@@ -5,6 +5,7 @@ import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.motion.PID;
+import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.subsystems.DriveTrain;
 
 /**
@@ -30,7 +31,6 @@ public class Constants
     }
 
     public final int magEncCPR = 4096;
-    public boolean singleControllerMode = false;
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);
@@ -68,7 +68,6 @@ public class Constants
     public final int cl_gorillaReverseLimit = 2;
     public final int cl_pogoForwardLimit = 3;
     public final int cl_pogoReverseLimit = 4;
-    public final int el_forwardLimit = 5; // Closed at max height
     public final int el_reverseLimit = 6; // Closed at min height
 
     /************ Controller Buttons and Axis ************/
@@ -77,13 +76,11 @@ public class Constants
     public final Button.ButtonID dt_gearToggle = Button.ButtonID.LEFT_BUMPER;
 
     // Elevator - Operator Controller
-    public final Button.ButtonID el_lowHatch = Button.ButtonID.START;
-    public final Button.ButtonID el_midHatch = Button.ButtonID.X;
-    public final Button.ButtonID el_highHatch = Button.ButtonID.Y;
-    public final Button.ButtonID el_lowCargo = Button.ButtonID.B;
-    public final Button.ButtonID el_midCargo = Button.ButtonID.A;
-    public final Button.ButtonID el_highCargo = Button.ButtonID.SELECT;
     public final Button.ButtonID el_playerStation = Button.ButtonID.D_UP;
+    public final Button.ButtonID el_low = Button.ButtonID.A;
+    public final Button.ButtonID el_mid = Button.ButtonID.X;
+    public final Button.ButtonID el_high = Button.ButtonID.Y;
+    public final Button.ButtonID el_toggle = Button.ButtonID.RIGHT_TRIGGER;
     public final Axis.AxisID el_rawControl = Axis.AxisID.RIGHT_Y;
 
     // Gorilla Arm / Pogo - Driver Controller
@@ -133,30 +130,20 @@ public class Constants
 
     /************ Elevator ************/
     public final double el_rawMultiplier = 1;
-    public final double holdPower = 0.05;
+    public final double el_holdPositionPower = 0.1;
 
-    public final int el_allowableHatchError = 500;
-    public final int el_allowableCargoError = 1500;
+    public final int el_allowableHatchError = 250;
+    public final int el_allowableCargoError = 100;
 
     public final int el_maxVelocity = 0;
     public final int el_maxAcceleration = 0;
-    public final int el_allowedClosedLoopError = 128;
-
-    public final PID el_motionPID = new PID(0, 0, 0, 0);
-    public final PID el_posPID = new PID(0, 0, 0, 0);
+    public final PID el_pid = new PID(0.1, 0, 0, 0.62264);
 
     /************ Climber ************/
     public final boolean cl_usePogoLimit = false;
     public final boolean cl_useGorillaLimit = true;
 
-    /************ Intake ************/
-    public final double in_intakeSpeed = 0.5;
-    public final double in_outtakeSpeed = 0.5;
-
     /************ Roller Claw ************/
-    public final double rc_intakeSpeed = 0.5;
-    public final double rc_outtakeSpeed = -0.5;
-    public final double rc_holdSpeed = 0.1;
     public final boolean rc_useLimit = false;
 
     public final int talonTimeout = 20;
