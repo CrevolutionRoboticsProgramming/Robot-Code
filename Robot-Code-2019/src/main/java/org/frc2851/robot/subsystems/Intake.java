@@ -10,6 +10,7 @@ import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
+import org.frc2851.robot.Robot;
 
 /**
  * Represents the cargo intake subsystem
@@ -130,15 +131,19 @@ public class Intake extends Subsystem
             @Override
             public void update()
             {
-                IntakeMotorState motorState = pollMotorState();
-                IntakeExtensionState extensionState = pollExtensionState();
+                if (Robot.isRunning())
+                {
+                    IntakeMotorState motorState = pollMotorState();
+                    IntakeExtensionState extensionState = pollExtensionState();
 //                log("Updated extension state: " + extensionState.name(), Logger.LogLevel.DEBUG);
-                if (mExtensionState != extensionState) {
+                    if (mExtensionState != extensionState)
+                    {
 
-                    setCommmandGroup(setExtensionState(extensionState));
+                        setCommmandGroup(setExtensionState(extensionState));
+                    }
+                    intakeTalon.set(ControlMode.PercentOutput, motorState.output);
+                    mMotorState = motorState;
                 }
-                intakeTalon.set(ControlMode.PercentOutput, motorState.output);
-                mMotorState = motorState;
             }
 
             @Override

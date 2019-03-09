@@ -127,7 +127,8 @@ public class RollerClaw extends Subsystem
 
     public boolean hasCargo()
     {
-        return mLimitSwitch.get();
+        return false;
+//        return mLimitSwitch.get();
     }
 
     public RollerClawState getState()

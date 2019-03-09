@@ -7,6 +7,7 @@ import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
+import org.frc2851.robot.Robot;
 
 /**
  * Represents the hatcher subsystem
@@ -116,19 +117,22 @@ public class Hatcher extends Subsystem
             @Override
             public void update()
             {
-                ExtensionState extensionState = mController.get(mConstants.ht_extend) ? ExtensionState.EXTENDED : ExtensionState.STOWED;
-                ActuationState actuationState = mController.get(mConstants.ht_actuate) ? ActuationState.OPEN : ActuationState.CLOSED;
+                if (Robot.isRunning())
+                {
+                    ExtensionState extensionState = mController.get(mConstants.ht_extend) ? ExtensionState.EXTENDED : ExtensionState.STOWED;
+                    ActuationState actuationState = mController.get(mConstants.ht_actuate) ? ActuationState.OPEN : ActuationState.CLOSED;
 
-                if (extensionState != lastExtensionState)
-                    log("Updated extension state: " + extensionState.name(), Logger.LogLevel.DEBUG);
-                if (actuationState != lastActuationState)
-                    log("Updated actuation state: " + actuationState.name(), Logger.LogLevel.DEBUG);
+                    if (extensionState != lastExtensionState)
+                        log("Updated extension state: " + extensionState.name(), Logger.LogLevel.DEBUG);
+                    if (actuationState != lastActuationState)
+                        log("Updated actuation state: " + actuationState.name(), Logger.LogLevel.DEBUG);
 
-                lastActuationState = actuationState;
-                lastExtensionState = extensionState;
+                    lastActuationState = actuationState;
+                    lastExtensionState = extensionState;
 
-                mExtendSol.set(extensionState.val);
-                mActuateSol.set(actuationState.val);
+                    mExtendSol.set(extensionState.val);
+                    mActuateSol.set(actuationState.val);
+                }
             }
 
             @Override

@@ -23,6 +23,7 @@ import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 /**
  * Represents the drivetrain subsystem
@@ -252,13 +253,11 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    if (debug)
-                    {
-                        mPrefs.putInt("Encoder Left", mLeftMaster.getSelectedSensorPosition());
-                        mPrefs.putInt("Encoder Right", mRightMaster.getSelectedSensorPosition());
-                        mPrefs.putDouble("Left Current Draw", mLeftMaster.getOutputCurrent() + mLeftSlaveA.getOutputCurrent() + mLeftSlaveB.getOutputCurrent());
-                        mPrefs.putDouble("Right Current Draw", mRightMaster.getOutputCurrent() + mRightSlaveA.getOutputCurrent() + mRightSlaveB.getOutputCurrent());
-                    }
+                    mPrefs.putInt("Encoder Left", mLeftMaster.getSelectedSensorPosition());
+                    mPrefs.putInt("Encoder Right", mRightMaster.getSelectedSensorPosition());
+                    mPrefs.putDouble("Left Current Draw", mLeftMaster.getOutputCurrent() + mLeftSlaveA.getOutputCurrent() + mLeftSlaveB.getOutputCurrent());
+                    mPrefs.putDouble("Right Current Draw", mRightMaster.getOutputCurrent() + mRightSlaveA.getOutputCurrent() + mRightSlaveB.getOutputCurrent());
+                    mPrefs.putString("Drive Gear", mCurrentGear.name());
 
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
@@ -753,4 +752,6 @@ public class DriveTrain extends Subsystem
     {
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
     }
+
+
 }
