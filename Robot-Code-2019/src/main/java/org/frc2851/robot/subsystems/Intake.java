@@ -181,7 +181,6 @@ public class Intake extends Subsystem
             @Override
             public boolean init()
             {
-                log ("test", Logger.LogLevel.ERROR);
                 if (state == mExtensionState) return true;
                 intakeSol.set(state.value);
                 mExtensionState = state;

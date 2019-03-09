@@ -5,7 +5,6 @@ import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.motion.PID;
-import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.subsystems.DriveTrain;
 
 /**
@@ -135,9 +134,11 @@ public class Constants
     public final int el_allowableHatchError = 250;
     public final int el_allowableCargoError = 100;
 
-    public final int el_maxVelocity = 0;
-    public final int el_maxAcceleration = 0;
-    public final PID el_pid = new PID(0.1, 0, 0, 0.62264);
+    public final int el_maxVelocityDown = 1500;
+    public final int el_maxAccelerationDown = 1500;
+    public final int el_maxVelocityUp = 1500;
+    public final int el_maxAccelerationUp = 1500;
+    public final PID el_pid = new PID(0.3, 0, 0, 1);
 
     /************ Climber ************/
     public final boolean cl_usePogoLimit = false;

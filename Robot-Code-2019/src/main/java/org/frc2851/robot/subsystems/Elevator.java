@@ -101,7 +101,7 @@ public class Elevator extends Subsystem
 
     // Tuning
     CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
-    private final boolean TUNING = true;
+    private final boolean TUNING = false;
 
     private static Elevator mInstance;
 
@@ -162,11 +162,11 @@ public class Elevator extends Subsystem
 
     private void configBadLog()
     {
-        BadLog.createTopicStr("Elevator/Control Mode", BadLog.UNITLESS, () -> mControlMode.name(), "hide");
         BadLog.createTopic("Elevator/Output Percent", BadLog.UNITLESS, () -> mTalon.getMotorOutputPercent(), "hide");
         BadLog.createTopic("Elevator/Output Voltage Master", "V", () -> mTalon.getBusVoltage(), "hide");
         BadLog.createTopic("Elevator/Output Current Master", "I", () -> mTalon.getOutputCurrent(), "hide");
         BadLog.createTopic("Elevator/Position", "Counts", () -> (double) mTalon.getSensorCollection().getQuadraturePosition(), "hide");
+        BadLog.createTopic("Elevator/Velocity", "Counts/100ms", () -> (double) mTalon.getSensorCollection().getQuadratureVelocity());
     }
 
     private void configController(Controller controller)
@@ -179,9 +179,9 @@ public class Elevator extends Subsystem
 
         // checks limit switches, applies deadband, and applies multiplier
         controller.config(mConst.el_rawControl, (x) -> {
-            x = (Math.abs(x) < 0.1) ? 0 : x;
-            x = (!mLimitSwitch.get() && x > 0) ? 0 : x;
-            return -(x * mConst.el_rawMultiplier);
+            double in = (Math.abs(x) < 0.1) ? 0 : x;
+            in = (!mLimitSwitch.get() && in > 0) ? 0 : in;
+            return -(in * mConst.el_rawMultiplier);
         });
     }
 
@@ -329,8 +329,10 @@ public class Elevator extends Subsystem
                 double i = (TUNING) ? mTunePrefs.getDouble("kI", 0) : mConst.el_pid.getI();
                 double d = (TUNING) ? mTunePrefs.getDouble("kD", 0) : mConst.el_pid.getD();
                 double f = mConst.el_pid.getF();
-                int maxV = (TUNING) ? mTunePrefs.getInt("maxV", 0) : mConst.el_maxVelocity;
-                int maxA = (TUNING) ? mTunePrefs.getInt("maxA", 0) : mConst.el_maxAcceleration;
+                int maxV = (TUNING) ? mTunePrefs.getInt("maxV", 0) :
+                        ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxVelocityDown : mConst.el_maxVelocityUp);
+                int maxA = (TUNING) ? mTunePrefs.getInt("maxA", 0) :
+                        ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxAccelerationDown : mConst.el_maxAccelerationUp);
 
                 PID pid = new PID(p, i, d, f);
                 log("MP_INFO[PID: " + pid.toString() + ", MaxVel: " + maxV + ", MaxAcc: " + maxA + "]", Logger.LogLevel.DEBUG);

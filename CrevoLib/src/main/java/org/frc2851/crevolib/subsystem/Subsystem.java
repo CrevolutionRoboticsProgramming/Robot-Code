@@ -57,7 +57,7 @@ public abstract class Subsystem
         if (mAuxiliaryCommandGroup != null)
         {
             Command auxCommand = mAuxiliaryCommandGroup.getCommand();
-            if (auxCommand != null && (mAuxiliaryState.isInit || initCommand(auxCommand, mAuxiliaryState)))
+            if (auxCommand != null && (initCommand(auxCommand, mAuxiliaryState)))
             {
                 if (!auxCommand.isFinished())
                 {
@@ -89,6 +89,8 @@ public abstract class Subsystem
      */
     private boolean initCommand(Command command, CommandState state)
     {
+        if (state.isInit) return true;
+
         if (!command.init())
         {
             log("Could not initialize command: " + command.getName(), Logger.LogLevel.ERROR);
