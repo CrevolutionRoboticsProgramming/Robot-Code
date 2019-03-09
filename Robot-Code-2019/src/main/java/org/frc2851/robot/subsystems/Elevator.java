@@ -22,7 +22,7 @@ import org.frc2851.robot.Robot;
  */
 
 /**
- * Represents the Elevator subsystem
+ * Represents the elevator subsystem
  */
 public class Elevator extends Subsystem
 {
