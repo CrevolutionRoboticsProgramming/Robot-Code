@@ -9,7 +9,7 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.robot.Constants;
 
 /**
- * Represents the Hatcher subsystem
+ * Represents the hatcher subsystem
  * <p>
  * Controls:
  * A - Extension Toggle

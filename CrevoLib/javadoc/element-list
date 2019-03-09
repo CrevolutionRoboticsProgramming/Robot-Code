@@ -5,3 +5,5 @@ org.frc2851.crevolib.io
 org.frc2851.crevolib.motion
 org.frc2851.crevolib.subsystem
 org.frc2851.crevolib.utilities
+org.frc2851.robot
+org.frc2851.robot.subsystems
