@@ -21,6 +21,10 @@ public class SubsystemManager
         return mInstance;
     }
 
+    /**
+     * Adds a subsystem to the Vector of subsystems
+     * @param s The subsystem to add
+     */
     public void addSubsystem(Subsystem s)
     {
         if (s == null)
@@ -32,11 +36,17 @@ public class SubsystemManager
         _subsystems.add(s);
     }
 
+    /**
+     * Runs the commands of all subsystems in the Vector
+     */
     private synchronized void run()
     {
         for (Subsystem s : _subsystems) s.runCommand();
     }
 
+    /**
+     * Initializes all subsystems and begins a new notifier
+     */
     public void start()
     {
         for (Subsystem s : _subsystems)

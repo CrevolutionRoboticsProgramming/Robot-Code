@@ -30,6 +30,11 @@ public class FileUtil
         return out;
     }
 
+    /**
+     * Writes a list of Files to the provided ArrayList from the given directory and all subdirectories
+     * @param dir The directory to search in
+     * @param out The ArrayList to write to
+     */
     private static void getFiles(File dir, ArrayList<File> out) {
         File[] files = dir.listFiles();
         if (files != null) {

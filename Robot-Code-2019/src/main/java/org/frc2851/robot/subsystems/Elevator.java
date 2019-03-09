@@ -17,6 +17,13 @@ import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
+/*
+ * TODO: Determine motor direction and set encoder phase accordingly
+ */
+
+/**
+ * Represents the Elevator subsystem
+ */
 public class Elevator extends Subsystem
 {
     private enum GamePiece
@@ -105,17 +112,30 @@ public class Elevator extends Subsystem
 
     private static Elevator mInstance;
 
+    /**
+     * Initializes the Elevator class with the name "Elevator"
+     */
     private Elevator()
     {
         super("Elevator");
     }
 
+    /**
+     * A method returning the sole instance of the Elevator class
+     *
+     * @return The instance of the Elevator class
+     */
     public static Elevator getInstance()
     {
         if (mInstance == null) mInstance = new Elevator();
         return mInstance;
     }
 
+    /**
+     * Initializes the motors and logging
+     *
+     * @return A boolean representing whether initialization has succeeded
+     */
     @Override
     protected boolean init()
     {
@@ -190,6 +210,9 @@ public class Elevator extends Subsystem
         TalonSRXFactory.runTalonConfig(() -> mTalon.setSelectedSensorPosition(0, 0, mConst.talonTimeout));
     }
 
+    /**
+     * Resets the encoder positions to 50
+     */
     public void reset()
     {
         mTunePrefs.putInt("error", 0);
@@ -197,6 +220,11 @@ public class Elevator extends Subsystem
         mCurrentPosition = ElevatorPosition.LOW_HATCH;
     }
 
+    /**
+     * Returns a command representing user control over the elevator
+     *
+     * @return A command representing user control over the elevator
+     */
     @Override
     public Command getDefaultCommand()
     {
@@ -295,6 +323,12 @@ public class Elevator extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command that sets the position of the elevator via motion magic
+     *
+     * @param pos The position to move the elevator to
+     * @return A Command that sets the position of the elevator via PID and/or motion magic
+     */
     public Command setPositionMotionMagic(ElevatorPosition pos)
     {
         return new Command()

@@ -114,6 +114,10 @@ public class MotionProfileExecutor
         _talon.getMotionProfileStatus(_status);
     }
 
+    /**
+     * Fills the Talon's buffer of Motion Profile points with those stored
+     * @throws InvalidMotionProfileException
+     */
     private void fillBuffer() throws InvalidMotionProfileException
     {
         Vector<MotionProfilePoint> points = _profile.getPoints();

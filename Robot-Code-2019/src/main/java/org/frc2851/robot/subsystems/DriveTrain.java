@@ -24,6 +24,9 @@ import org.frc2851.robot.Robot;
 
 import java.util.ArrayList;
 
+/**
+ * Represents the drivetrain subsystem
+ */
 public class DriveTrain extends Subsystem
 {
     public enum DriveGear
@@ -67,17 +70,30 @@ public class DriveTrain extends Subsystem
 
     private static DriveTrain mInstance;
 
+    /**
+     * Initializes the DriveTrain class with the name "DriveTrain"
+     */
     private DriveTrain()
     {
         super("DriveTrain");
     }
 
+    /**
+     * Returns the sole instance of the DriveTrain class
+     *
+     * @return The instance of the DriveTrain class
+     */
     public static DriveTrain getInstance()
     {
         if (mInstance == null) mInstance = new DriveTrain();
         return mInstance;
     }
 
+    /**
+     * Initializes the controllers, motor controllers, and logging
+     *
+     * @return A boolean representing whether initialization has succeeded
+     */
     @Override
     protected boolean init()
     {
@@ -138,6 +154,9 @@ public class DriveTrain extends Subsystem
         return true;
     }
 
+    /**
+     * Initializes BadLogging
+     */
     private void badLogInit()
     {
         BadLog.createTopic("Drivetrain/Left Percent", BadLog.UNITLESS, () -> mLeftMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
@@ -166,6 +185,9 @@ public class DriveTrain extends Subsystem
         zeroSensors();
     }
 
+    /**
+     * Resets the motor controllers and encoders
+     */
     private void reset()
     {
         if (!zeroSensors()) log("Failed to zero sensors", Logger.LogLevel.ERROR);
@@ -173,6 +195,11 @@ public class DriveTrain extends Subsystem
         setNeutralMode(mConstants.dt_defaultNeutralMode);
     }
 
+    /**
+     * Zeroes all sensors
+     *
+     * @return A boolean representing whether zeroing has succeeded
+     */
     private boolean zeroSensors()
     {
         return TalonSRXFactory.runTalonConfig(
@@ -181,6 +208,11 @@ public class DriveTrain extends Subsystem
         );
     }
 
+    /**
+     * Returns a Command representing user control over the drivetrain
+     *
+     * @return A Command representing user control over the drivetrain
+     */
     @Override
     public Command getDefaultCommand()
     {
@@ -245,6 +277,14 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command making the robot drive for the specified time
+     *
+     * @param time The time in seconds to drive for
+     * @param leftPower The power to drive the left motors at
+     * @param rightPower The power to drive the right motors at
+     * @return A Command making the robot drive for the specified time
+     */
     public Command driveTime(double time, double leftPower, double rightPower)
     {
         return new Command()
@@ -286,6 +326,13 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command making the robot drive for the specified time
+     *
+     * @param time The time in seconds to drive for
+     * @param power The power to drive at
+     * @return A Command making the robot drive for the specified time
+     */
     public Command driveTime(double time, double power)
     {
         return driveTime(time, power, power);
@@ -376,6 +423,13 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command making the robot rotate to the specified angle using its encoders
+     *
+     * @param angle The angle to turn to
+     * @param maxOut The maximum output (0.0 to 1.0) of the motors
+     * @return A Command making the robot rotate to the specified angle using its encoders
+     */
     public Command turnToAngleEncoder(double angle, double maxOut)
     {
         return new Command()
@@ -421,6 +475,13 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command making the robot rotate to the specified angle using its encoders
+     *
+     * @param angle The angle to turn to
+     * @param maxOut The maximum  output (0.0 to 1.0) of the motors
+     * @return A Command making the robot rotate to the specified angle using its encoders
+     */
     // TODO: Implement turn to angle gyro
     public Command turnToAngleGyro(double angle, double maxOut)
     {
@@ -458,6 +519,12 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command that runs the motion profile supplied to it
+     * @param leftProfile The file name of the motion profile to execute corresponding with the left side of the drivetrain
+     * @param rightProfile The file name of the motion profile to execute corresponding with the right side of the drivetrain
+     * @return
+     */
     public Command runMotionProfile(String leftProfile, String rightProfile)
     {
         return new Command()
@@ -534,6 +601,11 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Returns a Command that sets the drive gear of the drivetrain
+     * @param gear The gear to set the drivetrain to
+     * @return A Command that sets the drive gear of the drivetrain
+     */
     public Command setDriveGear(DriveGear gear)
     {
         return new Command()
@@ -570,6 +642,12 @@ public class DriveTrain extends Subsystem
         };
     }
 
+    /**
+     * Sets the nominal and peak outputs of the motors to the specified configuration
+     * @param nominal The nominal output to set
+     * @param peak The peak output to set
+     * @return A boolean indicating whether configuration has succeeded or not
+     */
     private boolean setNominalAndPeakOutputs(double nominal, double peak)
     {
         boolean setsSucceeded = true;
@@ -610,18 +688,31 @@ public class DriveTrain extends Subsystem
         return setsSucceeded;
     }
 
+    /**
+     * Sets the neutral mode of the master Talons
+     * @param mode The mode to set the master Talons to
+     */
     public void setNeutralMode(NeutralMode mode)
     {
         for (WPI_TalonSRX talon : leftMotors) talon.setNeutralMode(mode);
         for (WPI_TalonSRX talon : rightMotors) talon.setNeutralMode(mode);
     }
 
+    /**
+     * Sets the outputs to the left and right motors
+     * @param left The percent output to supply to the left set of motors (-1.0 to 1.0)
+     * @param right The percent output to supply to the right set of motors (-1.0 to 1.0)
+     */
     private void setLeftRightMotorOutputs(double left, double right)
     {
         mLeftMaster.set(ControlMode.PercentOutput, left);
         mRightMaster.set(ControlMode.PercentOutput, right);
     }
 
+    /**
+     * Configures the controller with the axes and buttons used to control the DriveTrain subsystem
+     * @param controller The controller to configure
+     */
     private void configureController(Controller controller)
     {
         controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(-x, 0.15)); // Throttle
@@ -632,17 +723,32 @@ public class DriveTrain extends Subsystem
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
     }
 
+    /**
+     * Converts the distance in inches given to encoder ticks
+     * @param distance
+     * @return
+     */
     private int distanceToCounts(double distance)
     {
         return (int) (distance / (mConstants.magEncCPR * mConstants.dt_wheelDiameter * Math.PI));
     }
 
+    /**
+     * Applies a deadband to the given value
+     * @param val The value to apply the deadband to
+     * @param deadband The deadband to apply to the value
+     * @return The new value as modified by the deadband
+     */
     private double applyDeadband(double val, double deadband)
     {
         return (Math.abs(val) < deadband) ? 0 : val;
     }
 
-    // counts / 100ms
+    /**
+     * Converts the velocity supplied by CTRE devices (in counts per 100ms) to feet per second
+     * @param ctreVel The velocity (in counts per 100ms)
+     * @return The equivalent feet per second of the given velocity
+     */
     private double ctreVelToFPS(int ctreVel)
     {
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
