@@ -1,8 +1,6 @@
 package org.frc2851.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.Logger;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
