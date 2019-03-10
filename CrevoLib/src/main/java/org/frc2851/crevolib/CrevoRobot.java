@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
 import org.frc2851.crevolib.auton.AutonExecutor;
-import org.frc2851.crevolib.motion.BadMotionProfileException;
+import org.frc2851.crevolib.motion.InvalidMotionProfileException;
 import org.frc2851.crevolib.motion.MotionProfile;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.crevolib.subsystem.SubsystemManager;
@@ -19,15 +19,15 @@ public class CrevoRobot extends TimedRobot
 {
     private static final String MOTION_PROFILE_DIR = "/home/lvuser/motion/";
 
-    private AutonExecutor _executor = new AutonExecutor();
-    private SendableChooser<Auton> _autonSelector = new SendableChooser<>();
-    private SubsystemManager _subManager = SubsystemManager.getInstance();
+    private AutonExecutor mAutonExecutor = new AutonExecutor();
+    private SendableChooser<Auton> mAutonSelector = new SendableChooser<>();
+    private SubsystemManager mSubManager = SubsystemManager.getInstance();
 
-    private static HashMap<String, MotionProfile> _motionProfiles = new HashMap<>();
+    private static HashMap<String, MotionProfile> mMotionProfiles = new HashMap<>();
 
-    private BadLog badLog;
-    private long startTimeNs;
-    private long lastLog, currentTimeMillis;
+    private BadLog mBadLog;
+    private long mStartTimeMs;
+    private long mLastLog, mCurrentTimeMs;
 
     private static boolean mIsEnabled = false;
 
@@ -38,7 +38,7 @@ public class CrevoRobot extends TimedRobot
      */
     protected void addSubsystem(Subsystem subsystem)
     {
-        _subManager.addSubsystem(subsystem);
+        mSubManager.addSubsystem(subsystem);
     }
 
     /**
@@ -49,19 +49,19 @@ public class CrevoRobot extends TimedRobot
     protected void addAuton(Auton auton)
     {
         Logger.println("Registered Auton: " + auton.getName(), Logger.LogLevel.DEBUG);
-        _autonSelector.addObject(auton.getName(), auton);
+        mAutonSelector.addOption(auton.getName(), auton);
     }
 
     protected CrevoRobot()
     {
-        badLog = BadLog.init("/home/lvuser/log.bag");
+        mBadLog = BadLog.init("/home/lvuser/log.bag");
     }
 
     @Override
     public final void robotInit()
     {
-        startTimeNs = System.nanoTime();
-        lastLog = System.currentTimeMillis();
+        mStartTimeMs = System.nanoTime();
+        mLastLog = System.currentTimeMillis();
 
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
@@ -74,23 +74,23 @@ public class CrevoRobot extends TimedRobot
             String name = f.getName().split("\\.")[0];
             try
             {
-                _motionProfiles.put(name, new MotionProfile(f));
-            } catch (BadMotionProfileException ignored)
+                mMotionProfiles.put(name, new MotionProfile(f));
+            } catch (InvalidMotionProfileException ignored)
             {
             }
         }
 
-        _subManager.start();
+        mSubManager.start();
 
-        badLog.finishInitialization();
+        mBadLog.finishInitialization();
     }
 
     @Override
     public final void autonomousInit()
     {
         Logger.println("Autonomous Init", Logger.LogLevel.DEBUG);
-        _executor.setAuton(_autonSelector.getSelected());
-        _executor.start();
+        mAutonExecutor.setAuton(mAutonSelector.getSelected());
+        mAutonExecutor.start();
     }
 
     @Override
@@ -103,11 +103,9 @@ public class CrevoRobot extends TimedRobot
     public final void disabledInit()
     {
         Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
-        _executor.stop();
-        _subManager.stopAllSubsystems();
+        mAutonExecutor.stop();
+        mSubManager.stopAllSubsystems();
     }
-
-    // TODO: Move all periodic tasks into the robot manager
 
     @Override
     public final void robotPeriodic()
@@ -142,21 +140,21 @@ public class CrevoRobot extends TimedRobot
      */
     public static MotionProfile getMotionProfile(String name)
     {
-        return _motionProfiles.getOrDefault(name, null);
+        return mMotionProfiles.getOrDefault(name, null);
     }
 
     private void periodic()
     {
-        double time = ((double) (System.nanoTime() - startTimeNs) / 1000000000d);
+        double time = ((double) (System.nanoTime() - mStartTimeMs) / 1000000000d);
         BadLog.publish("Time", time);
 
-        badLog.updateTopics();
+        mBadLog.updateTopics();
 
-        currentTimeMillis = System.currentTimeMillis();
-        if (!this.isDisabled() || (currentTimeMillis - lastLog >= 1000))
+        mCurrentTimeMs = System.currentTimeMillis();
+        if (!this.isDisabled() || (mCurrentTimeMs - mLastLog >= 1000))
         {
-            lastLog = System.currentTimeMillis();
-            badLog.log();
+            mLastLog = System.currentTimeMillis();
+            mBadLog.log();
         }
 
         mIsEnabled = isEnabled();
