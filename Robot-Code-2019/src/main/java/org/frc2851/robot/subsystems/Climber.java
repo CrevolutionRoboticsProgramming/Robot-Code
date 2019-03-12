@@ -22,7 +22,7 @@ public class Climber extends Subsystem
 {
     public enum GorillaState
     {
-        FORWARD(-0.5), REVERSE(0.5), NEUTRAL(0);
+        FORWARD(-1), REVERSE(1), NEUTRAL(0);
 
         final double power;
 
@@ -50,7 +50,7 @@ public class Climber extends Subsystem
     private PogoState mCurrentPState = PogoState.NEUTRAL;
 
     private DigitalInput mGForwardLimit, mGReverseLimit, mPForwardLimit, mPReverseLimit;
-    private TalonSRX mGorillaMaster, mGorillaSlave /*mPogoMaster*/;
+    private TalonSRX mGorillaMaster;
     private VictorSPX mPogoMaster;
 
     private static Climber mInstance = null;
@@ -87,8 +87,9 @@ public class Climber extends Subsystem
         try
         {
             mGorillaMaster = TalonSRXFactory.createDefaultTalonSRX(mConst.cl_gorillaMaster);
-            mGorillaSlave = TalonSRXFactory.createPermanentSlaveTalonSRX(mConst.cl_gorillaSlave, mGorillaMaster);
             mPogoMaster = new VictorSPX(mConst.cl_pogoMaster);
+
+            mGorillaMaster.setNeutralMode(NeutralMode.Brake);
 
             TalonSRXFactory.runTalonConfig(
                     () -> mPogoMaster.configNominalOutputForward(0),
@@ -119,9 +120,7 @@ public class Climber extends Subsystem
 
         BadLog.createTopic("Gorilla/Master Gorilla Output", BadLog.UNITLESS, () -> mGorillaMaster.getMotorOutputPercent(), "hide", "join:Gorilla/Percent");
         BadLog.createTopic("Gorilla/Master Gorilla Voltage", "V", () -> mGorillaMaster.getMotorOutputVoltage(), "hide", "join:Gorilla/Voltage");
-        BadLog.createTopic("Gorilla/Slave Gorilla Voltage", "V", () -> mGorillaSlave.getMotorOutputVoltage(), "hide", "join:Gorilla/Voltage");
         BadLog.createTopic("Gorilla/Master Gorilla Current", "I", () -> mGorillaMaster.getOutputCurrent(), "hide", "join:Gorilla/Current");
-        BadLog.createTopic("Gorilla/Slave Gorilla Current", "I", () -> mGorillaSlave.getOutputCurrent(), "hide", "join:Gorilla/Current");
 
         BadLog.createTopic("Pogo/Pogo Output", BadLog.UNITLESS, () -> mPogoMaster.getMotorOutputPercent(), "hide", "join:Pogo/Percent");
         BadLog.createTopic("Pogo/Pogo Voltage", "V", () -> mPogoMaster.getMotorOutputVoltage(), "hide", "join:Pogo/Voltage");
