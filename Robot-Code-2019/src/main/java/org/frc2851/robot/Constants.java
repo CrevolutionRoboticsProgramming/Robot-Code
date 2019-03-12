@@ -98,8 +98,9 @@ public class Constants
     public final Button.ButtonID in_outake = Button.ButtonID.LEFT_TRIGGER;
 
     // Roller Claw - Driver Controller
-    public final Axis.AxisID rc_intake = Axis.AxisID.RIGHT_TRIGGER;
-    public final Axis.AxisID rc_outtake = Axis.AxisID.LEFT_TRIGGER;
+    public final Button.ButtonID rc_intake = Button.ButtonID.RIGHT_TRIGGER;
+    public final Button.ButtonID rc_outtake = Button.ButtonID.LEFT_TRIGGER;
+    public final Button.ButtonID rc_hold = Button.ButtonID.D_UP;
 
     /************ Drivetrain ************/
     // Pigeon

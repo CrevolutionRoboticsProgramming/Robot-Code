@@ -4,6 +4,8 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DigitalInput;
+import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
@@ -20,7 +22,9 @@ public class RollerClaw extends Subsystem
         INTAKE(1), OUTTAKE(-1), IDLE(0), HOLD(0.1);
 
         double power;
-        RollerClawState(double power) {
+
+        RollerClawState(double power)
+        {
             this.power = power;
         }
     }
@@ -54,8 +58,9 @@ public class RollerClaw extends Subsystem
 
         mVictor = new VictorSPX(mConstants.rc_talon);
         mLimitSwitch = new DigitalInput(mConstants.rc_limitSwitch);
-        mController.config(mConstants.rc_intake, x -> -(x * RollerClawState.INTAKE.power));
-        mController.config(mConstants.rc_outtake, x -> -(x * RollerClawState.OUTTAKE.power));
+        mController.config(mConstants.rc_intake, Button.ButtonMode.RAW);
+        mController.config(mConstants.rc_outtake, Button.ButtonMode.RAW);
+        mController.config(mConstants.rc_hold, Button.ButtonMode.RAW);
 
         BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> mVictor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
         BadLog.createTopic("Roller Claw Voltage", "V", () -> mVictor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
@@ -72,6 +77,8 @@ public class RollerClaw extends Subsystem
     {
         return new Command()
         {
+            boolean currentHoldState = false, lastHoldState = false;
+
             @Override
             public String getName()
             {
@@ -96,12 +103,8 @@ public class RollerClaw extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double outtakeIn = mController.get(mConstants.rc_outtake);
-                    double intakeIn = mController.get(mConstants.rc_intake);
-
-                    if (outtakeIn > 0.1) mVictor.set(ControlMode.PercentOutput, outtakeIn);
-                    else if (intakeIn < -0.1) mVictor.set(ControlMode.PercentOutput, intakeIn);
-                    else mVictor.set(ControlMode.PercentOutput, 0);
+                    pollController();
+                    mVictor.set(ControlMode.PercentOutput, mState.power);
                 }
             }
 
@@ -109,6 +112,26 @@ public class RollerClaw extends Subsystem
             public void stop()
             {
                 mVictor.set(ControlMode.PercentOutput, 0);
+            }
+
+            public void pollController()
+            {
+                RollerClawState state = RollerClawState.IDLE;
+
+                if (mController.get(mConstants.rc_outtake))
+                {
+                    state = RollerClawState.OUTTAKE;
+                } else if (mController.get(mConstants.rc_intake))
+                {
+                    state = RollerClawState.INTAKE;
+                } else if (mController.get(mConstants.rc_hold))
+                {
+                    state = RollerClawState.HOLD;
+                }
+
+                if (state != mState) log("Updated state: " + state.name(), Logger.LogLevel.DEBUG);
+
+                mState = state;
             }
         };
     }
