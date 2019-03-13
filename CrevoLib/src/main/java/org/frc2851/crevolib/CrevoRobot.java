@@ -34,6 +34,8 @@ public class CrevoRobot extends RobotBase
     private boolean mAutonomousInit = false, mTeleopInit = false, mDisabledInit = false;
     private static boolean mIsEnabled = false;
 
+    private int mPeriod = 5;
+
     protected CrevoRobot()
     {
         mBadLog = BadLog.init("/home/lvuser/log.bag");
@@ -69,6 +71,12 @@ public class CrevoRobot extends RobotBase
     {
         return mIsEnabled;
     }
+
+    public void setPeriodMillis(int millis)
+    {
+        mPeriod = millis;
+    }
+
 
     public final void robotInit()
     {
@@ -161,7 +169,7 @@ public class CrevoRobot extends RobotBase
 
             try
             {
-                Thread.sleep(20, 0);
+                Thread.sleep(mPeriod, 0);
             } catch (InterruptedException e)
             {
                 e.printStackTrace();

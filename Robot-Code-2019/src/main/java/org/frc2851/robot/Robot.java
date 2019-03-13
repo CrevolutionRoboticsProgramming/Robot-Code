@@ -19,6 +19,7 @@ public class Robot extends CrevoRobot
     private Robot()
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
+        setPeriodMillis(20);
 
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
