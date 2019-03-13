@@ -15,11 +15,13 @@ public class Logger
     /**
      * Stores enumerations representing three levels of logging. Each level has its own integer and prefix.
      */
-    public enum LogLevel {
+    public enum LogLevel
+    {
         DEBUG(0, "D: "), WARNING(1, "W: "), ERROR(2, "E: ");
 
         private final int LEVEL;
         private final String MESSAGE_PREFIX;
+
         LogLevel(int level, String messagePrefix)
         {
             LEVEL = level;
@@ -29,19 +31,26 @@ public class Logger
 
     private static File _logFile;
 
-    private Logger() { }
+    private Logger()
+    {
+    }
 
     /**
      * Sets the level to log at
+     *
      * @param level Level to log at
      */
-    public static void setLogLevel(LogLevel level) { logLevel = level; }
+    public static void setLogLevel(LogLevel level)
+    {
+        logLevel = level;
+    }
 
     /**
      * Starts the Logger class
      */
     // TODO: Autogenerate unique log file name (timestamp-day.csv)
-    static void start() {
+    public static void start()
+    {
 //        try {
 //            _logFile = new File(LOG_PATH + "log.csv");
 //            new FileWriter(_logFile).close();
@@ -52,12 +61,16 @@ public class Logger
 
     /**
      * Prints the message at the specified level
+     *
      * @param message Message to print
-     * @param level Level to print at
+     * @param level   Level to print at
      */
     public static void println(String message, LogLevel level)
     {
-        if (level.LEVEL < Logger.logLevel.LEVEL) { return; }
+        if (level.LEVEL < Logger.logLevel.LEVEL)
+        {
+            return;
+        }
 
         message = level.MESSAGE_PREFIX + message;
 //        FileWriter fw;
