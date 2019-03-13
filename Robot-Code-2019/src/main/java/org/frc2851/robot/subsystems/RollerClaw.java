@@ -19,7 +19,7 @@ public class RollerClaw extends Subsystem
 {
     private enum RollerClawState
     {
-        INTAKE(1), OUTTAKE(-1), IDLE(0), HOLD(0.1);
+        INTAKE(1), OUTTAKE(-1), IDLE(0), HOLD(0.3);
 
         double power;
 
@@ -60,7 +60,7 @@ public class RollerClaw extends Subsystem
         mLimitSwitch = new DigitalInput(mConstants.rc_limitSwitch);
         mController.config(mConstants.rc_intake, Button.ButtonMode.RAW);
         mController.config(mConstants.rc_outtake, Button.ButtonMode.RAW);
-        mController.config(mConstants.rc_hold, Button.ButtonMode.RAW);
+        mController.config(mConstants.rc_hold, Button.ButtonMode.TOGGLE);
 
         BadLog.createTopic("Roller Claw Percent", BadLog.UNITLESS, () -> mVictor.getMotorOutputPercent(), "hide", "join:Roller Claw/Percent Outputs");
         BadLog.createTopic("Roller Claw Voltage", "V", () -> mVictor.getBusVoltage(), "hide", "join:Roller Claw/Voltage Outputs");
@@ -121,9 +121,11 @@ public class RollerClaw extends Subsystem
                 if (mController.get(mConstants.rc_outtake))
                 {
                     state = RollerClawState.OUTTAKE;
+                    mController.setToggleState(mConstants.rc_hold, false);
                 } else if (mController.get(mConstants.rc_intake))
                 {
                     state = RollerClawState.INTAKE;
+                    mController.setToggleState(mConstants.rc_hold, false);
                 } else if (mController.get(mConstants.rc_hold))
                 {
                     state = RollerClawState.HOLD;
