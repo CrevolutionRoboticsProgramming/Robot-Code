@@ -1,6 +1,9 @@
 package org.frc2851.crevolib.io;
 
 import java.util.HashMap;
+import java.util.function.DoubleFunction;
+import java.util.function.DoublePredicate;
+import java.util.function.DoubleSupplier;
 
 /**
  * Represents a XBox controller
@@ -45,7 +48,7 @@ public class Controller
      * @return The value of the given axis
      */
     @Deprecated
-    public double get(Axis.AxisID id, InputShaper shaper)
+    public double get(Axis.AxisID id, DoubleFunction<Double> shaper)
     {
         if (!mAxis.containsKey(id))
         {
@@ -98,7 +101,7 @@ public class Controller
      * @param id     The AxisID
      * @param shaper The shaper function
      */
-    public void config(Axis.AxisID id, InputShaper shaper)
+    public void config(Axis.AxisID id, DoubleFunction<Double> shaper)
     {
         if (!mAxis.containsKey(id)) mAxis.put(id, new Axis(mChannel, id, shaper));
     }
@@ -109,7 +112,7 @@ public class Controller
      * @param id     The AxisID
      * @param shaper The shaper function
      */
-    public void setShaper(Axis.AxisID id, InputShaper shaper)
+    public void setShaper(Axis.AxisID id, DoubleFunction<Double> shaper)
     {
         if (!mAxis.containsKey(id))
         {

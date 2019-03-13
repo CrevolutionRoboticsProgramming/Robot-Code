@@ -2,6 +2,8 @@ package org.frc2851.crevolib.io;
 
 import edu.wpi.first.wpilibj.Joystick;
 
+import java.util.function.DoubleFunction;
+
 /**
  * Represents an axis on a XBox Controller
  */
@@ -34,7 +36,7 @@ public class Axis
 
     private Joystick mJoystick;
     private final AxisID mId;
-    private InputShaper mShaper, mDeadbandShaper;
+    private DoubleFunction<Double> mShaper, mDeadbandShaper;
 
     /**
      * Creates an axis (analog joystick input)
@@ -50,7 +52,7 @@ public class Axis
         mDeadbandShaper = (x) -> x;
     }
 
-    Axis(int channel, AxisID id, InputShaper shaper)
+    Axis(int channel, AxisID id, DoubleFunction<Double> shaper)
     {
         mJoystick = new Joystick(channel);
         mId = id;
@@ -58,7 +60,7 @@ public class Axis
         mDeadbandShaper = (x) -> x;
     }
 
-    void setShaper(InputShaper shaper)
+    void setShaper(DoubleFunction<Double> shaper)
     {
         mShaper = shaper;
     }
@@ -76,15 +78,15 @@ public class Axis
      * @return The adjusted axis value
      */
     @Deprecated
-    double get(InputShaper shaper)
+    double get(DoubleFunction<Double> shaper)
     {
-        return shaper.shape(mJoystick.getRawAxis(mId.getID()));
+        return shaper.apply(mJoystick.getRawAxis(mId.getID()));
     }
 
     double get()
     {
-        return mShaper.shape(
-                mDeadbandShaper.shape(mJoystick.getRawAxis(mId.getID()))
+        return mShaper.apply(
+                mDeadbandShaper.apply(mJoystick.getRawAxis(mId.getID()))
         );
     }
 }
