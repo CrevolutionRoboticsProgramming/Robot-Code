@@ -1,7 +1,5 @@
 package org.frc2851.crevolib.utilities;
 
-import org.frc2851.crevolib.Logger;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

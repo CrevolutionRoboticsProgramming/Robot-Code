@@ -1,4 +1,4 @@
-package org.frc2851.crevolib;
+package org.frc2851.crevolib.configuration;
 
 // Exception thrown by the ConfigFile class
 

@@ -1,7 +1,6 @@
 package org.frc2851.crevolib.configuration;
 
-import org.frc2851.crevolib.ElementNotFoundException;
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;

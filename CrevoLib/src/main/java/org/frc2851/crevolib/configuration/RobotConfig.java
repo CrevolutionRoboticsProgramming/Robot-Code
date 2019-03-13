@@ -2,8 +2,7 @@ package org.frc2851.crevolib.configuration;
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import org.frc2851.crevolib.ElementNotFoundException;
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.motion.PID;
 import org.jdom2.DataConversionException;
 import org.jdom2.Element;

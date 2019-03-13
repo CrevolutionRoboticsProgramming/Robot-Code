@@ -5,7 +5,7 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.DigitalInput;
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.crevolib.io.Button;

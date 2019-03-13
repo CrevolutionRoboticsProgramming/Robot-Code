@@ -1,6 +1,6 @@
 package org.frc2851.crevolib.auton;
 
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 
 /**
  * Executes the autonomous period.

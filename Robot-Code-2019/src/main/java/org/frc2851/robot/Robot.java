@@ -2,7 +2,7 @@ package org.frc2851.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import org.frc2851.crevolib.CrevoRobot;
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.subsystems.*;
 

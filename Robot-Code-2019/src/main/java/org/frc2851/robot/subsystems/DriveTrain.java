@@ -8,7 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
@@ -23,7 +23,6 @@ import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
 import java.util.ArrayList;
-import java.util.function.Function;
 
 /**
  * Represents the drivetrain subsystem

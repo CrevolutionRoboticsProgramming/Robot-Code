@@ -1,6 +1,6 @@
 package org.frc2851.crevolib.subsystem;
 
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 
 /**
  * Abstract class that defines subsystem behavior. An example of the subsystem may be a drivetrain or a shooter.

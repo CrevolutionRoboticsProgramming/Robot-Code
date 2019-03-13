@@ -1,7 +1,7 @@
 package org.frc2851.crevolib.subsystem;
 
 import edu.wpi.first.wpilibj.Notifier;
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 
 import java.util.Vector;
 

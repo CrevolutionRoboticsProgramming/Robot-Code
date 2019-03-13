@@ -1,6 +1,6 @@
 package org.frc2851.crevolib.motion;
 
-import org.frc2851.crevolib.Logger;
+import org.frc2851.crevolib.utilities.Logger;
 
 import java.io.*;
 import java.util.ArrayList;

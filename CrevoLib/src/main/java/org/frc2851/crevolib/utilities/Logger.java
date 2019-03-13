@@ -1,4 +1,4 @@
-package org.frc2851.crevolib;
+package org.frc2851.crevolib.utilities;
 
 import edu.wpi.first.wpilibj.DriverStation;
 
