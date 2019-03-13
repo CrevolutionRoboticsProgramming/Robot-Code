@@ -24,14 +24,14 @@ public class Logger
         File f = new File(path);
         if (f.exists()) f.delete();
         mWriter = new BufferedWriter(new FileWriter(f));
+        mNotifier = new Notifier(this::writeLog);
+        mNotifier.startPeriodic(0.05);
     }
 
     public void addMessage(LogMessage message)
     {
         while (mMutex.isLocked());
         mLogBuffer.add(message);
-        mNotifier = new Notifier(this::writeLog);
-        mNotifier.startPeriodic(0.05);
     }
 
     private void writeLog()
