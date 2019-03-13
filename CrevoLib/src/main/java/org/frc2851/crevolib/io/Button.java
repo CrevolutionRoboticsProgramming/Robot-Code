@@ -130,4 +130,9 @@ public class Button
                 return false;
         }
     }
+
+    void setToggleState(boolean state)
+    {
+        _isToggled = state;
+    }
 }

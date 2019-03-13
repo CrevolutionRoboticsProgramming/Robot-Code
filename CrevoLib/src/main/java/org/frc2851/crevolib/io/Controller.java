@@ -130,4 +130,15 @@ public class Controller
 
         mAxis.get(id).setDeadband(deadband, rescale);
     }
+
+    public void setToggleState(Button.ButtonID id, boolean state)
+    {
+        if (!mAxis.containsKey(id))
+        {
+            System.out.println("Axis[" + id.name() + "] is not configured");
+            return;
+        }
+
+        mButtons.get(id).setToggleState(state);
+    }
 }
