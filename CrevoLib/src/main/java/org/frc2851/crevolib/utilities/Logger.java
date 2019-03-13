@@ -7,6 +7,8 @@ import java.io.File;
 /**
  * Logs events
  */
+
+@Deprecated
 public class Logger
 {
     private static LogLevel logLevel = LogLevel.DEBUG;
