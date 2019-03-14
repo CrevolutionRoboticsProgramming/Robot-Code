@@ -12,6 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Logger
 {
+    private LogLevel mLogLevel = LogLevel.DEBUG;
+
     private Notifier mNotifier;
     private ReentrantLock mMutex = new ReentrantLock();
 
@@ -30,7 +32,7 @@ public class Logger
 
     public void addMessage(LogMessage message)
     {
-        while (mMutex.isLocked());
+        while (mMutex.isLocked()) ;
         mLogBuffer.add(message);
     }
 
@@ -56,8 +58,11 @@ public class Logger
 
     private void printToDS(String message, LogLevel level)
     {
-        if (level == LogLevel.ERROR) DriverStation.reportError(message, false);
-        else if (level == LogLevel.WARNING) DriverStation.reportWarning(message, false);
-        else System.out.println(message);
+        if (level.ordinal() <= mLogLevel.ordinal())
+        {
+            if (level == LogLevel.ERROR) DriverStation.reportError(message, false);
+            else if (level == LogLevel.WARNING) DriverStation.reportWarning(message, false);
+            else System.out.println(message);
+        }
     }
 }
