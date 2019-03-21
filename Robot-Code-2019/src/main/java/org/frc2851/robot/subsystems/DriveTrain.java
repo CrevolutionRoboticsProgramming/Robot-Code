@@ -8,10 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import org.frc2851.crevolib.utilities.Logger;
-import org.frc2851.crevolib.utilities.CustomPreferences;
-import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
-import org.frc2851.crevolib.utilities.TalonSRXFactory;
+import org.frc2851.crevolib.utilities.*;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -264,6 +261,20 @@ public class DriveTrain extends Subsystem
                     if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
                     robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
+
+                    if (mController.get(mConstants.dt_swapCameras))
+                    {
+                        UDPHandler.getInstance().send("CAMSWITCH");
+                    }
+
+                    if (mController.get(mConstants.dt_enableVision))
+                    {
+                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+
+                        System.out.println(angleOfError);
+                        
+                        //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
+                    }
                 }
             }
 
@@ -719,6 +730,8 @@ public class DriveTrain extends Subsystem
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
         controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
+        controller.config(mConstants.dt_enableVision, Button.ButtonMode.RAW); // Vision
+        controller.config(mConstants.dt_swapCameras, Button.ButtonMode.ON_PRESS);
     }
 
     /**
