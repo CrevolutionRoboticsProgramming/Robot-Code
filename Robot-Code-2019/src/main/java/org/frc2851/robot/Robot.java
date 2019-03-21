@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import org.frc2851.crevolib.CrevoRobot;
 import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
+import org.frc2851.crevolib.utilities.UDPHandler;
 import org.frc2851.robot.subsystems.*;
 
 /**
@@ -20,6 +21,8 @@ public class Robot extends CrevoRobot
     {
         Logger.setLogLevel(Logger.LogLevel.DEBUG);
         setPeriodMillis(20);
+
+        UDPHandler.getInstance().start();
 
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
