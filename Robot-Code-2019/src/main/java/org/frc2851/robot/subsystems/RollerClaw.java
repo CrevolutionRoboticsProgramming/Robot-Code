@@ -19,7 +19,7 @@ public class RollerClaw extends Subsystem
 {
     private enum RollerClawState
     {
-        INTAKE(1), OUTTAKE(-1), IDLE(0), HOLD(0.3);
+        INTAKE(1), OUTTAKE(-1), IDLE(0.1), HOLD(0.4);
 
         double power;
 

@@ -3,31 +3,35 @@ package org.frc2851.crevolib.logging;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Logger
 {
     private LogLevel mLogLevel = LogLevel.DEBUG;
+    private final String DIR = "/home/lvuser/logs/events/";
 
     private Notifier mNotifier;
     private ReentrantLock mMutex = new ReentrantLock();
 
-    private final BufferedWriter mWriter;
+    private BufferedWriter mWriter = null;
 
     private Vector<LogMessage> mLogBuffer = new Vector<>();
 
-    public Logger(String path) throws IOException
+    public Logger(String name)
     {
-        File f = new File(path);
-        if (f.exists()) f.delete();
-        mWriter = new BufferedWriter(new FileWriter(f));
-        mNotifier = new Notifier(this::writeLog);
-        mNotifier.startPeriodic(0.05);
+        try
+        {
+            File f = new File(DIR + name + "_" + getIndex(new File(DIR + "log.idx")) + ".log");
+            if (f.exists()) f.delete();
+            mWriter = new BufferedWriter(new FileWriter(f));
+            mNotifier = new Notifier(this::writeLog);
+            mNotifier.startPeriodic(0.05);
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public void addMessage(LogMessage message)
@@ -47,12 +51,16 @@ public class Logger
         }
         mLogBuffer.clear();
         mMutex.unlock();
-        try
+        if (mWriter != null)
         {
-            mWriter.append(builder.toString());
-        } catch (IOException e)
-        {
-            e.printStackTrace();
+            try
+            {
+                mWriter.append(builder.toString());
+                mWriter.flush();
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -64,5 +72,42 @@ public class Logger
             else if (level == LogLevel.WARNING) DriverStation.reportWarning(message, false);
             else System.out.println(message);
         }
+    }
+
+    // TODO: Cleanup, its ugly but it works
+    private static int getIndex(File indexFile)
+    {
+        try
+        {
+            if (indexFile.createNewFile())
+            {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(indexFile));
+                writer.append("1");
+                writer.flush();
+                writer.close();
+                return 0;
+            }
+
+            BufferedReader reader = new BufferedReader(new FileReader(indexFile));
+            int index = Integer.parseInt(reader.readLine());
+            reader.close();
+            indexFile.delete();
+            indexFile.createNewFile();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(indexFile));
+            writer.write(Integer.toString(index + 1));
+            writer.flush();
+            writer.close();
+            return index;
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public static void main(String... args)
+    {
+        Logger l = new Logger("test");
+        l.addMessage(new LogMessage("Test", "Hello", LogLevel.DEBUG));
     }
 }

@@ -1,19 +1,21 @@
 package org.frc2851.robot.subsystems;
 
 import badlog.lib.BadLog;
-import com.ctre.phoenix.motorcontrol.*;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Timer;
-import org.frc2851.crevolib.utilities.Logger;
-import org.frc2851.crevolib.motion.PID;
-import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
-import org.frc2851.crevolib.utilities.TalonSRXFactory;
+import edu.wpi.first.wpilibj.DriverStation;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
+import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.crevolib.utilities.CustomPreferences;
+import org.frc2851.crevolib.utilities.Logger;
+import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
+import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
@@ -26,116 +28,28 @@ import org.frc2851.robot.Robot;
  */
 public class Elevator extends Subsystem
 {
-    private enum GamePiece
-    {
-        HATCH, CARGO
-    }
-
-    public enum ElevatorControlMode
-    {
-        DIRECT(ControlMode.PercentOutput, -1),
-        MOTION_MAGIC(ControlMode.MotionMagic, 0),
-        POS_PID(ControlMode.Position, 1);
-
-        private final ControlMode controlMode;
-        private final int slotID;
-
-        ElevatorControlMode(ControlMode controlMode, int slotID)
-        {
-            this.controlMode = controlMode;
-            this.slotID = slotID;
-        }
-
-        ControlMode getMode()
-        {
-            return controlMode;
-        }
-
-        int getSlotID()
-        {
-            return slotID;
-        }
-    }
-
-    public enum ElevatorPosition
-    {
-        LOW_HATCH(0, GamePiece.HATCH),
-        MID_HATCH(9100, GamePiece.HATCH),
-        HIGH_HATCH(18000, GamePiece.HATCH),
-        LOW_CARGO(5800, GamePiece.CARGO),
-        MID_CARGO(14500, GamePiece.CARGO),
-        HIGH_CARGO(22500, GamePiece.CARGO),
-        PLAYER_STATION(12250, GamePiece.CARGO),
-        UNKNOWN(0, null);
-
-        private final int pos;
-        private final GamePiece piece;
-        private Constants c = Constants.getInstance();
-
-        ElevatorPosition(int pos, GamePiece piece)
-        {
-            this.pos = pos;
-            this.piece = piece;
-        }
-
-        public int getPos()
-        {
-            return pos;
-        }
-
-        public int getAllowableError()
-        {
-            if (piece == GamePiece.HATCH) return c.el_allowableHatchError;
-            else if (piece == GamePiece.CARGO) return c.el_allowableCargoError;
-            else return 0;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "[" + this.name() + ", " + pos + "]";
-        }
-    }
-
+    // Singleton Definitions
+    private static Elevator mInstance;
+    private final boolean kTuning = false;
+    // Tuning
+    CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
     private Constants mConst = Constants.getInstance();
-
     private TalonSRX mTalon;
     private DigitalInput mLimitSwitch;
     private Controller mController = Constants.operator;
-
-    private ElevatorControlMode mControlMode = ElevatorControlMode.DIRECT;
     private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
 
-    // Tuning
-    CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
-    private final boolean TUNING = false;
-
-    private static Elevator mInstance;
-
-    /**
-     * Initializes the Elevator class with the name "Elevator"
-     */
     private Elevator()
     {
         super("Elevator");
     }
 
-    /**
-     * A method returning the sole instance of the Elevator class
-     *
-     * @return The instance of the Elevator class
-     */
     public static Elevator getInstance()
     {
         if (mInstance == null) mInstance = new Elevator();
         return mInstance;
     }
 
-    /**
-     * Initializes the motors and logging
-     *
-     * @return A boolean representing whether initialization has succeeded
-     */
     @Override
     protected boolean init()
     {
@@ -144,9 +58,13 @@ public class Elevator extends Subsystem
         {
             mTalon = TalonSRXFactory.createDefaultMasterTalonSRX(mConst.el_talon);
             mTalon.setNeutralMode(NeutralMode.Brake);
-            mTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConst.talonTimeout);
-            mTalon.setSensorPhase(true);
 
+            TalonSRXFactory.runTalonConfig(
+                    () -> mTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConst.talonTimeout),
+                    () -> mTalon.configReverseSoftLimitThreshold(0, mConst.talonTimeout)
+            );
+
+            mTalon.setSensorPhase(true);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, elevator init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -185,8 +103,8 @@ public class Elevator extends Subsystem
         BadLog.createTopic("Elevator/Output Percent", BadLog.UNITLESS, () -> mTalon.getMotorOutputPercent(), "hide");
         BadLog.createTopic("Elevator/Output Voltage Master", "V", () -> mTalon.getBusVoltage(), "hide");
         BadLog.createTopic("Elevator/Output Current Master", "I", () -> mTalon.getOutputCurrent(), "hide");
-        BadLog.createTopic("Elevator/Position", "Counts", () -> (double) mTalon.getSensorCollection().getQuadraturePosition(), "hide");
-        BadLog.createTopic("Elevator/Velocity", "Counts/100ms", () -> (double) mTalon.getSensorCollection().getQuadratureVelocity());
+        BadLog.createTopic("Elevator/Position", "Counts", () -> (double) mTalon.getSelectedSensorPosition(0), "hide");
+        BadLog.createTopic("Elevator/Velocity", "Counts/100ms", () -> (double) mTalon.getSelectedSensorVelocity(0));
     }
 
     private void configController(Controller controller)
@@ -196,13 +114,9 @@ public class Elevator extends Subsystem
         controller.config(mConst.el_high, Button.ButtonMode.RAW);
         controller.config(mConst.el_playerStation, Button.ButtonMode.RAW);
         controller.config(mConst.el_toggle, Button.ButtonMode.RAW);
+        controller.config(mConst.el_rawControl);
 
-        // checks limit switches, applies deadband, and applies multiplier
-        controller.config(mConst.el_rawControl, (x) -> {
-            double in = (Math.abs(x) < 0.1) ? 0 : x;
-            in = (!mLimitSwitch.get() && in > 0) ? 0 : in;
-            return -(in * mConst.el_rawMultiplier);
-        });
+        controller.config(Button.ButtonID.D_DOWN, Button.ButtonMode.TOGGLE);
     }
 
     private void zeroSensors()
@@ -210,9 +124,6 @@ public class Elevator extends Subsystem
         TalonSRXFactory.runTalonConfig(() -> mTalon.setSelectedSensorPosition(0, 0, mConst.talonTimeout));
     }
 
-    /**
-     * Resets the encoder positions to 50
-     */
     public void reset()
     {
         mTunePrefs.putInt("error", 0);
@@ -220,17 +131,13 @@ public class Elevator extends Subsystem
         mCurrentPosition = ElevatorPosition.LOW_HATCH;
     }
 
-    /**
-     * Returns a command representing user control over the elevator
-     *
-     * @return A command representing user control over the elevator
-     */
     @Override
     public Command getDefaultCommand()
     {
         return new Command()
         {
             ElevatorPosition desiredPosition = ElevatorPosition.LOW_HATCH;
+            boolean softLimitEnabled = false;
 
             @Override
             public String getName()
@@ -251,16 +158,27 @@ public class Elevator extends Subsystem
                 return true;
             }
 
+            double applyDeadband(double in, double band)
+            {
+                return (Math.abs(in) < band) ? 0 : in;
+            }
+
             @Override
             public void update()
             {
                 if (Robot.isRunning())
                 {
-                    double output = mController.get(mConst.el_rawControl);
+                    double output = -applyDeadband(mController.get(mConst.el_rawControl), 0.2);
+                    boolean softLimitInput = !mController.get(Button.ButtonID.D_DOWN);
                     getDesiredPosition();
                     boolean updatePos = mCurrentPosition != desiredPosition;
 
-                    mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
+                    if (softLimitInput != softLimitEnabled)
+                    {
+                        TalonSRXFactory.runTalonConfig(() -> mTalon.configForwardSoftLimitEnable(softLimitInput));
+                        softLimitEnabled = softLimitInput;
+                        log("Soft limit state: " + softLimitEnabled, Logger.LogLevel.DEBUG);
+                    }
 
                     if (!mLimitSwitch.get())
                     {
@@ -281,15 +199,13 @@ public class Elevator extends Subsystem
                     {
                         mTalon.set(ControlMode.PercentOutput, mConst.el_holdPositionPower);
                     }
-
-                    mTunePrefs.putInt("pos", mTalon.getSelectedSensorPosition(0));
-                    mTunePrefs.putInt("vel", mTalon.getSelectedSensorVelocity(0));
                 }
             }
 
             @Override
             public void stop()
             {
+                mTalon.set(ControlMode.PercentOutput, 0);
             }
 
             void getDesiredPosition()
@@ -359,20 +275,20 @@ public class Elevator extends Subsystem
             @Override
             public boolean init()
             {
-                double p = (TUNING) ? mTunePrefs.getDouble("kP", 0) : mConst.el_pid.getP();
-                double i = (TUNING) ? mTunePrefs.getDouble("kI", 0) : mConst.el_pid.getI();
-                double d = (TUNING) ? mTunePrefs.getDouble("kD", 0) : mConst.el_pid.getD();
+                double p = (kTuning) ? mTunePrefs.getDouble("kP", 0) : mConst.el_pid.getP();
+                double i = (kTuning) ? mTunePrefs.getDouble("kI", 0) : mConst.el_pid.getI();
+                double d = (kTuning) ? mTunePrefs.getDouble("kD", 0) : mConst.el_pid.getD();
                 double f = mConst.el_pid.getF();
-                int maxV = (TUNING) ? mTunePrefs.getInt("maxV", 0) :
+                int maxV = (kTuning) ? mTunePrefs.getInt("maxV", 0) :
                         ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxVelocityDown : mConst.el_maxVelocityUp);
-                int maxA = (TUNING) ? mTunePrefs.getInt("maxA", 0) :
+                int maxA = (kTuning) ? mTunePrefs.getInt("maxA", 0) :
                         ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxAccelerationDown : mConst.el_maxAccelerationUp);
 
                 PID pid = new PID(p, i, d, f);
-                log("MP_INFO[PID: " + pid.toString() + ", MaxVel: " + maxV + ", MaxAcc: " + maxA + "]", Logger.LogLevel.DEBUG);
+                log("MP_INFO[Name: " + pos.name() + ", PID: " + pid.toString() + ", MaxVel: " + maxV + ", MaxAcc: " + maxA + "]", Logger.LogLevel.DEBUG);
 
-                mTalon.selectProfileSlot(ElevatorControlMode.MOTION_MAGIC.getSlotID(), 0);
-                TalonSRXFactory.configurePIDF(mTalon, ElevatorControlMode.MOTION_MAGIC.getSlotID(), pid);
+                mTalon.selectProfileSlot(0, 0);
+                TalonSRXFactory.configurePIDF(mTalon, 0, pid);
                 TalonSRXFactory.runTalonConfig(
                         () -> mTalon.configMotionCruiseVelocity(maxV, mConst.talonTimeout),
                         () -> mTalon.configMotionAcceleration(maxA, mConst.talonTimeout)
@@ -399,44 +315,48 @@ public class Elevator extends Subsystem
         };
     }
 
-    public Command moveForTime(double time, double power)
+    private enum GamePiece
     {
-        return new Command()
+        HATCH, CARGO
+    }
+
+    public enum ElevatorPosition
+    {
+        LOW_HATCH(0, GamePiece.HATCH),
+        MID_HATCH(9100, GamePiece.HATCH),
+        HIGH_HATCH(18000, GamePiece.HATCH),
+        LOW_CARGO(5800, GamePiece.CARGO),
+        MID_CARGO(14500, GamePiece.CARGO),
+        HIGH_CARGO(22500, GamePiece.CARGO),
+        PLAYER_STATION(12250, GamePiece.CARGO),
+        UNKNOWN(0, null);
+
+        private final int pos;
+        private final GamePiece piece;
+        private Constants c = Constants.getInstance();
+
+        ElevatorPosition(int pos, GamePiece piece)
         {
-            double startTime;
-            boolean limitTriggered = false;
+            this.pos = pos;
+            this.piece = piece;
+        }
 
-            @Override
-            public String getName()
-            {
-                return "MoveForTime[T: " + time + ", P: " + power + "]";
-            }
+        public int getPos()
+        {
+            return pos;
+        }
 
-            @Override
-            public boolean isFinished()
-            {
-                return (Timer.getFPGATimestamp() - startTime) > time || limitTriggered;
-            }
+        public int getAllowableError()
+        {
+            if (piece == GamePiece.HATCH) return c.el_allowableHatchError;
+            else if (piece == GamePiece.CARGO) return c.el_allowableCargoError;
+            else return 0;
+        }
 
-            @Override
-            public boolean init()
-            {
-                startTime = Timer.getFPGATimestamp();
-                return true;
-            }
-
-            @Override
-            public void update()
-            {
-                limitTriggered = !mLimitSwitch.get() && power < 0;
-                mTalon.set(ControlMode.PercentOutput, power);
-            }
-
-            @Override
-            public void stop()
-            {
-                mTalon.set(ControlMode.PercentOutput, 0);
-            }
-        };
+        @Override
+        public String toString()
+        {
+            return "[" + this.name() + ", " + pos + "]";
+        }
     }
 }

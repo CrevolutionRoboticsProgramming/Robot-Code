@@ -22,7 +22,7 @@ public class Climber extends Subsystem
 {
     public enum GorillaState
     {
-        FORWARD(-1), REVERSE(1), NEUTRAL(0);
+        FORWARD(-0.75), REVERSE(0.5), NEUTRAL(0);
 
         final double power;
 
@@ -34,7 +34,7 @@ public class Climber extends Subsystem
 
     public enum PogoState
     {
-        FORWARD(1), REVERSE(-0.6), NEUTRAL(0);
+        FORWARD(-1.0), REVERSE(0.8), NEUTRAL(0);
 
         final double power;
 

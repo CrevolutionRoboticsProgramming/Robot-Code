@@ -8,10 +8,18 @@ import org.frc2851.crevolib.utilities.Logger;
  */
 public abstract class Subsystem
 {
+    private enum State
+    {
+        NULL, INIT, RUNNING, FINISHED
+    }
+
     private String mName;
     private Command mDefaultCommand = getDefaultCommand();
     private CommandGroup mAuxiliaryCommandGroup = null;
-    private CommandState mDefaultState = new CommandState(), mAuxiliaryState = new CommandState();
+    private CommandState mDefaultState = new CommandState("Default Command"),
+            mAuxiliaryState = new CommandState("Auxilary Command");
+
+    boolean disableSubsystem = false;
 
     /**
      * Runs once when the subsystem first starts
@@ -34,6 +42,17 @@ public abstract class Subsystem
         mName = name;
     }
 
+    public synchronized void restartDefaultCommand()
+    {
+        if (mDefaultState.isNull)
+        {
+            mDefaultCommand = getDefaultCommand();
+            mDefaultState.isNull = false;
+            mDefaultState.isInit = false;
+            mDefaultState.isFinished = false;
+        }
+    }
+
     /**
      * Sets the group the Command is in
      * @param commands
@@ -52,7 +71,7 @@ public abstract class Subsystem
      */
     synchronized void runCommand()
     {
-        if (mDefaultCommand != null && initCommand(mDefaultCommand, mDefaultState)) mDefaultCommand.update();
+        if (mDefaultCommand != null && initCommand(mDefaultCommand, mDefaultState) && !disableSubsystem) mDefaultCommand.update();
 
         if (mAuxiliaryCommandGroup != null)
         {
@@ -102,6 +121,16 @@ public abstract class Subsystem
         log("Started command: " + command.getName(), Logger.LogLevel.DEBUG);
         state.isInit = true;
         return true;
+    }
+
+    public synchronized void stopSubsystem()
+    {
+        log("Disabling subsystem", Logger.LogLevel.DEBUG);
+        stopAuxiliaryCommand();
+        if (mDefaultCommand == null) return;
+        mDefaultCommand.stop();
+        mDefaultState = null;
+        mDefaultState.isNull = true;
     }
 
     /**

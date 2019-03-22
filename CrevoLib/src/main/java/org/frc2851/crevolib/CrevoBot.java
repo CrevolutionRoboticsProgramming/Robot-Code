@@ -3,7 +3,6 @@ package org.frc2851.crevolib;
 import badlog.lib.BadLog;
 import badlog.lib.DataInferMode;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
 import org.frc2851.crevolib.auton.AutonExecutor;
@@ -34,6 +33,7 @@ public class CrevoBot extends TimedRobot
     private long mLastLog, mCurrentTimeMs;
 
     private static boolean mIsEnabled = false;
+    private boolean mBadLogEnabled = true;
 
     /**
      * Adds a subsystem to the robots routine. Also adds it to the logger.
@@ -109,6 +109,7 @@ public class CrevoBot extends TimedRobot
         Logger.println("Disabled Init", Logger.LogLevel.DEBUG);
         mAutonExecutor.stop();
         mSubManager.stopAllSubsystems();
+        mSubManager.restartDefaultCommands();
     }
 
     @Override
@@ -149,16 +150,19 @@ public class CrevoBot extends TimedRobot
 
     private void periodic()
     {
-        double time = ((double) (System.nanoTime() - mStartTimeMs) / 1000000000d);
-        BadLog.publish("Time", time);
-
-        mBadLog.updateTopics();
-
-        mCurrentTimeMs = System.currentTimeMillis();
-        if (!this.isDisabled() || (mCurrentTimeMs - mLastLog >= 1000))
+        if (mBadLogEnabled)
         {
-            mLastLog = System.currentTimeMillis();
-            mBadLog.log();
+            double time = ((double) (System.nanoTime() - mStartTimeMs) / 1000000000d);
+            BadLog.publish("Time", time);
+
+            mBadLog.updateTopics();
+
+            mCurrentTimeMs = System.currentTimeMillis();
+            if (!this.isDisabled() || (mCurrentTimeMs - mLastLog >= 1000))
+            {
+                mLastLog = System.currentTimeMillis();
+                mBadLog.log();
+            }
         }
 
         mIsEnabled = isEnabled();
@@ -167,5 +171,10 @@ public class CrevoBot extends TimedRobot
     public static boolean isRunning()
     {
         return mIsEnabled;
+    }
+
+    public void enableBadLog(boolean enable)
+    {
+        mBadLogEnabled = enable;
     }
 }

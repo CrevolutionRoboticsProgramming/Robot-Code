@@ -4,6 +4,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
+import org.frc2851.crevolib.logging.Logger;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.robot.subsystems.DriveTrain;
 
@@ -33,6 +34,7 @@ public class Constants
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);
+//    public static Logger logger = new Logger("/home/lvuser/logging/events/" + );
 
     /************ Motor Controllers and Others ************/
     // CAN Bus
@@ -141,8 +143,8 @@ public class Constants
     public final int el_maxAccelerationDown = 1500;
     public final int el_maxVelocityUp = 1500;
     public final int el_maxAccelerationUp = 1500;
+//    public final PID el_pid = new PID(0.3, 0, 0, 1);
     public final PID el_pid = new PID(0.3, 0, 0, 1);
-
     /************ Climber ************/
     public final boolean cl_usePogoLimit = false;
     public final boolean cl_useGorillaLimit = true;

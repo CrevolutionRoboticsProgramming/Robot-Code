@@ -51,6 +51,7 @@ public class SubsystemManager
     {
         for (Subsystem s : _subsystems)
         {
+            s.restartDefaultCommand();
             if (!s.init())
                 Logger.println("[SubsystemManger]: Could not initialize " + s.getName(), Logger.LogLevel.ERROR);
             else Logger.println("[SubsystemManager]: Successfully initialized " + s.getName(), Logger.LogLevel.DEBUG);
@@ -58,6 +59,11 @@ public class SubsystemManager
 
         _notifier = new Notifier(this::run);
         _notifier.startPeriodic(0.005);
+    }
+
+    public void restartDefaultCommands()
+    {
+        for (Subsystem s : _subsystems) s.restartDefaultCommand();
     }
 
     /**

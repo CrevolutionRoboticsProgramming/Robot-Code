@@ -4,11 +4,15 @@ import badlog.lib.BadLog;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motion.SetValueMotionProfile;
 import com.ctre.phoenix.motorcontrol.*;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import org.frc2851.crevolib.utilities.*;
+import org.frc2851.crevolib.utilities.Logger;
+import org.frc2851.crevolib.utilities.CustomPreferences;
+import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
+import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -16,6 +20,7 @@ import org.frc2851.crevolib.motion.MotionProfileExecutor;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
+import org.frc2851.crevolib.utilities.UDPHandler;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
@@ -26,46 +31,23 @@ import java.util.ArrayList;
  */
 public class DriveTrain extends Subsystem
 {
-    public enum DriveGear
-    {
-        HIGH(DoubleSolenoid.Value.kForward), LOW(DoubleSolenoid.Value.kReverse);
-
-        private final DoubleSolenoid.Value val;
-
-        DriveGear(DoubleSolenoid.Value val)
-        {
-            this.val = val;
-        }
-    }
-
-    public enum DriveControlMode
-    {
-        TANK, FPS, FPS_CURVE, ARCADE
-    }
-
+    private static boolean mTuneMode = false;
+    private static DriveTrain mInstance;
     // Constants
     private final NeutralMode TALON_NEUTRAL_MODE = NeutralMode.Brake;
-
-    private static boolean mTuneMode = false;
-
     // PID
     private PID mLeftMotionPID, mRightMotionPID, mAuxMotionPID, mLeftRawPID, mRightRawPID, mTurnGyroPID;
     private int mMotionSlotPrimary = 0, mMotionSlotAux = 1, mRawSlotDrive = 2, mRawSlotTurn = 3;
-
     // Members
     private DriveControlMode mDriveControlMode = DriveControlMode.FPS;
     private CustomPreferences mPrefs = new CustomPreferences("DriveTrain");
-
     private WPI_TalonSRX mLeftMaster, mLeftSlaveA, mLeftSlaveB, mRightMaster, mRightSlaveA, mRightSlaveB;
-    private ArrayList<WPI_TalonSRX> leftMotors = new ArrayList<>(), rightMotors = new ArrayList<>();
+    private ArrayList<TalonSRX> leftMotors = new ArrayList<>(), rightMotors = new ArrayList<>();
     private PigeonIMU mPigeon;
     private DoubleSolenoid mShifterSolenoid;
-
     private Controller mController = Constants.driver;
     private Constants mConstants = Constants.getInstance();
     private DriveGear mCurrentGear = mConstants.dt_defaultDriveGear;
-
-    private static DriveTrain mInstance;
 
     /**
      * Initializes the DriveTrain class with the name "DriveTrain"
@@ -114,8 +96,8 @@ public class DriveTrain extends Subsystem
             rightMotors.add(mRightSlaveA);
             rightMotors.add(mRightSlaveB);
 
-            for (WPI_TalonSRX talon : leftMotors) talon.setInverted(true);
-            for (WPI_TalonSRX talon : rightMotors) talon.setInverted(true);
+            for (TalonSRX talon : leftMotors) talon.setInverted(true);
+            for (TalonSRX talon : rightMotors) talon.setInverted(true);
         } catch (TalonCommunicationErrorException e)
         {
             log("Could not initialize motor, drivetrain init failed! Port: " + e.getPortNumber(), Logger.LogLevel.ERROR);
@@ -124,14 +106,6 @@ public class DriveTrain extends Subsystem
 
         setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
         setNeutralMode(NeutralMode.Brake);
-
-        // I don't know what safety does but the messages it throws annoy me.
-        mLeftMaster.setSafetyEnabled(false);
-        mLeftSlaveA.setSafetyEnabled(false);
-        mLeftSlaveB.setSafetyEnabled(false);
-        mRightMaster.setSafetyEnabled(false);
-        mRightSlaveA.setSafetyEnabled(false);
-        mRightSlaveB.setSafetyEnabled(false);
 
         mShifterSolenoid = new DoubleSolenoid(mConstants.pcm, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
 
@@ -215,9 +189,6 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            boolean debug = true;
-            DifferentialDrive robotDrive;
-
             @Override
             public String getName()
             {
@@ -234,13 +205,9 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 reset();
-                robotDrive = new DifferentialDrive(mLeftMaster, mRightMaster);
-
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.setSensorPhase(true);
-
-                robotDrive.setSafetyEnabled(false);
                 return true;
             }
 
@@ -249,32 +216,13 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    mPrefs.putInt("Encoder Left", mLeftMaster.getSelectedSensorPosition());
-                    mPrefs.putInt("Encoder Right", mRightMaster.getSelectedSensorPosition());
-                    mPrefs.putDouble("Left Current Draw", mLeftMaster.getOutputCurrent() + mLeftSlaveA.getOutputCurrent() + mLeftSlaveB.getOutputCurrent());
-                    mPrefs.putDouble("Right Current Draw", mRightMaster.getOutputCurrent() + mRightSlaveA.getOutputCurrent() + mRightSlaveB.getOutputCurrent());
-                    mPrefs.putString("Drive Gear", mCurrentGear.name());
-
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
                     if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
 
-                    robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
-
-                    if (mController.get(mConstants.dt_swapCameras))
-                    {
-                        UDPHandler.getInstance().send("CAMSWITCH");
-                    }
-
-                    if (mController.get(mConstants.dt_enableVision))
-                    {
-                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
-
-                        System.out.println(angleOfError);
-                        
-                        //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
-                    }
+                    arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
+                    visionLoop();
                 }
             }
 
@@ -283,14 +231,62 @@ public class DriveTrain extends Subsystem
             {
                 reset();
             }
+
+            void visionLoop()
+            {
+                if (mController.get(mConstants.dt_swapCameras))
+                {
+                    UDPHandler.getInstance().send("CAMSWITCH");
+                }
+
+                if (mController.get(mConstants.dt_enableVision))
+                {
+                    if(UDPHandler.getInstance().getMessage() != "")
+                    {
+                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+
+                        System.out.println(angleOfError);
+                        //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
+                    }
+                }
+            }
+
+            void arcadeDrive(double throttle, double turn)
+            {
+                double leftOut, rightOut;
+                double maxInput = Math.copySign(Math.max(Math.abs(throttle), Math.abs(turn)), throttle);
+
+                if (throttle >= 0.0) {
+                    // First quadrant, else second quadrant
+                    if (turn >= 0.0) {
+                        leftOut = maxInput;
+                        rightOut = throttle - turn;
+                    } else {
+                        leftOut = throttle + turn;
+                        rightOut = maxInput;
+                    }
+                } else {
+                    // Third quadrant, else fourth quadrant
+                    if (turn >= 0.0) {
+                        leftOut = throttle + turn;
+                        rightOut = maxInput;
+                    } else {
+                        leftOut = maxInput;
+                        rightOut = throttle - turn;
+                    }
+                }
+
+                mLeftMaster.set(ControlMode.PercentOutput, leftOut);
+                mRightMaster.set(ControlMode.PercentOutput, rightOut);
+            }
         };
     }
 
     /**
      * Returns a Command making the robot drive for the specified time
      *
-     * @param time The time in seconds to drive for
-     * @param leftPower The power to drive the left motors at
+     * @param time       The time in seconds to drive for
+     * @param leftPower  The power to drive the left motors at
      * @param rightPower The power to drive the right motors at
      * @return A Command making the robot drive for the specified time
      */
@@ -338,7 +334,7 @@ public class DriveTrain extends Subsystem
     /**
      * Returns a Command making the robot drive for the specified time
      *
-     * @param time The time in seconds to drive for
+     * @param time  The time in seconds to drive for
      * @param power The power to drive at
      * @return A Command making the robot drive for the specified time
      */
@@ -351,13 +347,11 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            double targetAngle;
-            double targetPos;
-
-
             final double UNITS_PER_ROTATION = 10000.0d;
             // Scales the encoder difference reading to 3600 counts per rotation
             final double turnCoeff = 3600.0d / UNITS_PER_ROTATION;
+            double targetAngle;
+            double targetPos;
 
             @Override
             public String getName()
@@ -435,7 +429,7 @@ public class DriveTrain extends Subsystem
     /**
      * Returns a Command making the robot rotate to the specified angle using its encoders
      *
-     * @param angle The angle to turn to
+     * @param angle  The angle to turn to
      * @param maxOut The maximum output (0.0 to 1.0) of the motors
      * @return A Command making the robot rotate to the specified angle using its encoders
      */
@@ -487,7 +481,7 @@ public class DriveTrain extends Subsystem
     /**
      * Returns a Command making the robot rotate to the specified angle using its encoders
      *
-     * @param angle The angle to turn to
+     * @param angle  The angle to turn to
      * @param maxOut The maximum  output (0.0 to 1.0) of the motors
      * @return A Command making the robot rotate to the specified angle using its encoders
      */
@@ -530,7 +524,8 @@ public class DriveTrain extends Subsystem
 
     /**
      * Returns a Command that runs the motion profile supplied to it
-     * @param leftProfile The file name of the motion profile to execute corresponding with the left side of the drivetrain
+     *
+     * @param leftProfile  The file name of the motion profile to execute corresponding with the left side of the drivetrain
      * @param rightProfile The file name of the motion profile to execute corresponding with the right side of the drivetrain
      * @return
      */
@@ -612,6 +607,7 @@ public class DriveTrain extends Subsystem
 
     /**
      * Returns a Command that sets the drive gear of the drivetrain
+     *
      * @param gear The gear to set the drivetrain to
      * @return A Command that sets the drive gear of the drivetrain
      */
@@ -653,8 +649,9 @@ public class DriveTrain extends Subsystem
 
     /**
      * Sets the nominal and peak outputs of the motors to the specified configuration
+     *
      * @param nominal The nominal output to set
-     * @param peak The peak output to set
+     * @param peak    The peak output to set
      * @return A boolean indicating whether configuration has succeeded or not
      */
     private boolean setNominalAndPeakOutputs(double nominal, double peak)
@@ -699,17 +696,19 @@ public class DriveTrain extends Subsystem
 
     /**
      * Sets the neutral mode of the master Talons
+     *
      * @param mode The mode to set the master Talons to
      */
     public void setNeutralMode(NeutralMode mode)
     {
-        for (WPI_TalonSRX talon : leftMotors) talon.setNeutralMode(mode);
-        for (WPI_TalonSRX talon : rightMotors) talon.setNeutralMode(mode);
+        for (TalonSRX talon : leftMotors) talon.setNeutralMode(mode);
+        for (TalonSRX talon : rightMotors) talon.setNeutralMode(mode);
     }
 
     /**
      * Sets the outputs to the left and right motors
-     * @param left The percent output to supply to the left set of motors (-1.0 to 1.0)
+     *
+     * @param left  The percent output to supply to the left set of motors (-1.0 to 1.0)
      * @param right The percent output to supply to the right set of motors (-1.0 to 1.0)
      */
     private void setLeftRightMotorOutputs(double left, double right)
@@ -720,6 +719,7 @@ public class DriveTrain extends Subsystem
 
     /**
      * Configures the controller with the axes and buttons used to control the DriveTrain subsystem
+     *
      * @param controller The controller to configure
      */
     private void configureController(Controller controller)
@@ -736,6 +736,7 @@ public class DriveTrain extends Subsystem
 
     /**
      * Converts the distance in inches given to encoder ticks
+     *
      * @param distance
      * @return
      */
@@ -746,7 +747,8 @@ public class DriveTrain extends Subsystem
 
     /**
      * Applies a deadband to the given value
-     * @param val The value to apply the deadband to
+     *
+     * @param val      The value to apply the deadband to
      * @param deadband The deadband to apply to the value
      * @return The new value as modified by the deadband
      */
@@ -757,12 +759,30 @@ public class DriveTrain extends Subsystem
 
     /**
      * Converts the velocity supplied by CTRE devices (in counts per 100ms) to feet per second
+     *
      * @param ctreVel The velocity (in counts per 100ms)
      * @return The equivalent feet per second of the given velocity
      */
     private double ctreVelToFPS(int ctreVel)
     {
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
+    }
+
+    public enum DriveGear
+    {
+        HIGH(DoubleSolenoid.Value.kForward), LOW(DoubleSolenoid.Value.kReverse);
+
+        private final DoubleSolenoid.Value val;
+
+        DriveGear(DoubleSolenoid.Value val)
+        {
+            this.val = val;
+        }
+    }
+
+    public enum DriveControlMode
+    {
+        TANK, FPS, FPS_CURVE, ARCADE
     }
 
 

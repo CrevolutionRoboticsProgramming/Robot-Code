@@ -1,5 +1,7 @@
 package org.frc2851.crevolib.io;
 
+import edu.wpi.first.wpilibj.DriverStation;
+
 import java.util.HashMap;
 import java.util.function.DoubleFunction;
 import java.util.function.DoublePredicate;
@@ -143,5 +145,10 @@ public class Controller
         }
 
         mButtons.get(id).setToggleState(state);
+    }
+
+    public boolean isControllerConnected()
+    {
+        return DriverStation.getInstance().getStickAxisCount(mChannel) <= 0;
     }
 }
