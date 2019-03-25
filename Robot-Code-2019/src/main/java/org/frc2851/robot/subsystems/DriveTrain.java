@@ -277,7 +277,7 @@ public class DriveTrain extends Subsystem
                 }
 
                 mLeftMaster.set(ControlMode.PercentOutput, leftOut);
-                mRightMaster.set(ControlMode.PercentOutput, rightOut);
+                mRightMaster.set(ControlMode.PercentOutput, -rightOut);
             }
         };
     }
