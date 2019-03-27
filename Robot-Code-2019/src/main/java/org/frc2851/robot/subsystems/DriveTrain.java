@@ -148,6 +148,9 @@ public class DriveTrain extends Subsystem
         if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
         if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
 
+        mLeftRawPID = new PID(2.0, 0.0, 0.0, 0.0);
+        mRightRawPID = mLeftRawPID; //new PID(0.0, 0.0, 0.0, 0.0);
+
         return true;
     }
 
@@ -262,18 +265,18 @@ public class DriveTrain extends Subsystem
 
                     robotDrive.arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
 
-                    if (mController.get(mConstants.dt_swapCameras))
-                    {
-                        UDPHandler.getInstance().send("CAMSWITCH");
-                    }
-
                     if (mController.get(mConstants.dt_enableVision))
                     {
-                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+                        setCommmandGroup(turnToAngleEncoder(270, 0.75));
 
-                        System.out.println(angleOfError);
-                        
-                        //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
+                        if(UDPHandler.getInstance().getMessage() != "")
+                        {
+                            double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+
+                            System.out.println(angleOfError);
+
+                            //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
+                        }
                     }
                 }
             }
@@ -730,8 +733,7 @@ public class DriveTrain extends Subsystem
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
         controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
-        controller.config(mConstants.dt_enableVision, Button.ButtonMode.RAW); // Vision
-        controller.config(mConstants.dt_swapCameras, Button.ButtonMode.ON_PRESS);
+        controller.config(mConstants.dt_enableVision, Button.ButtonMode.ON_PRESS); // Vision
     }
 
     /**
