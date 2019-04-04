@@ -118,6 +118,9 @@ public class DriveTrain extends Subsystem
         if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
         if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
 
+        mLeftRawPID = new PID(1.25, 0.0, 0.0, 0.0);
+        mRightRawPID = mLeftRawPID;
+
         return true;
     }
 
@@ -222,6 +225,19 @@ public class DriveTrain extends Subsystem
                     }
 
                     arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X), mConstants.dt_turnMult);
+
+                    if (mController.get(mConstants.dt_enableVision))
+                    {
+                        if (!UDPHandler.getInstance().getMessage().equals(""))
+                        {
+                            double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+
+                            log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
+
+                            setCommmandGroup(turnToAngleEncoder(angleOfError, 0.5));
+                        }
+
+                    }
                 }
             }
 
@@ -229,25 +245,6 @@ public class DriveTrain extends Subsystem
             public void stop()
             {
                 reset();
-            }
-
-            void visionLoop()
-            {
-                if (mController.get(mConstants.dt_swapCameras))
-                {
-                    UDPHandler.getInstance().send("CAMSWITCH");
-                }
-
-                if (mController.get(mConstants.dt_enableVision))
-                {
-                    if (UDPHandler.getInstance().getMessage() != "")
-                    {
-                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
-
-                        System.out.println(angleOfError);
-                        //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
-                    }
-                }
             }
 
             void arcadeDrive(double throttle, double turn, double turnMult)
@@ -445,6 +442,9 @@ public class DriveTrain extends Subsystem
         {
             int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
 
+            //int counts = (int) (Math.toRadians(angle) * Math.PI * mConstants.dt_width * 0.5 * (mConstants.magEncCPR / (mConstants.dt_wheelDiameter * Math.PI)));
+            int targetPos = 0;
+
             @Override
             public String getName()
             {
@@ -460,7 +460,8 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
-                int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
+                targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
+                log("Target: " + targetPos, Logger.LogLevel.DEBUG);
                 TalonSRXFactory.configurePIDF(mLeftMaster, 0, mLeftRawPID);
                 TalonSRXFactory.configurePIDF(mRightMaster, 0, mRightRawPID);
                 mLeftMaster.set(ControlMode.Position, targetPos);
@@ -473,13 +474,19 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                mRightMaster.set(ControlMode.PercentOutput, -mLeftMaster.getMotorOutputPercent());
+                mLeftMaster.set(ControlMode.Position, targetPos);
+                mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
+                mLeftSlaveB.set(ControlMode.Follower, mLeftMaster.getDeviceID());
+                mRightMaster.set(ControlMode.PercentOutput, mLeftMaster.getMotorOutputPercent());
+                mRightSlaveA.set(ControlMode.Follower, mRightMaster.getDeviceID());
+                mRightSlaveB.set(ControlMode.Follower, mRightMaster.getDeviceID());
             }
 
             @Override
             public void stop()
             {
                 reset();
+                setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
             }
         };
     }
@@ -736,8 +743,8 @@ public class DriveTrain extends Subsystem
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
         controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
-        controller.config(mConstants.dt_enableVision, Button.ButtonMode.RAW); // Vision
-        controller.config(mConstants.dt_swapCameras, Button.ButtonMode.ON_PRESS);
+        controller.config(mConstants.dt_enableVision, Button.ButtonMode.ON_PRESS); // Vision
+        controller.config(Button.ButtonID.X, Button.ButtonMode.RAW);
     }
 
     /**

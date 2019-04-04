@@ -30,7 +30,9 @@ public class Constants
     {
     }
 
-    public final int magEncCPR = 4096;
+    // This is 22,000 because the mag encoder isn't mounted on the output shaft so it's effected by the gear ratios.
+    // We had to determine this value empirically.
+    public final int magEncCPR = 22000;//4096;
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);
@@ -75,8 +77,8 @@ public class Constants
     // Drivetrain - Driver Controller
     public final Button.ButtonID dt_curvatureToggle = Button.ButtonID.RIGHT_BUMPER;
     public final Button.ButtonID dt_gearToggle = Button.ButtonID.LEFT_BUMPER;
+
     public final Button.ButtonID dt_enableVision = Button.ButtonID.D_RIGHT;
-    public final Button.ButtonID dt_swapCameras = Button.ButtonID.D_DOWN;
 
     // Elevator - Operator Controller
     public final Button.ButtonID el_playerStation = Button.ButtonID.D_UP;
