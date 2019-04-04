@@ -29,7 +29,9 @@ public class Constants
     {
     }
 
-    public final int magEncCPR = 4096;
+    // This is 22,000 because the mag encoder isn't mounted on the output shaft so it's effected by the gear ratios.
+    // We had to determine this value empirically.
+    public final int magEncCPR = 22000;//4096;
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);

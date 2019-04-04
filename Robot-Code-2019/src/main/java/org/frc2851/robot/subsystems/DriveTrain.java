@@ -148,8 +148,8 @@ public class DriveTrain extends Subsystem
         if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
         if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
 
-        mLeftRawPID = new PID(5.0, 0.0, 0.0, 0.0);
-        mRightRawPID = mLeftRawPID; //new PID(0.0, 0.0, 0.0, 0.0);
+        mLeftRawPID = new PID(1.25, 0.0, 0.0, 0.0);
+        mRightRawPID = mLeftRawPID;
 
         return true;
     }
@@ -273,7 +273,7 @@ public class DriveTrain extends Subsystem
 
                             log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
 
-                            //setCommmandGroup(turnToAngleEncoder(angleOfError, 0.75));
+                            setCommmandGroup(turnToAngleEncoder(angleOfError, 0.5));
                         }
                     }
                 }
@@ -444,9 +444,10 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            //int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
+            int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
 
-            int counts = (int) (Math.toRadians(angle) * Math.PI * mConstants.dt_width * 0.5 * (mConstants.magEncCPR / (mConstants.dt_wheelDiameter * Math.PI)));
+            //int counts = (int) (Math.toRadians(angle) * Math.PI * mConstants.dt_width * 0.5 * (mConstants.magEncCPR / (mConstants.dt_wheelDiameter * Math.PI)));
+            int targetPos = 0;
 
             @Override
             public String getName()
@@ -463,7 +464,7 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
-                int targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
+                targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
                 log("Target: " + targetPos, Logger.LogLevel.DEBUG);
                 TalonSRXFactory.configurePIDF(mLeftMaster, 0, mLeftRawPID);
                 TalonSRXFactory.configurePIDF(mRightMaster, 0, mRightRawPID);
@@ -477,13 +478,19 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                mRightMaster.set(ControlMode.PercentOutput, -mLeftMaster.getMotorOutputPercent());
+                mLeftMaster.set(ControlMode.Position, targetPos);
+                mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
+                mLeftSlaveB.set(ControlMode.Follower, mLeftMaster.getDeviceID());
+                mRightMaster.set(ControlMode.PercentOutput, mLeftMaster.getMotorOutputPercent());
+                mRightSlaveA.set(ControlMode.Follower, mRightMaster.getDeviceID());
+                mRightSlaveB.set(ControlMode.Follower, mRightMaster.getDeviceID());
             }
 
             @Override
             public void stop()
             {
                 reset();
+                setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
             }
         };
     }
@@ -735,6 +742,7 @@ public class DriveTrain extends Subsystem
         controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
         controller.config(mConstants.dt_enableVision, Button.ButtonMode.ON_PRESS); // Vision
+        controller.config(Button.ButtonID.X, Button.ButtonMode.RAW);
     }
 
     /**
