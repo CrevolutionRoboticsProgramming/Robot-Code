@@ -67,9 +67,9 @@ public class Constants
     public final int rc_limitSwitch = 0; // Normally Open; Closed when ball in RC
     public final int cl_gorillaForwardLimit = 1;
     public final int cl_gorillaReverseLimit = 2;
-    public final int cl_pogoForwardLimit = 3;
-    public final int cl_pogoReverseLimit = 4;
-    public final int el_reverseLimit = 6; // Closed at min height
+    public final int cl_pogoForwardLimit = 8;
+    public final int cl_pogoReverseLimit = 9;
+    public final int el_reverseLimit = 4; // Closed at min height
 
     /************ Controller Buttons and Axis ************/
     // Drivetrain - Driver Controller
@@ -127,10 +127,11 @@ public class Constants
     public final int dt_motionMagicMaxAcceleration = 15000;
     public final int dt_motionMagicMaxVelocity = 3000;
 
-    // Defaults
+    /************ DriveTrain ************/
     public final double dt_peakOut = 1;
     public final double dt_nominalOut = 0;
     public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
+    public final double dt_turnMult = 1;
 
     /************ Elevator ************/
     public final double el_rawMultiplier = 1;
@@ -146,7 +147,7 @@ public class Constants
 //    public final PID el_pid = new PID(0.3, 0, 0, 1);
     public final PID el_pid = new PID(0.3, 0, 0, 1);
     /************ Climber ************/
-    public final boolean cl_usePogoLimit = false;
+    public final boolean cl_usePogoLimit = true;
     public final boolean cl_useGorillaLimit = true;
 
     /************ Roller Claw ************/

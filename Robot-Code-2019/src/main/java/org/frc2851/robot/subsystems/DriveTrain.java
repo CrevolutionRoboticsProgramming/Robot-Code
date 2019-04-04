@@ -7,12 +7,8 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
-import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import org.frc2851.crevolib.utilities.Logger;
-import org.frc2851.crevolib.utilities.CustomPreferences;
-import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
-import org.frc2851.crevolib.utilities.TalonSRXFactory;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -20,7 +16,7 @@ import org.frc2851.crevolib.motion.MotionProfileExecutor;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
-import org.frc2851.crevolib.utilities.UDPHandler;
+import org.frc2851.crevolib.utilities.*;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
@@ -219,10 +215,13 @@ public class DriveTrain extends Subsystem
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
 
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
-                    if (requestedGear != mCurrentGear) setCommmandGroup(setDriveGear(requestedGear));
+                    if (requestedGear != mCurrentGear)
+                    {
+                        mShifterSolenoid.set(requestedGear.val);
+                        mCurrentGear = requestedGear;
+                    }
 
-                    arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X));
-                    visionLoop();
+                    arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X), mConstants.dt_turnMult);
                 }
             }
 
@@ -241,7 +240,7 @@ public class DriveTrain extends Subsystem
 
                 if (mController.get(mConstants.dt_enableVision))
                 {
-                    if(UDPHandler.getInstance().getMessage() != "")
+                    if (UDPHandler.getInstance().getMessage() != "")
                     {
                         double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
 
@@ -251,26 +250,33 @@ public class DriveTrain extends Subsystem
                 }
             }
 
-            void arcadeDrive(double throttle, double turn)
+            void arcadeDrive(double throttle, double turn, double turnMult)
             {
+                turn *= turnMult;
                 double leftOut, rightOut;
                 double maxInput = Math.copySign(Math.max(Math.abs(throttle), Math.abs(turn)), throttle);
 
-                if (throttle >= 0.0) {
+                if (throttle >= 0.0)
+                {
                     // First quadrant, else second quadrant
-                    if (turn >= 0.0) {
+                    if (turn >= 0.0)
+                    {
                         leftOut = maxInput;
                         rightOut = throttle - turn;
-                    } else {
+                    } else
+                    {
                         leftOut = throttle + turn;
                         rightOut = maxInput;
                     }
-                } else {
+                } else
+                {
                     // Third quadrant, else fourth quadrant
-                    if (turn >= 0.0) {
+                    if (turn >= 0.0)
+                    {
                         leftOut = throttle + turn;
                         rightOut = maxInput;
-                    } else {
+                    } else
+                    {
                         leftOut = maxInput;
                         rightOut = throttle - turn;
                     }

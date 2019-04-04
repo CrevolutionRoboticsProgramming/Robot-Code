@@ -28,8 +28,11 @@ import org.frc2851.robot.Robot;
  */
 public class Elevator extends Subsystem
 {
+    private enum ElevatorControlMode { OPEN_LOOP, MOTION_MAGIC }
+
     // Singleton Definitions
     private static Elevator mInstance;
+    private ElevatorControlMode mControlMode = ElevatorControlMode.OPEN_LOOP;
     private final boolean kTuning = false;
     // Tuning
     CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
@@ -38,6 +41,8 @@ public class Elevator extends Subsystem
     private DigitalInput mLimitSwitch;
     private Controller mController = Constants.operator;
     private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
+
+    private boolean mSetPositionRunning = false;
 
     private Elevator()
     {
@@ -137,7 +142,6 @@ public class Elevator extends Subsystem
         return new Command()
         {
             ElevatorPosition desiredPosition = ElevatorPosition.LOW_HATCH;
-            boolean softLimitEnabled = false;
 
             @Override
             public String getName()
@@ -168,17 +172,9 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double output = -applyDeadband(mController.get(mConst.el_rawControl), 0.2);
-                    boolean softLimitInput = !mController.get(Button.ButtonID.D_DOWN);
+                    double output = -applyDeadband(mController.get(mConst.el_rawControl), 0.15);
                     getDesiredPosition();
                     boolean updatePos = mCurrentPosition != desiredPosition;
-
-                    if (softLimitInput != softLimitEnabled)
-                    {
-                        TalonSRXFactory.runTalonConfig(() -> mTalon.configForwardSoftLimitEnable(softLimitInput));
-                        softLimitEnabled = softLimitInput;
-                        log("Soft limit state: " + softLimitEnabled, Logger.LogLevel.DEBUG);
-                    }
 
                     if (!mLimitSwitch.get())
                     {
@@ -189,13 +185,15 @@ public class Elevator extends Subsystem
                     if (output != 0)
                     {
                         stopAuxiliaryCommand();
+                        mControlMode = ElevatorControlMode.OPEN_LOOP;
                         mTalon.set(ControlMode.PercentOutput, output);
                         mCurrentPosition = ElevatorPosition.UNKNOWN;
                     } else if (updatePos && desiredPosition != null)
                     {
+                        mControlMode = ElevatorControlMode.MOTION_MAGIC;
                         setCommmandGroup(setPositionMotionMagic(desiredPosition));
                         mCurrentPosition = desiredPosition;
-                    } else if (!getAuxiliaryCommandActivity())
+                    } else if (mControlMode == ElevatorControlMode.OPEN_LOOP)
                     {
                         mTalon.set(ControlMode.PercentOutput, mConst.el_holdPositionPower);
                     }
@@ -293,6 +291,8 @@ public class Elevator extends Subsystem
                         () -> mTalon.configMotionCruiseVelocity(maxV, mConst.talonTimeout),
                         () -> mTalon.configMotionAcceleration(maxA, mConst.talonTimeout)
                 );
+
+                mSetPositionRunning = true;
                 return true;
             }
 
@@ -311,6 +311,7 @@ public class Elevator extends Subsystem
             {
                 if (hitLimit) zeroSensors();
                 mTalon.set(ControlMode.PercentOutput, 0);
+                mControlMode = ElevatorControlMode.OPEN_LOOP;
             }
         };
     }
