@@ -30,9 +30,7 @@ public class Constants
     {
     }
 
-    // This is 22,000 because the mag encoder isn't mounted on the output shaft so it's effected by the gear ratios.
-    // We had to determine this value empirically.
-    public final int magEncCPR = 22000;//4096;
+    public final int magEncCPR = 4096;
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);
@@ -128,6 +126,7 @@ public class Constants
     public final int dt_encTurnPidSlot = 2;
     public final int dt_motionMagicMaxAcceleration = 15000;
     public final int dt_motionMagicMaxVelocity = 3000;
+    public final int dt_countsPerRotation = 22000;
 
     /************ DriveTrain ************/
     public final double dt_peakOut = 1;

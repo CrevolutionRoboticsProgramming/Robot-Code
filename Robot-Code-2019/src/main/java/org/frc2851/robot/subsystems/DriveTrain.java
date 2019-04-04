@@ -44,7 +44,7 @@ public class DriveTrain extends Subsystem
     private Controller mController = Constants.driver;
     private Constants mConstants = Constants.getInstance();
     private DriveGear mCurrentGear = mConstants.dt_defaultDriveGear;
-
+    private DriveTrainControlMode mControlMode = DriveTrainControlMode.OPEN_LOOP;
     /**
      * Initializes the DriveTrain class with the name "DriveTrain"
      */
@@ -216,6 +216,8 @@ public class DriveTrain extends Subsystem
                 if (Robot.isRunning())
                 {
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
+                    double throttle = applyDeadband(mController.get(Axis.AxisID.LEFT_Y), 0.1);
+                    double rotation = applyDeadband(mController.get(Axis.AxisID.RIGHT_X), 0.1);
 
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
                     if (requestedGear != mCurrentGear)
@@ -224,19 +226,19 @@ public class DriveTrain extends Subsystem
                         mCurrentGear = requestedGear;
                     }
 
-                    arcadeDrive(mController.get(Axis.AxisID.LEFT_Y), mController.get(Axis.AxisID.RIGHT_X), mConstants.dt_turnMult);
-
-                    if (mController.get(mConstants.dt_enableVision))
+                    if (throttle != 0 || rotation != 0)
                     {
-                        if (!UDPHandler.getInstance().getMessage().equals(""))
-                        {
-                            double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
-
-                            log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
-
-                            setCommmandGroup(turnToAngleEncoder(angleOfError, 0.5));
-                        }
-
+                        stopAuxiliaryCommand();
+                        mControlMode = DriveTrainControlMode.OPEN_LOOP;
+                        arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
+                    } else if (mController.get(mConstants.dt_enableVision) && !UDPHandler.getInstance().getMessage().equals(""))
+                    {
+                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+                        log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
+                        setCommmandGroup(turnToAngleEncoder(angleOfError, 0.5));
+                    } else if (mControlMode == DriveTrainControlMode.OPEN_LOOP)
+                    {
+                        arcadeDrive(0, 0, mConstants.dt_turnMult);
                     }
                 }
             }
@@ -245,6 +247,11 @@ public class DriveTrain extends Subsystem
             public void stop()
             {
                 reset();
+            }
+
+            double applyDeadband(double in, double band)
+            {
+                return (Math.abs(in) < band) ? 0 : in;
             }
 
             void arcadeDrive(double throttle, double turn, double turnMult)
@@ -440,7 +447,7 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.magEncCPR);
+            int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
 
             //int counts = (int) (Math.toRadians(angle) * Math.PI * mConstants.dt_width * 0.5 * (mConstants.magEncCPR / (mConstants.dt_wheelDiameter * Math.PI)));
             int targetPos = 0;
@@ -468,6 +475,7 @@ public class DriveTrain extends Subsystem
                 mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
 
                 setNominalAndPeakOutputs(0, maxOut);
+                mControlMode = DriveTrainControlMode.CLOSED_LOOP;
                 return true;
             }
 
@@ -475,11 +483,7 @@ public class DriveTrain extends Subsystem
             public void update()
             {
                 mLeftMaster.set(ControlMode.Position, targetPos);
-                mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
-                mLeftSlaveB.set(ControlMode.Follower, mLeftMaster.getDeviceID());
                 mRightMaster.set(ControlMode.PercentOutput, mLeftMaster.getMotorOutputPercent());
-                mRightSlaveA.set(ControlMode.Follower, mRightMaster.getDeviceID());
-                mRightSlaveB.set(ControlMode.Follower, mRightMaster.getDeviceID());
             }
 
             @Override
@@ -487,6 +491,7 @@ public class DriveTrain extends Subsystem
             {
                 reset();
                 setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
+                mControlMode = DriveTrainControlMode.OPEN_LOOP;
             }
         };
     }
@@ -779,6 +784,11 @@ public class DriveTrain extends Subsystem
     private double ctreVelToFPS(int ctreVel)
     {
         return ((ctreVel * 10) / (double) (mConstants.magEncCPR)) * mConstants.dt_wheelDiameter * Math.PI;
+    }
+
+    private enum DriveTrainControlMode
+    {
+        OPEN_LOOP, CLOSED_LOOP
     }
 
     public enum DriveGear
