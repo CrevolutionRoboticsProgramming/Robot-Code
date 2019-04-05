@@ -8,8 +8,8 @@ import java.net.InetSocketAddress;
 
 public class UDPHandler implements Runnable {
 
-    private int sendPort = 9001;
-    private int receivePort = 9000;
+    private int sendPort = 1183;
+    private int receivePort = 1182;
     private int bufferSize = 8;
     private byte[] buffer = new byte[bufferSize];
     private String message = "";
@@ -62,8 +62,8 @@ public class UDPHandler implements Runnable {
     }
 
     /**
-     * Sends the specified message to the Jetson
-     * @param message Message to send to the Jetson
+     * Sends the specified message to the offboard processor
+     * @param message Message to send to the offboard processor
      */
     public void send(String message) {
         try {

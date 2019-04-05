@@ -447,9 +447,10 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
+            //              v For arc length
+            // angle (rads) * radius of wheelbase * ticks per inch (ticks per rotation / circumference of wheel (pi * diameter))
             int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
 
-            //int counts = (int) (Math.toRadians(angle) * Math.PI * mConstants.dt_width * 0.5 * (mConstants.magEncCPR / (mConstants.dt_wheelDiameter * Math.PI)));
             int targetPos = 0;
 
             @Override
