@@ -57,7 +57,7 @@ public abstract class Subsystem
      * Sets the group the Command is in
      * @param commands
      */
-    public void setCommmandGroup(Command... commands) {
+    public synchronized void setCommmandGroup(Command... commands) {
         mAuxiliaryCommandGroup = new CommandGroup(commands);
         if (mAuxiliaryCommandGroup.getSize() > 0) mAuxiliaryState.isNull = false;
         mAuxiliaryState.isInit = false;
@@ -138,7 +138,7 @@ public abstract class Subsystem
      */
     public synchronized void stopAuxiliaryCommand()
     {
-        if (mAuxiliaryCommandGroup == null) return;
+        if (mAuxiliaryCommandGroup == null || mAuxiliaryCommandGroup.getSize() == 0) return;
         Command c = mAuxiliaryCommandGroup.getCommand();
         log("Stopping " + mAuxiliaryCommandGroup.toString() + " on command " + c.getName(), Logger.LogLevel.DEBUG);
         c.stop();

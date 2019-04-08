@@ -176,8 +176,9 @@ public class Elevator extends Subsystem
                     getDesiredPosition();
                     boolean updatePos = mCurrentPosition != desiredPosition;
 
-                    if (!mLimitSwitch.get())
+                    if (!mLimitSwitch.get() && mCurrentPosition != ElevatorPosition.LOW_HATCH)
                     {
+                        mCurrentPosition = ElevatorPosition.LOW_HATCH;
                         zeroSensors();
                         if (output < 0) output = 0;
                     }

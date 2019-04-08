@@ -216,8 +216,8 @@ public class DriveTrain extends Subsystem
                 if (Robot.isRunning())
                 {
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
-                    double throttle = applyDeadband(mController.get(Axis.AxisID.LEFT_Y), 0.1);
-                    double rotation = applyDeadband(mController.get(Axis.AxisID.RIGHT_X), 0.1);
+                    double throttle = mController.get(Axis.AxisID.LEFT_Y);
+                    double rotation = mController.get(Axis.AxisID.RIGHT_X);
 
                     DriveGear requestedGear = (gearToggle) ? DriveGear.HIGH : DriveGear.LOW;
                     if (requestedGear != mCurrentGear)
@@ -240,6 +240,7 @@ public class DriveTrain extends Subsystem
                     {
                         arcadeDrive(0, 0, mConstants.dt_turnMult);
                     }
+                    arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                 }
             }
 
@@ -247,11 +248,6 @@ public class DriveTrain extends Subsystem
             public void stop()
             {
                 reset();
-            }
-
-            double applyDeadband(double in, double band)
-            {
-                return (Math.abs(in) < band) ? 0 : in;
             }
 
             void arcadeDrive(double throttle, double turn, double turnMult)

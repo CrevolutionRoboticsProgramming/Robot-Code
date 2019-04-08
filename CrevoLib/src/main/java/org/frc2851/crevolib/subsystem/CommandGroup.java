@@ -5,7 +5,7 @@ import java.util.Vector;
 public class CommandGroup
 {
     private Vector<Command> mCommands = new Vector<>();
-    private final int SIZE;
+    private final int kSize;
     private int mIndex = 0;
     private boolean mEnabled = true;
 
@@ -18,21 +18,21 @@ public class CommandGroup
                 if (c == null) continue;
                 mCommands.add(c);
             }
-            SIZE = mCommands.size();
+            kSize = mCommands.size();
         } else
         {
-            SIZE = 0;
+            kSize = 0;
         }
     }
 
     Command getCommand()
     {
-        return (mEnabled && SIZE != 0) ? mCommands.get(mIndex) : null;
+        return (mEnabled && kSize != 0) ? mCommands.get(mIndex) : null;
     }
 
     public boolean nextCommand()
     {
-        if (mIndex + 1 < SIZE)
+        if (mIndex + 1 < kSize)
         {
             mIndex++;
             return true;
@@ -58,7 +58,7 @@ public class CommandGroup
 
     public int getSize()
     {
-        return SIZE;
+        return kSize;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class CommandGroup
     {
         StringBuilder sb = new StringBuilder();
         sb.append("CommandGroup[");
-        if (SIZE == 0)
+        if (kSize == 0)
         {
             sb.append("null");
         } else
