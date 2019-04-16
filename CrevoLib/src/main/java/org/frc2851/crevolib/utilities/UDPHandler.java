@@ -62,8 +62,8 @@ public class UDPHandler implements Runnable {
     }
 
     /**
-     * Sends the specified message to the Jetson
-     * @param message Message to send to the Jetson
+     * Sends the specified message to the offboard processor
+     * @param message Message to send to the offboard processor
      */
     public void send(String message) {
         try {
