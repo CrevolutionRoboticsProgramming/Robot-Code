@@ -8,11 +8,6 @@ import org.frc2851.crevolib.utilities.Logger;
  */
 public abstract class Subsystem
 {
-    private enum State
-    {
-        NULL, INIT, RUNNING, FINISHED
-    }
-
     private String mName;
     private Command mDefaultCommand = getDefaultCommand();
     private CommandGroup mAuxiliaryCommandGroup = null;

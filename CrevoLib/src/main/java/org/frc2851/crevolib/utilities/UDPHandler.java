@@ -8,8 +8,8 @@ import java.net.InetSocketAddress;
 
 public class UDPHandler implements Runnable {
 
-    private int sendPort = 9001;
-    private int receivePort = 9000;
+    private int sendPort = 1183;
+    private int receivePort = 1182;
     private int bufferSize = 8;
     private byte[] buffer = new byte[bufferSize];
     private String message = "";

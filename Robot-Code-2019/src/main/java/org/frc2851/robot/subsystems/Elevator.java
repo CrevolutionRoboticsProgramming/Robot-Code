@@ -172,6 +172,7 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
+//                    System.out.println("Elevator Enc: " + mTalon.getSelectedSensorPosition(0));
                     double output = -applyDeadband(mController.get(mConst.el_rawControl), 0.15);
                     getDesiredPosition();
                     boolean updatePos = mCurrentPosition != desiredPosition;
@@ -329,8 +330,8 @@ public class Elevator extends Subsystem
         HIGH_HATCH(18000, GamePiece.HATCH),
         LOW_CARGO(5800, GamePiece.CARGO),
         MID_CARGO(14500, GamePiece.CARGO),
-        HIGH_CARGO(22500, GamePiece.CARGO),
-        PLAYER_STATION(12250, GamePiece.CARGO),
+        HIGH_CARGO(22000, GamePiece.CARGO),
+        PLAYER_STATION(11200, GamePiece.CARGO),
         UNKNOWN(0, null);
 
         private final int pos;
