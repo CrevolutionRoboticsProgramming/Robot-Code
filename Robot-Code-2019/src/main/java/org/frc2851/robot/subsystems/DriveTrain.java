@@ -45,6 +45,7 @@ public class DriveTrain extends Subsystem
     private Constants mConstants = Constants.getInstance();
     private DriveGear mCurrentGear = mConstants.dt_defaultDriveGear;
     private DriveTrainControlMode mControlMode = DriveTrainControlMode.OPEN_LOOP;
+
     /**
      * Initializes the DriveTrain class with the name "DriveTrain"
      */
@@ -73,6 +74,9 @@ public class DriveTrain extends Subsystem
     protected boolean init()
     {
         configureController(Constants.driver);
+
+        Constants.operator.config(Button.ButtonID.LEFT_TRIGGER, Button.ButtonMode.RAW);
+
         try
         {
             mLeftMaster = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_leftMaster);
@@ -114,12 +118,15 @@ public class DriveTrain extends Subsystem
         }
 //        mLeftMotionPID = new PID(0, 0, 0, 0);
 
+        mLeftRawPID = new PID(0/*.05*/, 0, 0, 0.1);
+        mRightRawPID = mLeftRawPID;
+
+        TalonSRXFactory.configurePIDF(mLeftMaster, mMotionSlotAux, mLeftRawPID);
+        TalonSRXFactory.configurePIDF(mRightMaster, mMotionSlotAux, mRightRawPID);
+
         // Preferences
         if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
         if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
-
-        mLeftRawPID = new PID(0.5, 0.0, 0.0, 0.0);
-        mRightRawPID = mLeftRawPID;
 
         return true;
     }
@@ -188,6 +195,11 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
+            boolean firstProcessing = false;
+            boolean stopVision = false;
+            double counts = 0;
+            double angleOfError = 0;
+
             @Override
             public String getName()
             {
@@ -204,8 +216,8 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 reset();
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
-                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, mMotionSlotPrimary, mConstants.talonTimeout);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, mMotionSlotAux, mConstants.talonTimeout);
                 mRightMaster.setSensorPhase(true);
                 return true;
             }
@@ -226,28 +238,56 @@ public class DriveTrain extends Subsystem
                         mCurrentGear = requestedGear;
                     }
 
-//                    if (applyDeadband(throttle, 0.1) != 0 || applyDeadband(rotation, 0.1) != 0)
-//                    {
-//                        stopAuxiliaryCommand();
-//                        mControlMode = DriveTrainControlMode.OPEN_LOOP;
-//                        arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
-//                    } else if (mController.get(mConstants.dt_enableVision) && !UDPHandler.getInstance().getMessage().equals(""))
-//                    {
-//                        double angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
-//                        log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
-//                        setCommmandGroup(turnToAngleEncoder(angleOfError, 1.0));
-//                    } else if (mControlMode == DriveTrainControlMode.OPEN_LOOP)
-//                    {
-//                        arcadeDrive(0, 0, mConstants.dt_turnMult);
-//                    }
+                    if (!Constants.operator.get(mConstants.dt_enableVision))
+                    {
+                        firstProcessing = true;
+                        stopVision = false;
+                    }
 
+                    if (Constants.operator.get(mConstants.dt_enableVision)
+                            && !stopVision)
+                    {
+                        if (firstProcessing)
+                        {
+                            if (!UDPHandler.getInstance().getMessage().equals(""))
+                            {
+                                reset();
+
+                                angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
+                                log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
+
+                                //              v For arc length
+                                // angle (rads) * radius of wheelbase * ticks per inch (ticks per rotation / circumference of wheel (pi * diameter))
+                                counts = (int) (((Math.toRadians(angleOfError) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
+
+                                UDPHandler.getInstance().clearMessage();
+                            }
+
+                            firstProcessing = false;
+                        }
+
+                        if (rotation != 0
+                                || Math.abs(mRightMaster.getSelectedSensorPosition() - mLeftMaster.getSelectedSensorPosition()) >= Math.abs(2 * counts))
+                        {
+                            firstProcessing = true;
+                            stopVision = true;
+                            angleOfError = 0;
+                            counts = 0;
+                        }
+
+                        if (counts != 0)
+                        {
+                            if (angleOfError > 0)
+                            {
+                                rotation = 0.4;
+                            } else if (angleOfError < 0)
+                            {
+                                rotation = -0.4;
+                            }
+                        }
+                    }
                     arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                 }
-            }
-
-            double applyDeadband(double input, double deadband)
-            {
-                return (Math.abs(input) < deadband) ? 0 : input;
             }
 
             @Override
@@ -751,7 +791,6 @@ public class DriveTrain extends Subsystem
         controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
         controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
-        controller.config(mConstants.dt_enableVision, Button.ButtonMode.ON_PRESS); // Vision
         controller.config(Button.ButtonID.X, Button.ButtonMode.RAW);
     }
 

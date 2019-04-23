@@ -6,7 +6,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-public class UDPHandler implements Runnable {
+public class UDPHandler implements Runnable
+{
 
     private int sendPort = 1183;
     private int receivePort = 1182;
@@ -27,17 +28,21 @@ public class UDPHandler implements Runnable {
     /**
      * Private constructor ensures that UDPHandler cannot be instantiated outside of the UDPHandler class
      */
-    private UDPHandler() {
+    private UDPHandler()
+    {
     }
 
     /**
      * Starts the processes controlling communication with the Jetson
      */
-    public void start() {
-        try {
+    public void start()
+    {
+        try
+        {
             serverSocket = new DatagramSocket(new InetSocketAddress(receivePort));
             sendingSocket = new DatagramSocket();
-        } catch (java.net.SocketException e) {
+        } catch (java.net.SocketException e)
+        {
             Logger.println("Cannot instantiate server socket", Logger.LogLevel.ERROR);
             e.printStackTrace();
         }
@@ -49,12 +54,16 @@ public class UDPHandler implements Runnable {
      * Receives messages on a separate thread
      */
     @Override
-    public void run() {
-        while (true) {
-            try {
+    public void run()
+    {
+        while (true)
+        {
+            try
+            {
                 serverSocket.receive(packet);
                 message = new String(packet.getData(), 0, packet.getLength());
-            } catch (java.io.IOException e) {
+            } catch (java.io.IOException e)
+            {
                 Logger.println("Cannot receive message", Logger.LogLevel.ERROR);
                 e.printStackTrace();
             }
@@ -63,12 +72,16 @@ public class UDPHandler implements Runnable {
 
     /**
      * Sends the specified message to the offboard processor
+     *
      * @param message Message to send to the offboard processor
      */
-    public void send(String message) {
-        try {
+    public void send(String message)
+    {
+        try
+        {
             sendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(sendIP), sendPort));
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             Logger.println("Cannot send message", Logger.LogLevel.ERROR);
             e.printStackTrace();
         }
@@ -76,30 +89,46 @@ public class UDPHandler implements Runnable {
 
     /**
      * Returns the sole instance of the UDPHandler class
+     *
      * @return The instance of the UDPHandler class
      */
-    public static UDPHandler getInstance() {
+    public static UDPHandler getInstance()
+    {
         return _instance;
     }
 
     /**
      * Returns the message previously received
+     *
      * @return The message previously received
      */
-    public String getMessage() {
+    public String getMessage()
+    {
         return message;
     }
 
     /**
+     * Clears the stored message
+     */
+    public void clearMessage()
+    {
+        message = "";
+    }
+
+    /**
      * Returns the IP of the roboRIO for debugging purposes
+     *
      * @return The IP of the roboRIO
      */
-    public String getThisIP() {
+    public String getThisIP()
+    {
         String returnString = "Cannot get this IP";
 
-        try {
+        try
+        {
             returnString = InetAddress.getLocalHost().getHostAddress();
-        } catch (java.net.UnknownHostException e) {
+        } catch (java.net.UnknownHostException e)
+        {
             Logger.println("Cannot get this IP", Logger.LogLevel.ERROR);
             e.printStackTrace();
         }
@@ -109,9 +138,11 @@ public class UDPHandler implements Runnable {
 
     /**
      * Returns the port that the roboRIO is receiving messages on
+     *
      * @return The port that the roboRIO is receiving messages on
      */
-    public int getThisPort() {
+    public int getThisPort()
+    {
         return receivePort;
     }
 

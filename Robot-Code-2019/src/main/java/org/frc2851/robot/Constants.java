@@ -76,7 +76,7 @@ public class Constants
     public final Button.ButtonID dt_curvatureToggle = Button.ButtonID.RIGHT_BUMPER;
     public final Button.ButtonID dt_gearToggle = Button.ButtonID.LEFT_BUMPER;
 
-    public final Button.ButtonID dt_enableVision = Button.ButtonID.D_RIGHT;
+    public final Button.ButtonID dt_enableVision = Button.ButtonID.LEFT_TRIGGER;
 
     // Elevator - Operator Controller
     public final Button.ButtonID el_playerStation = Button.ButtonID.D_UP;
