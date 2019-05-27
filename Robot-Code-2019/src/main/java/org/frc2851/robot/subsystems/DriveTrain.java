@@ -118,7 +118,7 @@ public class DriveTrain extends Subsystem
         }
 //        mLeftMotionPID = new PID(0, 0, 0, 0);
 
-        mLeftRawPID = new PID(0/*.05*/, 0, 0, 0.1);
+        mLeftRawPID = new PID(.0001, 0, 0, 0);
         mRightRawPID = mLeftRawPID;
 
         TalonSRXFactory.configurePIDF(mLeftMaster, mMotionSlotAux, mLeftRawPID);
@@ -218,6 +218,12 @@ public class DriveTrain extends Subsystem
                 reset();
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, mMotionSlotPrimary, mConstants.talonTimeout);
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, mMotionSlotAux, mConstants.talonTimeout);
+
+                mRightMaster.configRemoteFeedbackFilter(mLeftMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor, mConstants.auxPidOrdinal, mConstants.talonTimeout);
+                mRightMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.RemoteSensor1, mConstants.talonTimeout);
+                mRightMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.CTRE_MagEncoder_Relative, mConstants.talonTimeout);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, mConstants.dt_encTurnPidSlot, mConstants.talonTimeout);
+
                 mRightMaster.setSensorPhase(true);
                 return true;
             }
@@ -260,14 +266,15 @@ public class DriveTrain extends Subsystem
                                 // angle (rads) * radius of wheelbase * ticks per inch (ticks per rotation / circumference of wheel (pi * diameter))
                                 counts = (int) (((Math.toRadians(angleOfError) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
 
+                                mRightMaster.selectProfileSlot(1, 1);//mConstants.auxPidOrdinal, mConstants.dt_encTurnPidSlot);
+
                                 UDPHandler.getInstance().clearMessage();
                             }
-
                             firstProcessing = false;
                         }
 
                         if (rotation != 0
-                                || Math.abs(mRightMaster.getSelectedSensorPosition() - mLeftMaster.getSelectedSensorPosition()) >= Math.abs(2 * counts))
+                                )//|| Math.abs(mRightMaster.getSelectedSensorPosition() - mLeftMaster.getSelectedSensorPosition()) >= Math.abs(2 * counts))
                         {
                             firstProcessing = true;
                             stopVision = true;
@@ -277,6 +284,10 @@ public class DriveTrain extends Subsystem
 
                         if (counts != 0)
                         {
+                            mRightMaster.set(ControlMode.PercentOutput, throttle, DemandType.AuxPID, counts);
+                            mLeftMaster.follow(mRightMaster, FollowerType.AuxOutput1);
+
+                            /*
                             if (angleOfError > 0)
                             {
                                 rotation = 0.4;
@@ -284,9 +295,12 @@ public class DriveTrain extends Subsystem
                             {
                                 rotation = -0.4;
                             }
+                             */
                         }
+                    } else
+                    {
+                        arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                     }
-                    arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                 }
             }
 

@@ -154,5 +154,7 @@ public class Constants
     /************ Roller Claw ************/
     public final boolean rc_useLimit = false;
 
+    public final int primaryPidOrdinal = 0;
+    public final int auxPidOrdinal = 1;
     public final int talonTimeout = 20;
 }
