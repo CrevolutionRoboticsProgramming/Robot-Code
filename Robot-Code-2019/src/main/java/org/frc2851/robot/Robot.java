@@ -21,6 +21,8 @@ public class Robot extends CrevoBot
 
         UDPHandler.getInstance().start();
 
+        UDPHandler.getInstance().start();
+
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
         addSubsystem(Hatcher.getInstance());

@@ -18,14 +18,7 @@ import java.util.ArrayList;
 
 public class SwerveDrive extends Subsystem
 {
-    private enum DriveControlMode
-    {
-        BASIC,
-        FIELD_CENTRIC
-    }
-
     private static SwerveDrive mInstance = new SwerveDrive();
-    private DriveControlMode mDriveControlMode = DriveControlMode.FIELD_CENTRIC;
     private WPI_TalonSRX mTopLeftDrive, mTopRightDrive, mBottomLeftDrive, mBottomRightDrive,
         mTopLeftSwivel, mTopRightSwivel, mBottomLeftSwivel, mBottomRightSwivel;
     private ArrayList<WPI_TalonSRX> mDriveMotors = new ArrayList<>(), mSwivelMotors = new ArrayList<>();
@@ -97,8 +90,14 @@ public class SwerveDrive extends Subsystem
         return new Command()
         {
             Vector2d robotCenter;
+            
+            // Yes, I'm that lazy. All of these values can be stored as individual variables, but I didn't feel like it
             ArrayList<Vector2d> swerveMovementVectors;
             double[] perpendicularAngles = new double[4];
+            int[] driveMultipliers = new int[4];
+            
+            // This actually has to be an array so it can be passed into getYawPitchRoll() later
+            double[] ypr = new double[3];
 
             @Override
             public String getName()
@@ -115,18 +114,32 @@ public class SwerveDrive extends Subsystem
             @Override
             public boolean init()
             {
+                reset();
+
                 robotCenter = new Vector2d(mConstants.dt_width / 2, mConstants.dt_length / 2);
 
+                // Calculates the angles each wheel would have to face to be perpendicular to the center of the robot
+                // Taking the tangent of the difference between the wheel's position and the robot's center's y-value and that of its x-value
+                // gives us the wheel's angle in relation to the center of the robot. Subtracting 90 degrees (or PI/2 radians) gives us the
+                // perpendicular angle. We use this later to compute rotation vectors
+                // atan2 takes into account the quadrant of the angle, unlike atan
                 perpendicularAngles[0] = Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_topLeftPosition).y, Vector2d.sub(robotCenter, mConstants.dt_topLeftPosition).x) - (Math.PI / 2);
                 perpendicularAngles[1] = Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_topRightPosition).y, Vector2d.sub(robotCenter, mConstants.dt_topRightPosition).x) - (Math.PI / 2);
                 perpendicularAngles[2] = Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_bottomLeftPosition).y, Vector2d.sub(robotCenter, mConstants.dt_bottomLeftPosition).x) - (Math.PI / 2);
                 perpendicularAngles[3] = Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_bottomRightPosition).y, Vector2d.sub(robotCenter, mConstants.dt_bottomRightPosition).x) - (Math.PI / 2);
 
+                // Makes sure all values we pull exist
+                for (int i = 0; i < 4; ++i)
+                {
+                    driveMultipliers[i] = 0;
+                }
+
                 for (WPI_TalonSRX talon : mSwivelMotors)
                 {
                     talon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 }
-                return false;
+                
+                return true;
             }
 
             @Override
@@ -136,10 +149,19 @@ public class SwerveDrive extends Subsystem
                 Vector2d movement = new Vector2d(mController.get(Axis.AxisID.LEFT_X), mController.get(Axis.AxisID.LEFT_Y));
                 double rotationMagnitude = mController.get(Axis.AxisID.RIGHT_X);
 
-                swerveMovementVectors.add(Vector2d.add(movement, new Vector2d((float) (rotationMagnitude * Math.cos(perpendicularAngles[0])), (float) (rotationMagnitude * Math.sin(perpendicularAngles[0])))));
-                swerveMovementVectors.add(Vector2d.add(movement, new Vector2d((float) (rotationMagnitude * Math.cos(perpendicularAngles[1])), (float) (rotationMagnitude * Math.sin(perpendicularAngles[1])))));
-                swerveMovementVectors.add(Vector2d.add(movement, new Vector2d((float) (rotationMagnitude * Math.cos(perpendicularAngles[2])), (float) (rotationMagnitude * Math.sin(perpendicularAngles[2])))));
-                swerveMovementVectors.add(Vector2d.add(movement, new Vector2d((float) (rotationMagnitude * Math.cos(perpendicularAngles[3])), (float) (rotationMagnitude * Math.sin(perpendicularAngles[3])))));
+                /*
+                In these lines we:
+                1. Change the signs of the vector representing movement to accommodate its orientation (if it made backwards forwards to save time rotating)
+                2. Create a new vector with:
+                    a. The x-value as the x-component of the rotation vector
+                    b. The y-value as the y-component of the rotation vector
+                        i. This is where we use the perpendicular angle of the wheel; that's what rotates the magnitude and makes it a vector
+                3. Add the vectors to get the total vector representing our final movement
+                 */
+                swerveMovementVectors.add(Vector2d.add(new Vector2d(driveMultipliers[0] * movement.x, driveMultipliers[0] * movement.y), new Vector2d((rotationMagnitude * Math.cos(perpendicularAngles[0])), (rotationMagnitude * Math.sin(perpendicularAngles[0])))));
+                swerveMovementVectors.add(Vector2d.add(new Vector2d(driveMultipliers[1] * movement.x, driveMultipliers[1] * movement.y), new Vector2d((rotationMagnitude * Math.cos(perpendicularAngles[1])), (rotationMagnitude * Math.sin(perpendicularAngles[1])))));
+                swerveMovementVectors.add(Vector2d.add(new Vector2d(driveMultipliers[2] * movement.x, driveMultipliers[2] * movement.y), new Vector2d((rotationMagnitude * Math.cos(perpendicularAngles[2])), (rotationMagnitude * Math.sin(perpendicularAngles[2])))));
+                swerveMovementVectors.add(Vector2d.add(new Vector2d(driveMultipliers[3] * movement.x, driveMultipliers[3] * movement.y), new Vector2d((rotationMagnitude * Math.cos(perpendicularAngles[3])), (rotationMagnitude * Math.sin(perpendicularAngles[3])))));
 
                 double largestMagnitude = 1;
                 for (Vector2d vector : swerveMovementVectors)
@@ -156,36 +178,94 @@ public class SwerveDrive extends Subsystem
 
                     if(largest)
                     {
-                        largestMagnitude = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+                        largestMagnitude = vector.magnitude();
+                        break;
                     }
                 }
 
-                double multiplier = largestMagnitude > 1 ? 1 / largestMagnitude : largestMagnitude;
+                // If the largest magnitude is greater than one (which we can't use as a magnitude), set the multiplier to reduce
+                // the magnitude of all the vectors by the fraction it takes to reduce the largest magnitude to one
+                double multiplier = largestMagnitude > 1 ? 1 / largestMagnitude : 1;
 
                 for (int i = 0; i < swerveMovementVectors.size(); ++i)
                 {
-                    swerveMovementVectors.set(i, new Vector2d((float) (swerveMovementVectors.get(i).x * multiplier), (float) (swerveMovementVectors.get(i).y * multiplier)));
+                    swerveMovementVectors.set(i, new Vector2d((swerveMovementVectors.get(i).x * multiplier), (swerveMovementVectors.get(i).y * multiplier)));
                 }
 
-                turnToAngle(mTopLeftSwivel, Math.atan2(swerveMovementVectors.get(0).y, swerveMovementVectors.get(0).x) * 180 / Math.PI);
-                turnToAngle(mTopRightSwivel, Math.atan2(swerveMovementVectors.get(1).y, swerveMovementVectors.get(1).x) * 180 / Math.PI);
-                turnToAngle(mBottomLeftSwivel, Math.atan2(swerveMovementVectors.get(2).y, swerveMovementVectors.get(2).x) * 180 / Math.PI);
-                turnToAngle(mBottomRightSwivel, Math.atan2(swerveMovementVectors.get(3).y, swerveMovementVectors.get(3).x) * 180 / Math.PI);
+                // Converts the angle to degrees for easier understanding. All the other angles were in radians because the Math trig functions use rads
+                turnToAngle(mTopLeftSwivel, Math.atan2(swerveMovementVectors.get(0).y, swerveMovementVectors.get(0).x) * 180 / Math.PI, 0);
+                turnToAngle(mTopRightSwivel, Math.atan2(swerveMovementVectors.get(1).y, swerveMovementVectors.get(1).x) * 180 / Math.PI, 1);
+                turnToAngle(mBottomLeftSwivel, Math.atan2(swerveMovementVectors.get(2).y, swerveMovementVectors.get(2).x) * 180 / Math.PI, 2);
+                turnToAngle(mBottomRightSwivel, Math.atan2(swerveMovementVectors.get(3).y, swerveMovementVectors.get(3).x) * 180 / Math.PI, 3);
             }
 
             @Override
             public void stop()
             {
+                reset();
+            }
 
+            public void turnToAngle(WPI_TalonSRX talon, double angle, int index)
+            {
+                // This gives us the counts of the swivel as if rotating it 360 degrees looped its angle back to 0
+                double rotationsCompleted = talon.getSelectedSensorPosition(0) % mConstants.dt_countsPerSwerveRotation;
+                double absoluteCounts = (Math.abs(talon.getSelectedSensorPosition(0)) - (rotationsCompleted * mConstants.dt_countsPerSwerveRotation)) / mConstants.dt_countsPerSwerveRotation * 360;
+
+                double counts = angle / 360 * mConstants.dt_countsPerSwerveRotation;
+
+                // Puts negative counts in positive terms
+                if (absoluteCounts < 0)
+                {
+                    absoluteCounts = mConstants.dt_countsPerSwerveRotation + absoluteCounts;
+                }
+
+                // We had to put the sensor position through Math.abs before, so this fixes absoluteCounts
+                if (talon.getSelectedSensorPosition(0) < 0)
+                {
+                    absoluteCounts = mConstants.dt_countsPerSwerveRotation - absoluteCounts;
+                }
+
+                // This enables field-centric driving. It adds the rotation of the robot to the total counts so it knows where to turn
+                mPigeon.getYawPitchRoll(ypr);
+                absoluteCounts += ypr[0] * mConstants.dt_countsPerSwerveRotation;
+
+                // If it's faster to turn to the angle opposite of the angle we were given and drive backwards, do that thing
+                if (counts - absoluteCounts > 180)
+                {
+                    counts = mConstants.dt_countsPerSwerveRotation - counts;
+                    driveMultipliers[index] = -1;
+                } else
+                {
+                    driveMultipliers[index] = 1;
+                }
+
+                double difference = counts - absoluteCounts;
+
+                talon.set(ControlMode.Position, talon.getSelectedSensorPosition(0) + difference);
             }
         };
     }
 
-    public void turnToAngle(WPI_TalonSRX talon, double angle)
+    private void reset()
     {
-        double rotationsCompleted = talon.getSelectedSensorPosition(0) % mConstants.dt_countsPerSwerveRotation;
-        double currentAngle = (talon.getSelectedSensorPosition(0) - (rotationsCompleted * mConstants.dt_countsPerSwerveRotation)) / mConstants.dt_countsPerSwerveRotation * 360;
-        double counts = angle / 360 * mConstants.dt_countsPerSwerveRotation;
-        talon.set(ControlMode.Position, talon.getSelectedSensorPosition(0) + counts);
+        for(WPI_TalonSRX talon : mDriveMotors)
+        {
+            talon.set(ControlMode.PercentOutput, 0);
+        }
+        for(WPI_TalonSRX talon : mSwivelMotors)
+        {
+            talon.set(ControlMode.PercentOutput, 0);
+        }
+
+        resetSensors();
+    }
+
+    private void resetSensors()
+    {
+        for (WPI_TalonSRX talon : mSwivelMotors)
+        {
+            talon.setSelectedSensorPosition(0);
+        }
+        mPigeon.setYaw(0);
     }
 }
