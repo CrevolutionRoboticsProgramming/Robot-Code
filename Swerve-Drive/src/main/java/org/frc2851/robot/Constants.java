@@ -34,5 +34,7 @@ public class Constants
 
     public final double dt_countsPerSwerveRotation = 4096;
 
+    public final Vector2d robotCenter = new Vector2d(dt_width / 2, dt_length / 2);
+
     public final int talonTimeout = 20;
 }

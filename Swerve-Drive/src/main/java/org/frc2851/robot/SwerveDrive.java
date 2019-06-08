@@ -65,21 +65,10 @@ public class SwerveDrive extends Subsystem
             mBottomLeftDrive = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_bottomLeftDrive);
             mBottomRightDrive = TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_bottomRightDrive);
 
-            /* Calculates the angles each wheel would have to face to be perpendicular to the center of the robot
-            Taking the tangent of the difference between the wheel's position and the robot's center's y-value and that of its x-value
-            gives us the wheel's angle in relation to the center of the robot. Subtracting 90 degrees (or PI/2 radians) gives us the
-            perpendicular angle. We use this later to compute rotation vectors
-            atan2 takes into account the quadrant of the angle, unlike atan
-            */
-            Vector2d robotCenter = new Vector2d(mConstants.dt_width / 2, mConstants.dt_length / 2);
-            mTopLeftSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_topLeftSwivel),
-                    Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_topLeftPosition).y, Vector2d.sub(robotCenter, mConstants.dt_topLeftPosition).x) - (Math.PI / 2));
-            mTopRightSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_topRightSwivel),
-                    Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_topRightPosition).y, Vector2d.sub(robotCenter, mConstants.dt_topRightPosition).x) - (Math.PI / 2));
-            mBottomLeftSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_bottomLeftSwivel),
-                    Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_bottomLeftPosition).y, Vector2d.sub(robotCenter, mConstants.dt_bottomLeftPosition).x) - (Math.PI / 2));
-            mBottomRightSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_bottomRightSwivel),
-                    Math.atan2(Vector2d.sub(robotCenter, mConstants.dt_bottomRightPosition).y, Vector2d.sub(robotCenter, mConstants.dt_bottomRightPosition).x) - (Math.PI / 2));
+            mTopLeftSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_topLeftSwivel), mConstants.dt_topLeftPosition);
+            mTopRightSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_topRightSwivel), mConstants.dt_topRightPosition);
+            mBottomLeftSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_bottomLeftSwivel), mConstants.dt_bottomLeftPosition);
+            mBottomRightSwivel = new SwivelWheel(TalonSRXFactory.createDefaultMasterWPI_TalonSRX(mConstants.dt_bottomRightSwivel), mConstants.dt_bottomRightPosition);
 
             for (SwivelWheel wheel : mSwivelWheels)
             {
@@ -203,7 +192,7 @@ public class SwerveDrive extends Subsystem
 
                 // This enables field-centric driving. It adds the rotation of the robot to the total counts so it knows where to turn
                 mPigeon.getYawPitchRoll(ypr);
-                counts += Math.abs((ypr[0] - ((int) (ypr[0] / 360)) * 360)) / 360 * mConstants.dt_countsPerSwerveRotation;
+                counts += (ypr[0] - ((int) (ypr[0] / 360) * 360)) / 360 * mConstants.dt_countsPerSwerveRotation;
                 // TODO: What's the resolution of a pigeon? Find it and replace 360
 
                 // This gives us the counts of the swivel on a scale from 0 to the total counts per rotation
@@ -214,22 +203,14 @@ public class SwerveDrive extends Subsystem
                 double target = angle / 360 * mConstants.dt_countsPerSwerveRotation;
 
                 // Puts negative counts in positive terms
-                if (target < 0)
-                {
-                    target = mConstants.dt_countsPerSwerveRotation + target;
-                }
+                if (target < 0) target += mConstants.dt_countsPerSwerveRotation;
 
                 // Puts negative counts in positive terms
-                if (counts < 0)
-                {
-                    counts = mConstants.dt_countsPerSwerveRotation + counts;
-                }
+                if (counts < 0) counts += mConstants.dt_countsPerSwerveRotation;
 
                 // We had to put the sensor position through Math.abs before, so this fixes absoluteCounts
                 if (wheel.getTalon().getSelectedSensorPosition(0) < 0)
-                {
                     counts = mConstants.dt_countsPerSwerveRotation - counts;
-                }
 
                 double oppositeAngle = target - (mConstants.dt_countsPerSwerveRotation / 2);
                 if (oppositeAngle < 0) oppositeAngle += mConstants.dt_countsPerSwerveRotation;
@@ -318,30 +299,40 @@ class SwivelWheel
     private double mDriveMultiplier = 1.0;
     private boolean mStopped = false;
     private boolean mLastStopped = false;
-    private double mLastTarget = 0;
+    private double mLastTarget = 0.0;
     private double mPerpendicularAngle;
 
-    public SwivelWheel(WPI_TalonSRX talon, double perpendicularAngle)
+    private Constants mConstants;
+
+    public SwivelWheel(WPI_TalonSRX talon, Vector2d wheelPosition)
     {
+        mConstants = Constants.getInstance();
         mTalon = talon;
-        mPerpendicularAngle = perpendicularAngle;
+
+        /* Calculates the angle the wheel would have to face to be perpendicular to the center of the robot
+            Taking the tangent of the difference between the wheel's position and the robot's center's y-value and that of its x-value
+            gives us the wheel's angle in relation to the center of the robot. Subtracting 90 degrees (or PI/2 radians) gives us the
+            perpendicular angle. We use this later to compute rotation vectors.
+            atan2 takes into account the quadrant of the angle, unlike atan
+            */
+        mPerpendicularAngle = Math.atan2(Vector2d.sub(mConstants.robotCenter, wheelPosition).y, Vector2d.sub(mConstants.robotCenter, wheelPosition).x) - (Math.PI / 2);
     }
-    
+
     public WPI_TalonSRX getTalon()
     {
         return mTalon;
     }
-    
+
     public double getPerpendicularAngle()
     {
         return mPerpendicularAngle;
     }
-    
+
     public double getDriveMultiplier()
     {
         return mDriveMultiplier;
     }
-    
+
     public void setDriveMultiplier(double driveMultiplier)
     {
         mDriveMultiplier = driveMultiplier;
