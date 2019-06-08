@@ -174,10 +174,11 @@ public class SwerveDrive extends Subsystem
                 }
 
                 // Converts the angle to degrees for easier understanding. All the other angles were in radians because the Math trig functions use rads
-                turnToAngle(mTopLeftSwivel, Math.atan2(swerveMovementVectors.get(0).y, swerveMovementVectors.get(0).x) * 180 / Math.PI - 90);
-                turnToAngle(mTopRightSwivel, Math.atan2(swerveMovementVectors.get(1).y, swerveMovementVectors.get(1).x) * 180 / Math.PI - 90);
-                turnToAngle(mBottomLeftSwivel, Math.atan2(swerveMovementVectors.get(2).y, swerveMovementVectors.get(2).x) * 180 / Math.PI - 90);
-                turnToAngle(mBottomRightSwivel, Math.atan2(swerveMovementVectors.get(3).y, swerveMovementVectors.get(3).x) * 180 / Math.PI - 90);
+                for (int i = 0; i < mDriveMotors.size(); ++i)
+                {
+                    turnToAngle(mSwivelWheels.get(i), Math.atan2(swerveMovementVectors.get(i).y, swerveMovementVectors.get(i).x) * 180 / Math.PI - 90);
+                    mDriveMotors.get(i).set(swerveMovementVectors.get(i).magnitude() * mTopLeftSwivel.getDriveMultiplier());
+                }
             }
 
             @Override
