@@ -135,8 +135,15 @@ public class SwerveDrive extends Subsystem
 
                 // If the largest magnitude is greater than one (which we can't use as a magnitude), set the multiplier to reduce
                 // the magnitude of all the vectors by the fraction it takes to reduce the largest magnitude to one
-                double largestMagnitude = Math.max(Math.max(swerveMovementVectors.get(0).magnitude(), swerveMovementVectors.get(1).magnitude()), Math.max(swerveMovementVectors.get(2).magnitude(), swerveMovementVectors.get(3).magnitude()));
-                if (largestMagnitude > 1.0) {
+                double largestMagnitude = 0;
+                for (Vector2D vector : swerveMovementVectors)
+                {
+                    if (vector.magnitude() > largestMagnitude)
+                        largestMagnitude = vector.magnitude();
+                }
+
+                if (largestMagnitude > 1.0)
+                {
                     double multiplier = 1 / largestMagnitude;
                     for (int i = 0; i < swerveMovementVectors.size(); ++i)
                         swerveMovementVectors.set(i, new Vector2D((swerveMovementVectors.get(i).x * multiplier), (swerveMovementVectors.get(i).y * multiplier)));
