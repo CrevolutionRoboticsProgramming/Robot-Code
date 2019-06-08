@@ -144,33 +144,13 @@ public class SwerveDrive extends Subsystem
                             new Vector2d((wheel.getDriveMultiplier() * rotationMagnitude * Math.cos(wheel.getPerpendicularAngle())), (wheel.getDriveMultiplier() * rotationMagnitude * Math.sin(wheel.getPerpendicularAngle())))));
                 }
 
-                double largestMagnitude = 1;
-                for (Vector2d vector : swerveMovementVectors)
-                {
-                    boolean largest = true;
-                    for (Vector2d comparisonVector : swerveMovementVectors)
-                    {
-                        if (vector.magnitude() < comparisonVector.magnitude())
-                        {
-                            largest = false;
-                            break;
-                        }
-                    }
-
-                    if (largest)
-                    {
-                        largestMagnitude = vector.magnitude();
-                        break;
-                    }
-                }
-
                 // If the largest magnitude is greater than one (which we can't use as a magnitude), set the multiplier to reduce
                 // the magnitude of all the vectors by the fraction it takes to reduce the largest magnitude to one
-                double multiplier = largestMagnitude > 1 ? 1 / largestMagnitude : 1;
-
-                for (int i = 0; i < swerveMovementVectors.size(); ++i)
-                {
-                    swerveMovementVectors.set(i, new Vector2d((swerveMovementVectors.get(i).x * multiplier), (swerveMovementVectors.get(i).y * multiplier)));
+                double largestMagnitude = Math.max(Math.max(swerveMovementVectors.get(0).magnitude(), swerveMovementVectors.get(1).magnitude()), Math.max(swerveMovementVectors.get(2).magnitude(), swerveMovementVectors.get(3).magnitude()));
+                if (largestMagnitude > 1.0) {
+                    double multiplier = 1 / largestMagnitude;
+                    for (int i = 0; i < swerveMovementVectors.size(); ++i)
+                        swerveMovementVectors.set(i, new Vector2d((swerveMovementVectors.get(i).x * multiplier), (swerveMovementVectors.get(i).y * multiplier)));
                 }
 
                 // Converts the angle to degrees for easier understanding. All the other angles were in radians because the Math trig functions use rads
