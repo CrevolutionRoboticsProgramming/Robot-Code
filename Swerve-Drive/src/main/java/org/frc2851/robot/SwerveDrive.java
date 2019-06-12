@@ -114,7 +114,7 @@ public class SwerveDrive extends Subsystem
             @Override
             public void update()
             {
-                swerveMovementVectors = new ArrayList<>();
+                swerveMovementVectors.clear();
                 Vector2D movement = new Vector2D(mController.get(Axis.AxisID.LEFT_X), mController.get(Axis.AxisID.LEFT_Y));
                 double rotationMagnitude = mController.get(Axis.AxisID.RIGHT_X);
 
