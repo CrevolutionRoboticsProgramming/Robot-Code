@@ -855,7 +855,7 @@ public class DriveTrain extends Subsystem
 
         DriveGear(DoubleSolenoid.Value val)
         {
-            this.val = val;
+            val = val;
         }
     }
 
