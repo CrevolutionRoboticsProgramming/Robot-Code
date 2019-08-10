@@ -8,51 +8,36 @@ import java.net.InetSocketAddress;
 
 public class UDPHandler implements Runnable
 {
+    private String mHostIP;
+    private int mSendPort;
+    private int mReceivePort;
+    private int mBufferSize = 1024;
+    private byte[] mBuffer = new byte[mBufferSize];
+    private String mMessage = "";
 
-    private int sendPort = 1183;
-    private int receivePort = 1182;
-    private int bufferSize = 8;
-    private byte[] buffer = new byte[bufferSize];
-    private String message = "";
+    private DatagramSocket mServerSocket;
+    private DatagramSocket mSendingSocket;
 
-    // Static IP of the offboard processor
-    private String sendIP = "10.28.51.18";
-
-    private DatagramSocket serverSocket;
-    private DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
-    private DatagramSocket sendingSocket;
-
-    private static UDPHandler _instance = new UDPHandler();
-    private static Thread _thread = new Thread(_instance);
-
-    /**
-     * Private constructor ensures that UDPHandler cannot be instantiated outside of the UDPHandler class
-     */
-    private UDPHandler()
+    public UDPHandler(String hostIP, int sendPort, int receivePort)
     {
-    }
+        mHostIP = hostIP;
+        mSendPort = sendPort;
+        mReceivePort = receivePort;
 
-    /**
-     * Starts the processes controlling communication with the Jetson
-     */
-    public void start()
-    {
         try
         {
-            serverSocket = new DatagramSocket(new InetSocketAddress(receivePort));
-            sendingSocket = new DatagramSocket();
+            mServerSocket = new DatagramSocket(new InetSocketAddress(mReceivePort));
+            mSendingSocket = new DatagramSocket();
         } catch (java.net.SocketException e)
         {
-            Logger.println("Cannot instantiate server socket", Logger.LogLevel.ERROR);
+            System.out.println("Failed to instantiate server socket");
             e.printStackTrace();
         }
 
-        _thread.start();
+        Thread mThread = new Thread(this);
+        mThread.start();
     }
 
-    /**
-     * Receives messages on a separate thread
-     */
     @Override
     public void run()
     {
@@ -60,66 +45,61 @@ public class UDPHandler implements Runnable
         {
             try
             {
-                serverSocket.receive(packet);
-                message = new String(packet.getData(), 0, packet.getLength());
+                DatagramPacket mPacket = new DatagramPacket(mBuffer, mBufferSize);
+                mServerSocket.receive(mPacket);
+                mMessage = new String(mPacket.getData(), 0, mPacket.getLength());
             } catch (java.io.IOException e)
             {
-                Logger.println("Cannot receive message", Logger.LogLevel.ERROR);
+                System.out.println("Cannot receive message");
                 e.printStackTrace();
             }
         }
     }
 
-    /**
-     * Sends the specified message to the offboard processor
-     *
-     * @param message Message to send to the offboard processor
-     */
-    public void send(String message)
+    // Timeout is expressed in milliseconds; if 0, no timeout
+    public void send(String message, int timeout)
     {
         try
         {
-            sendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(sendIP), sendPort));
+            mSendingSocket.send(new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(mHostIP), mSendPort));
         } catch (IOException e)
         {
-            Logger.println("Cannot send message", Logger.LogLevel.ERROR);
+            System.out.println("Failed to send message");
             e.printStackTrace();
+        }
+
+        if (timeout > 0)
+        {
+            long begin = System.currentTimeMillis();
+            boolean received = false;
+
+            while (System.currentTimeMillis() - begin < timeout)
+            {
+                if (getMessage().equals("received"))
+                {
+                    received = true;
+                    clearMessage();
+                    break;
+                }
+            }
+
+            if (!received)
+            {
+                System.out.println("Timed out waiting for target to send confirmation of reception");
+            }
         }
     }
 
-    /**
-     * Returns the sole instance of the UDPHandler class
-     *
-     * @return The instance of the UDPHandler class
-     */
-    public static UDPHandler getInstance()
-    {
-        return _instance;
-    }
-
-    /**
-     * Returns the message previously received
-     *
-     * @return The message previously received
-     */
     public String getMessage()
     {
-        return message;
+        return mMessage;
     }
 
-    /**
-     * Clears the stored message
-     */
     public void clearMessage()
     {
-        message = "";
+        mMessage = "";
     }
 
-    /**
-     * Returns the IP of the roboRIO for debugging purposes
-     *
-     * @return The IP of the roboRIO
-     */
     public String getThisIP()
     {
         String returnString = "Cannot get this IP";
@@ -129,21 +109,15 @@ public class UDPHandler implements Runnable
             returnString = InetAddress.getLocalHost().getHostAddress();
         } catch (java.net.UnknownHostException e)
         {
-            Logger.println("Cannot get this IP", Logger.LogLevel.ERROR);
+            System.out.println("Cannot get this IP");
             e.printStackTrace();
         }
 
         return returnString;
     }
 
-    /**
-     * Returns the port that the roboRIO is receiving messages on
-     *
-     * @return The port that the roboRIO is receiving messages on
-     */
     public int getThisPort()
     {
-        return receivePort;
+        return mReceivePort;
     }
-
 }
