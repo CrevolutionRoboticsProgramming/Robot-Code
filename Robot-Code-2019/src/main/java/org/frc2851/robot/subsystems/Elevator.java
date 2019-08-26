@@ -172,7 +172,6 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-//                    System.out.println("Elevator Enc: " + mTalon.getSelectedSensorPosition(0));
                     double output = -applyDeadband(mController.get(mConst.el_rawControl), 0.15);
                     getDesiredPosition();
                     boolean updatePos = mCurrentPosition != desiredPosition;

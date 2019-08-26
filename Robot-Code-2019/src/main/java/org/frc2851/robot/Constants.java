@@ -6,6 +6,7 @@ import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.logging.Logger;
 import org.frc2851.crevolib.motion.PID;
+import org.frc2851.crevolib.utilities.UDPHandler;
 import org.frc2851.robot.subsystems.DriveTrain;
 
 /**
@@ -34,6 +35,7 @@ public class Constants
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);
+    public static UDPHandler udpHandler = new UDPHandler("10.28.51.18", 1184, 1182);
 //    public static Logger logger = new Logger("/home/lvuser/logging/events/" + );
 
     /************ Motor Controllers and Others ************/
@@ -127,6 +129,8 @@ public class Constants
     public final int dt_motionMagicMaxAcceleration = 15000;
     public final int dt_motionMagicMaxVelocity = 3000;
     public final int dt_countsPerRotation = 23000;
+    public final int dt_differenceInCountsPerRobotRotation = 50000;
+    public final int dt_turnTravelUnitsPerRotation = 3600;
 
     /************ DriveTrain ************/
     public final double dt_peakOut = 1;

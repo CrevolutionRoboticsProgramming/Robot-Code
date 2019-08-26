@@ -90,6 +90,7 @@ public class Climber extends Subsystem
             mPogoMaster = new VictorSPX(mConst.cl_pogoMaster);
 
             mGorillaMaster.setNeutralMode(NeutralMode.Brake);
+            mGorillaMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConst.talonTimeout);
 
             TalonSRXFactory.runTalonConfig(
                     () -> mPogoMaster.configNominalOutputForward(0),

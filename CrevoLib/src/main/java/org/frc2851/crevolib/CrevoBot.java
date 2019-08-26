@@ -58,7 +58,8 @@ public class CrevoBot extends TimedRobot
 
     protected CrevoBot()
     {
-        mBadLog = BadLog.init("/home/lvuser/log.bag");
+        if (mBadLogEnabled)
+            mBadLog = BadLog.init("/home/lvuser/log.bag");
     }
 
     @Override
@@ -86,7 +87,8 @@ public class CrevoBot extends TimedRobot
 
         mSubManager.start();
 
-        mBadLog.finishInitialization();
+        if (mBadLogEnabled)
+            mBadLog.finishInitialization();
     }
 
     @Override

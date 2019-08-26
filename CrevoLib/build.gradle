@@ -10,7 +10,7 @@ dependencies {
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
     nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
     testCompile 'junit:junit:4.12'
-    // TODO: Replace my github with original once jitpack build passes
+// TODO: Replace my github with original once jitpack build passes
 //    compile "com.github.dominikWin:badlog:v0.1.0"
     compile "com.github.jmd613:Test:v0.1.0"
     compile "org.jdom:jdom2:2.0.6"

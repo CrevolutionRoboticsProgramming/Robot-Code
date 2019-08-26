@@ -7,6 +7,9 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.io.Axis;
@@ -16,11 +19,16 @@ import org.frc2851.crevolib.motion.MotionProfileExecutor;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
-import org.frc2851.crevolib.utilities.*;
+import org.frc2851.crevolib.utilities.CustomPreferences;
+import org.frc2851.crevolib.utilities.Logger;
+import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
+import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
 import java.util.ArrayList;
+
+// Left and right encoders are flipped on purpose; electrical did it wrong.
 
 /**
  * Represents the drivetrain subsystem
@@ -86,8 +94,6 @@ public class DriveTrain extends Subsystem
             mRightSlaveA = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_rightSlaveA, mRightMaster);
             mRightSlaveB = TalonSRXFactory.createPermanentSlaveWPI_TalonSRX(mConstants.dt_rightSlaveB, mRightMaster);
 
-            mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 0);
-
             leftMotors.add(mLeftMaster);
             leftMotors.add(mLeftSlaveA);
             leftMotors.add(mLeftSlaveB);
@@ -118,7 +124,7 @@ public class DriveTrain extends Subsystem
         }
 //        mLeftMotionPID = new PID(0, 0, 0, 0);
 
-        mLeftRawPID = new PID(0/*.05*/, 0, 0, 0.1);
+        mLeftRawPID = new PID(.05, 0, 0, 0);
         mRightRawPID = mLeftRawPID;
 
         TalonSRXFactory.configurePIDF(mLeftMaster, mMotionSlotAux, mLeftRawPID);
@@ -195,10 +201,12 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            boolean firstProcessing = false;
-            boolean stopVision = false;
-            double counts = 0;
-            double angleOfError = 0;
+            NetworkTable visionTable = NetworkTableInstance.getDefault().getTable("limelight");
+            NetworkTableEntry tx = visionTable.getEntry("tx");
+
+            int counts = 0;
+            int target = 0;
+            boolean firstVision = true;
 
             @Override
             public String getName()
@@ -216,9 +224,13 @@ public class DriveTrain extends Subsystem
             public boolean init()
             {
                 reset();
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, mMotionSlotPrimary, mConstants.talonTimeout);
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, mMotionSlotAux, mConstants.talonTimeout);
-                mRightMaster.setSensorPhase(true);
+
+                mLeftMaster.configRemoteFeedbackFilter(mConstants.cl_gorillaMaster, RemoteSensorSource.TalonSRX_SelectedSensor, 0, mConstants.talonTimeout);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, 0, mConstants.talonTimeout);
+                mRightMaster.configRemoteFeedbackFilter(mLeftMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor, 0, mConstants.talonTimeout);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
+                mLeftMaster.setSensorPhase(true);
+                mRightMaster.setSensorPhase(false);
                 return true;
             }
 
@@ -227,6 +239,8 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
+                    double horizontalAngleOfError = tx.getDouble(0.0);
+
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
                     double throttle = mController.get(Axis.AxisID.LEFT_Y);
                     double rotation = mController.get(Axis.AxisID.RIGHT_X);
@@ -238,54 +252,35 @@ public class DriveTrain extends Subsystem
                         mCurrentGear = requestedGear;
                     }
 
-                    if (!Constants.operator.get(mConstants.dt_enableVision))
-                    {
-                        firstProcessing = true;
-                        stopVision = false;
-                    }
+                    int rightEncoderCount = mRightMaster.getSelectedSensorPosition(0);
+                    int leftEncoderCount = mLeftMaster.getSelectedSensorPosition(0);
 
-                    if (Constants.operator.get(mConstants.dt_enableVision)
-                            && !stopVision)
+                    if (Constants.operator.get(mConstants.dt_enableVision) && horizontalAngleOfError != 0)
                     {
-                        if (firstProcessing)
+                        if (firstVision)
                         {
-                            if (!UDPHandler.getInstance().getMessage().equals(""))
-                            {
-                                reset();
-
-                                angleOfError = Double.parseDouble(UDPHandler.getInstance().getMessage());
-                                log("Received Angle of Error: " + angleOfError, Logger.LogLevel.DEBUG);
-
-                                //              v For arc length
-                                // angle (rads) * radius of wheelbase * ticks per inch (ticks per rotation / circumference of wheel (pi * diameter))
-                                counts = (int) (((Math.toRadians(angleOfError) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
-
-                                UDPHandler.getInstance().clearMessage();
-                            }
-
-                            firstProcessing = false;
+                            counts = (int) (((Math.toRadians(horizontalAngleOfError) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
+                            target = rightEncoderCount - leftEncoderCount + (2 * counts);
+                            firstVision = false;
                         }
 
-                        if (rotation != 0
-                                || Math.abs(mRightMaster.getSelectedSensorPosition() - mLeftMaster.getSelectedSensorPosition()) >= Math.abs(2 * counts))
-                        {
-                            firstProcessing = true;
-                            stopVision = true;
-                            angleOfError = 0;
-                            counts = 0;
-                        }
+                        rotation = 0;
 
-                        if (counts != 0)
+                        if (Math.abs(Math.abs(rightEncoderCount - leftEncoderCount) - target) > 5000)
                         {
-                            if (angleOfError > 0)
+                            if (horizontalAngleOfError > 0)
                             {
-                                rotation = 0.4;
-                            } else if (angleOfError < 0)
+                                rotation = 0.75;
+                            } else
                             {
-                                rotation = -0.4;
+                                rotation = -0.75;
                             }
                         }
+                    } else
+                    {
+                        firstVision = true;
                     }
+
                     arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                 }
             }
@@ -492,7 +487,6 @@ public class DriveTrain extends Subsystem
             //              v For arc length
             // angle (rads) * radius of wheelbase * ticks per inch (ticks per rotation / circumference of wheel (pi * diameter))
             int counts = (int) (((Math.toRadians(angle) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
-
             int targetPos = 0;
 
             @Override
@@ -504,18 +498,17 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean isFinished()
             {
-                return Math.abs(Math.abs(mLeftMaster.getSelectedSensorPosition(0)) - Math.abs(targetPos)) < 32;//mLeftMaster.getClosedLoopError(0) < 512;
+                return Math.abs(Math.abs(mRightMaster/*mLeftMaster*/.getSelectedSensorPosition(0)) - Math.abs(targetPos)) < 32;//mLeftMaster.getClosedLoopError(0) < 512;
             }
 
             @Override
             public boolean init()
             {
-                targetPos = mLeftMaster.getSelectedSensorPosition(0) + counts;
+                targetPos = mRightMaster/*mLeftMaster*/.getSelectedSensorPosition(0) + counts;
                 log("Target: " + targetPos, Logger.LogLevel.DEBUG);
-                TalonSRXFactory.configurePIDF(mLeftMaster, 0, mLeftRawPID);
-                TalonSRXFactory.configurePIDF(mRightMaster, 0, mRightRawPID);
-                mLeftMaster.set(ControlMode.Position, targetPos);
-                mLeftSlaveA.set(ControlMode.Follower, mLeftMaster.getDeviceID());
+                TalonSRXFactory.configurePIDF(mRightMaster/*mLeftMaster*/, 0, mLeftRawPID);
+                TalonSRXFactory.configurePIDF(mLeftMaster/*mRightMaster*/, 0, mRightRawPID);
+                mRightMaster/*mLeftMaster*/.set(ControlMode.Position, targetPos);
 
                 setNominalAndPeakOutputs(0, maxOut);
                 mControlMode = DriveTrainControlMode.CLOSED_LOOP;
@@ -525,8 +518,8 @@ public class DriveTrain extends Subsystem
             @Override
             public void update()
             {
-                mLeftMaster.set(ControlMode.Position, targetPos);
-                mRightMaster.set(ControlMode.PercentOutput, mLeftMaster.getMotorOutputPercent());
+                mRightMaster/*mLeftMaster*/.set(ControlMode.Position, targetPos);
+                mLeftMaster/*mRightMaster*/.set(ControlMode.PercentOutput, mRightMaster/*mLeftMaster*/.getMotorOutputPercent());
             }
 
             @Override
