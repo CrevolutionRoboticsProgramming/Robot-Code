@@ -122,7 +122,6 @@ public class DriveTrain extends Subsystem
             mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
-//        mLeftMotionPID = new PID(0, 0, 0, 0);
 
         mLeftRawPID = new PID(.05, 0, 0, 0);
         mRightRawPID = mLeftRawPID;
@@ -225,12 +224,21 @@ public class DriveTrain extends Subsystem
             {
                 reset();
 
-                mLeftMaster.configRemoteFeedbackFilter(mConstants.cl_gorillaMaster, RemoteSensorSource.TalonSRX_SelectedSensor, 0, mConstants.talonTimeout);
-                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0, 0, mConstants.talonTimeout);
+                mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
                 mRightMaster.configRemoteFeedbackFilter(mLeftMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor, 0, mConstants.talonTimeout);
                 mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
-                mLeftMaster.setSensorPhase(true);
-                mRightMaster.setSensorPhase(false);
+
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
+                mRightMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.RemoteSensor0, mConstants.talonTimeout);
+                mRightMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.CTRE_MagEncoder_Relative, mConstants.talonTimeout);
+                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, 1, mConstants.talonTimeout);
+
+                TalonSRXFactory.configurePIDF(mRightMaster, 1, mRightRawPID);
+                mRightMaster.selectProfileSlot(1, 1);
+                mRightMaster.configAuxPIDPolarity(false);
+
+                mLeftMaster.setSensorPhase(false);
+                mRightMaster.setSensorPhase(true);
                 return true;
             }
 
@@ -239,7 +247,7 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double horizontalAngleOfError = tx.getDouble(0.0);
+                    double horizontalAngleOfError = -90;//Double.parseDouble(Constants.udpHandler.getMessage());
 
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
                     double throttle = mController.get(Axis.AxisID.LEFT_Y);
@@ -252,36 +260,32 @@ public class DriveTrain extends Subsystem
                         mCurrentGear = requestedGear;
                     }
 
-                    int rightEncoderCount = mRightMaster.getSelectedSensorPosition(0);
-                    int leftEncoderCount = mLeftMaster.getSelectedSensorPosition(0);
+                    int difference = mRightMaster.getSelectedSensorPosition(1);
 
                     if (Constants.operator.get(mConstants.dt_enableVision) && horizontalAngleOfError != 0)
                     {
                         if (firstVision)
                         {
                             counts = (int) (((Math.toRadians(horizontalAngleOfError) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
-                            target = rightEncoderCount - leftEncoderCount + (2 * counts);
+                            target = difference + (2 * counts);
                             firstVision = false;
+
+                            System.out.println("Counts: " + counts);
+                            System.out.println("Left: " + mLeftMaster.getSelectedSensorPosition(0));
+                            System.out.println("Right: " + mRightMaster.getSelectedSensorPosition(0));
+                            System.out.println("Difference: " + mRightMaster.getSelectedSensorPosition(1));
+                            System.out.println("Horizontal Angle of Error: " + horizontalAngleOfError);
+                            System.out.println("Target: " + target);
+                            System.out.println("--------------------------------------------");
                         }
 
-                        rotation = 0;
-
-                        if (Math.abs(Math.abs(rightEncoderCount - leftEncoderCount) - target) > 5000)
-                        {
-                            if (horizontalAngleOfError > 0)
-                            {
-                                rotation = 0.75;
-                            } else
-                            {
-                                rotation = -0.75;
-                            }
-                        }
+                        mRightMaster.set(ControlMode.PercentOutput, throttle, DemandType.AuxPID, target);
+                        mLeftMaster.set(ControlMode.PercentOutput, mRightMaster.getMotorOutputPercent());
                     } else
                     {
+                        arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                         firstVision = true;
                     }
-
-                    arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                 }
             }
 

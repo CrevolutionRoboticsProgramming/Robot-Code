@@ -133,7 +133,7 @@ public class Constants
     public final int dt_turnTravelUnitsPerRotation = 3600;
 
     /************ DriveTrain ************/
-    public final double dt_peakOut = 1;
+    public final double dt_peakOut = 0.5;
     public final double dt_nominalOut = 0;
     public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
     public final double dt_turnMult = 0.9;
