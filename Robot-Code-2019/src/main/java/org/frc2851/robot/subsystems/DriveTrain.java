@@ -7,9 +7,6 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.io.Axis;
@@ -123,12 +120,6 @@ public class DriveTrain extends Subsystem
             mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
         }
 
-        mLeftRawPID = new PID(.05, 0, 0, 0);
-        mRightRawPID = mLeftRawPID;
-
-        TalonSRXFactory.configurePIDF(mLeftMaster, mMotionSlotAux, mLeftRawPID);
-        TalonSRXFactory.configurePIDF(mRightMaster, mMotionSlotAux, mRightRawPID);
-
         // Preferences
         if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
         if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
@@ -200,13 +191,6 @@ public class DriveTrain extends Subsystem
     {
         return new Command()
         {
-            NetworkTable visionTable = NetworkTableInstance.getDefault().getTable("limelight");
-            NetworkTableEntry tx = visionTable.getEntry("tx");
-
-            int counts = 0;
-            int target = 0;
-            boolean firstVision = true;
-
             @Override
             public String getName()
             {
@@ -225,20 +209,10 @@ public class DriveTrain extends Subsystem
                 reset();
 
                 mLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
-                mRightMaster.configRemoteFeedbackFilter(mLeftMaster.getDeviceID(), RemoteSensorSource.TalonSRX_SelectedSensor, 0, mConstants.talonTimeout);
                 mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
-
-                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, mConstants.talonTimeout);
-                mRightMaster.configSensorTerm(SensorTerm.Diff0, FeedbackDevice.RemoteSensor0, mConstants.talonTimeout);
-                mRightMaster.configSensorTerm(SensorTerm.Diff1, FeedbackDevice.CTRE_MagEncoder_Relative, mConstants.talonTimeout);
-                mRightMaster.configSelectedFeedbackSensor(FeedbackDevice.SensorDifference, 1, mConstants.talonTimeout);
-
-                TalonSRXFactory.configurePIDF(mRightMaster, 1, mRightRawPID);
-                mRightMaster.selectProfileSlot(1, 1);
-                mRightMaster.configAuxPIDPolarity(false);
-
                 mLeftMaster.setSensorPhase(false);
                 mRightMaster.setSensorPhase(true);
+
                 return true;
             }
 
@@ -247,7 +221,11 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double horizontalAngleOfError = -90;//Double.parseDouble(Constants.udpHandler.getMessage());
+                    double horizontalAngleOfError = 0;
+                    if (!Constants.udpHandler.getMessage().equals(""))
+                    {
+                        horizontalAngleOfError = Double.parseDouble(Constants.udpHandler.getMessage());
+                    }
 
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
                     double throttle = mController.get(Axis.AxisID.LEFT_Y);
@@ -260,32 +238,17 @@ public class DriveTrain extends Subsystem
                         mCurrentGear = requestedGear;
                     }
 
-                    int difference = mRightMaster.getSelectedSensorPosition(1);
-
+                    /*
+                    If the operator enables vision tracking and we have identified a target, rotate to the target.
+                    The rotation of the robot is determined by multiplying the angle of error by an empirically determined constant ratio
+                        (the "magic number") which has been tuned to make the robot turn at an optimal (read: "arbitrary") speed
+                    */
                     if (Constants.operator.get(mConstants.dt_enableVision) && horizontalAngleOfError != 0)
                     {
-                        if (firstVision)
-                        {
-                            counts = (int) (((Math.toRadians(horizontalAngleOfError) * mConstants.dt_width) * 0.5) / (mConstants.dt_wheelDiameter * Math.PI) * mConstants.dt_countsPerRotation);
-                            target = difference + (2 * counts);
-                            firstVision = false;
-
-                            System.out.println("Counts: " + counts);
-                            System.out.println("Left: " + mLeftMaster.getSelectedSensorPosition(0));
-                            System.out.println("Right: " + mRightMaster.getSelectedSensorPosition(0));
-                            System.out.println("Difference: " + mRightMaster.getSelectedSensorPosition(1));
-                            System.out.println("Horizontal Angle of Error: " + horizontalAngleOfError);
-                            System.out.println("Target: " + target);
-                            System.out.println("--------------------------------------------");
-                        }
-
-                        mRightMaster.set(ControlMode.PercentOutput, throttle, DemandType.AuxPID, target);
-                        mLeftMaster.set(ControlMode.PercentOutput, mRightMaster.getMotorOutputPercent());
-                    } else
-                    {
-                        arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
-                        firstVision = true;
+                        rotation = horizontalAngleOfError * mConstants.dt_turnMagicMultiplier;
                     }
+
+                    arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
                 }
             }
 

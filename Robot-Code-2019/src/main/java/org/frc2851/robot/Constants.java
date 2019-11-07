@@ -129,14 +129,13 @@ public class Constants
     public final int dt_motionMagicMaxAcceleration = 15000;
     public final int dt_motionMagicMaxVelocity = 3000;
     public final int dt_countsPerRotation = 23000;
-    public final int dt_differenceInCountsPerRobotRotation = 50000;
-    public final int dt_turnTravelUnitsPerRotation = 3600;
 
     /************ DriveTrain ************/
     public final double dt_peakOut = 0.5;
     public final double dt_nominalOut = 0;
     public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
     public final double dt_turnMult = 0.9;
+    public final double dt_turnMagicMultiplier = 0.03;
 
     /************ Elevator ************/
     public final double el_rawMultiplier = 1;
