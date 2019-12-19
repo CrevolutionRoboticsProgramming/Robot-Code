@@ -6,14 +6,23 @@ import org.frc2851.crevolib.subsystem.Subsystem;
 import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.robot.Robot;
 
-public class TestSubsystem extends Subsystem
+public class ExampleSubsystem extends Subsystem
 {
-    public TestSubsystem() { super("Test Subsystem"); }
+    private static ExampleSubsystem instance = new ExampleSubsystem();
+
+    private ExampleSubsystem()
+    {
+        super("Example Subsystem");
+    }
+
+    public static ExampleSubsystem getInstance()
+    {
+        return instance;
+    }
 
     @Override
     protected boolean init()
     {
-        Controller c = new Controller(0);
         return true;
     }
 
@@ -22,11 +31,10 @@ public class TestSubsystem extends Subsystem
     {
         return new Command()
         {
-            Controller c = new Controller(0);
             @Override
             public String getName()
             {
-                return "Default Command";
+                return "Teleop";
             }
 
             @Override
@@ -46,12 +54,6 @@ public class TestSubsystem extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    if (!c.isControllerConnected())
-                    {
-                        log("Controller not connected...", Logger.LogLevel.ERROR);
-                        stopSubsystem();
-                        return;
-                    }
                 }
             }
 

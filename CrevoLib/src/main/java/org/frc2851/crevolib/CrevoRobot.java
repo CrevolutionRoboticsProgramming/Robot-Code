@@ -22,25 +22,30 @@ import java.util.HashMap;
 public class CrevoRobot extends RobotBase
 {
     private static final String MOTION_PROFILE_DIR = "/home/lvuser/motion/";
-
+    private static HashMap<String, MotionProfile> mMotionProfiles = new HashMap<>();
+    private static boolean mIsEnabled = false;
     private AutonExecutor mAutonExecutor = new AutonExecutor();
     private SendableChooser<Auton> mAutonSelector = new SendableChooser<>();
     private SubsystemManager mSubManager = SubsystemManager.getInstance();
-
-    private static HashMap<String, MotionProfile> mMotionProfiles = new HashMap<>();
-
     private BadLog mBadLog;
-    private long mStartTimeMs;
+    private long mStartTimeNanos;
     private long mLastLog, mCurrentTimeMs;
-
     private boolean mAutonomousInit = false, mTeleopInit = false, mDisabledInit = false;
-    private static boolean mIsEnabled = false;
-
     private int mPeriod = 5;
 
     protected CrevoRobot()
     {
         mBadLog = BadLog.init("/home/lvuser/log.bag");
+    }
+
+    public static MotionProfile getMotionProfile(String name)
+    {
+        return mMotionProfiles.getOrDefault(name, null);
+    }
+
+    public static boolean isRunning()
+    {
+        return mIsEnabled;
     }
 
     /**
@@ -64,16 +69,6 @@ public class CrevoRobot extends RobotBase
         mAutonSelector.addOption(auton.getName(), auton);
     }
 
-    public static MotionProfile getMotionProfile(String name)
-    {
-        return mMotionProfiles.getOrDefault(name, null);
-    }
-
-    public static boolean isRunning()
-    {
-        return mIsEnabled;
-    }
-
     public void setPeriodMillis(int millis)
     {
         mPeriod = millis;
@@ -82,7 +77,7 @@ public class CrevoRobot extends RobotBase
 
     public final void robotInit()
     {
-        mStartTimeMs = System.nanoTime();
+        mStartTimeNanos = System.nanoTime();
         mLastLog = System.currentTimeMillis();
 
         Logger.start();
@@ -109,7 +104,7 @@ public class CrevoRobot extends RobotBase
 
     private void periodic()
     {
-        double time = ((double) (System.nanoTime() - mStartTimeMs) / 1e9d);
+        double time = ((double) (System.nanoTime() - mStartTimeNanos) / 1e9d);
         BadLog.publish("Time", time);
 
         mBadLog.updateTopics();

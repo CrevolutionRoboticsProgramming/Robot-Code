@@ -4,10 +4,8 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
-import org.frc2851.crevolib.logging.Logger;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.utilities.UDPHandler;
-import org.frc2851.robot.subsystems.DriveTrain;
 
 /**
  * Stores constants used throughout the program
@@ -35,7 +33,7 @@ public class Constants
 
     public static Controller driver = new Controller(0);
     public static Controller operator = new Controller(1);
-    public static UDPHandler udpHandler = new UDPHandler("10.28.51.18", 1184, 1182);
+    public static UDPHandler udpHandler = new UDPHandler("10.28.51.18", 1184, 1183);
 //    public static Logger logger = new Logger("/home/lvuser/logging/events/" + );
 
     /************ Motor Controllers and Others ************/
@@ -116,11 +114,11 @@ public class Constants
     public final boolean dt_usePigeon = false;
 
     // Shifters
-    public final DriveTrain.DriveGear dt_defaultDriveGear = DriveTrain.DriveGear.HIGH;
+    //public final DriveTrain.DriveGear dt_defaultDriveGear = DriveTrain.DriveGear.HIGH;
 
     // Physical Dimensions
     public final double dt_width = 2.5;
-    public final double dt_wheelDiameter = 1.0d / 3.0d;
+    public final double dt_wheelDiameter = 1.0 / 3.0;
 
     // Closed Loop Constants
     public final int dt_drivePidSlot = 0;
@@ -131,11 +129,11 @@ public class Constants
     public final int dt_countsPerRotation = 23000;
 
     /************ DriveTrain ************/
-    public final double dt_peakOut = 0.5;
+    public final double dt_peakOut = 1;
     public final double dt_nominalOut = 0;
     public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
     public final double dt_turnMult = 0.9;
-    public final double dt_turnMagicMultiplier = 0.03;
+    public final double dt_turnkP = 0.02;
 
     /************ Elevator ************/
     public final double el_rawMultiplier = 1;

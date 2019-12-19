@@ -46,11 +46,18 @@ public class MotionProfile
                     throw new InvalidMotionProfileException();
                 }
 
-                double pos = Double.parseDouble(vals[3]);
-                double vel = Double.parseDouble(vals[4]);
-                int dt = Integer.parseInt(vals[0]);
-                double heading = Double.parseDouble(vals[7]);
-                mPoints.add(new MotionProfilePoint(pos, vel, dt, heading, cpf));
+                try
+                {
+                    double pos = Double.parseDouble(vals[3]);
+                    double vel = Double.parseDouble(vals[4]);
+                    int dt = (int) Double.parseDouble(vals[0]);
+                    double heading = Double.parseDouble(vals[7]);
+                    mPoints.add(new MotionProfilePoint(pos, vel, dt, heading, cpf));
+                } catch (NumberFormatException e)
+                {
+                    Logger.println("CSV[" + file.getName() + "]: Improper number formatting", Logger.LogLevel.ERROR);
+                    throw new InvalidMotionProfileException();
+                }
             }
         } catch (FileNotFoundException e)
         {
