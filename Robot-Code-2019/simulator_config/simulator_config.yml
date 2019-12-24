@@ -1,0 +1,126 @@
+!!com.snobot.simulator.config.v1.SimulatorConfigV1
+mAccelerometers: []
+mAnalogIn: []
+mAnalogOut: []
+mDefaultI2CWrappers: {}
+mDefaultSpiWrappers: {}
+mDigitalIO:
+  - mHandle: 0
+    mName: Digital IO 0
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiDigitalIoWrapper
+  - mHandle: 1
+    mName: Digital IO 1
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiDigitalIoWrapper
+  - mHandle: 2
+    mName: Digital IO 2
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiDigitalIoWrapper
+  - mHandle: 4
+    mName: Digital IO 4
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiDigitalIoWrapper
+  - mHandle: 8
+    mName: Digital IO 8
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiDigitalIoWrapper
+  - mHandle: 9
+    mName: Digital IO 9
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiDigitalIoWrapper
+mEncoders:
+  - mConnectedSpeedControllerHandle: 101
+    mHandle: 101
+    mName: CAN Encoder (1)
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim$CtreEncoder
+  - mConnectedSpeedControllerHandle: 104
+    mHandle: 104
+    mName: CAN Encoder (4)
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim$CtreEncoder
+  - mConnectedSpeedControllerHandle: 107
+    mHandle: 107
+    mName: CAN Encoder (7)
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim$CtreEncoder
+  - mConnectedSpeedControllerHandle: 108
+    mHandle: 108
+    mName: CAN Encoder (8)
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim$CtreEncoder
+mGyros: []
+mPwm:
+  - mHandle: 101
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 1
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 102
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 2
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 103
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 3
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 104
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 4
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 105
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 5
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 106
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 6
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 107
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 7
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 108
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 8
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 110
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 10
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 111
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 11
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+  - mHandle: 112
+    mMotorModelConfig: null
+    mMotorSimConfig: null
+    mName: CTRE SC 12
+    mType: com.snobot.simulator.simulator_components.ctre.CtreTalonSrxSpeedControllerSim
+mRelays: []
+mSimulatorComponents: []
+mSolenoids:
+  - mHandle: 104
+    mName: Solenoid 104
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 105
+    mName: Solenoid 105
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 106
+    mName: Solenoid 106
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 107
+    mName: Solenoid 107
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 108
+    mName: Solenoid 108
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 109
+    mName: Solenoid 109
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 110
+    mName: Solenoid 110
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
+  - mHandle: 111
+    mName: Solenoid 111
+    mType: com.snobot.simulator.module_wrapper.wpi.WpiSolenoidWrapper
