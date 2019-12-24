@@ -2,8 +2,6 @@ package org.frc2851.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import org.frc2851.crevolib.CrevoBot;
-import org.frc2851.crevolib.auton.Auton;
-import org.frc2851.crevolib.auton.AutonEndedException;
 import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
 import org.frc2851.robot.subsystems.ExampleSubsystem;

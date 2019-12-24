@@ -1,9 +1,7 @@
 package org.frc2851.robot.subsystems;
 
-import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
-import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.robot.Robot;
 
 public class ExampleSubsystem extends Subsystem
@@ -46,7 +44,7 @@ public class ExampleSubsystem extends Subsystem
             @Override
             public boolean init()
             {
-                return false;
+                return true;
             }
 
             @Override
