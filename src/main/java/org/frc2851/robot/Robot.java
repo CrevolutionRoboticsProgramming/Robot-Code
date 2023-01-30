@@ -20,10 +20,10 @@ public class Robot extends CrevoBot
 
         addSubsystem(DriveTrain.getInstance());
         addSubsystem(Elevator.getInstance());
-        addSubsystem(Hatcher.getInstance());
-        addSubsystem(Intake.getInstance());
-        addSubsystem(RollerClaw.getInstance());
-        addSubsystem(Climber.getInstance());
+//        addSubsystem(Hatcher.getInstance());
+//        addSubsystem(Intake.getInstance());
+//        addSubsystem(RollerClaw.getInstance());
+//        addSubsystem(Climber.getInstance());
     }
 
     public static void main(String... args)

@@ -149,6 +149,6 @@ public class Controller
 
     public boolean isControllerConnected()
     {
-        return DriverStation.getInstance().getStickAxisCount(mChannel) <= 0;
+        return DriverStation.getStickAxisCount(mChannel) <= 0;
     }
 }

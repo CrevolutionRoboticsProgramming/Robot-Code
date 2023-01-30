@@ -7,12 +7,12 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
+import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
-import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
@@ -35,11 +35,10 @@ public class Elevator extends Subsystem
     private ElevatorControlMode mControlMode = ElevatorControlMode.OPEN_LOOP;
     private final boolean kTuning = false;
     // Tuning
-    CustomPreferences mTunePrefs = new CustomPreferences("ElevatorTuning");
     private Constants mConst = Constants.getInstance();
     private TalonSRX mTalon;
     private DigitalInput mLimitSwitch;
-    private Controller mController = Constants.operator;
+    private Controller mController = Constants.driver;
     private ElevatorPosition mCurrentPosition = ElevatorPosition.LOW_HATCH;
 
     private boolean mSetPositionRunning = false;
@@ -79,28 +78,12 @@ public class Elevator extends Subsystem
         // Limit Switch Configuration
         mLimitSwitch = new DigitalInput(mConst.el_reverseLimit);
 
-        configPreferences();
         configBadLog();
         configController(mController);
         zeroSensors();
         reset();
 
         return true;
-    }
-
-    private void configPreferences()
-    {
-        if (!mTunePrefs.containsKey("kP")) mTunePrefs.putDouble("kP", 0);
-        if (!mTunePrefs.containsKey("kI")) mTunePrefs.putDouble("kI", 0);
-        if (!mTunePrefs.containsKey("kD")) mTunePrefs.putDouble("kD", 0);
-        if (!mTunePrefs.containsKey("kF")) mTunePrefs.putDouble("kF", 0);
-
-        if (!mTunePrefs.containsKey("maxV")) mTunePrefs.putInt("maxV", 0);
-        if (!mTunePrefs.containsKey("maxA")) mTunePrefs.putInt("maxA", 0);
-
-        mTunePrefs.putInt("pos", 0);
-        mTunePrefs.putInt("vel", 0);
-        mTunePrefs.putInt("error", 0);
     }
 
     private void configBadLog()
@@ -118,8 +101,10 @@ public class Elevator extends Subsystem
         controller.config(mConst.el_mid, Button.ButtonMode.RAW);
         controller.config(mConst.el_high, Button.ButtonMode.RAW);
         controller.config(mConst.el_playerStation, Button.ButtonMode.RAW);
-        controller.config(mConst.el_toggle, Button.ButtonMode.RAW);
-        controller.config(mConst.el_rawControl);
+//        controller.config(mConst.el_toggle, Button.ButtonMode.RAW);
+//        controller.config(mConst.el_rawControl);
+        controller.config(Axis.AxisID.RIGHT_TRIGGER);
+        controller.config(Axis.AxisID.LEFT_TRIGGER);
 
         controller.config(Button.ButtonID.D_DOWN, Button.ButtonMode.TOGGLE);
     }
@@ -131,7 +116,6 @@ public class Elevator extends Subsystem
 
     public void reset()
     {
-        mTunePrefs.putInt("error", 0);
         mTalon.set(ControlMode.PercentOutput, 0);
         mCurrentPosition = ElevatorPosition.LOW_HATCH;
     }
@@ -172,7 +156,15 @@ public class Elevator extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double output = -applyDeadband(mController.get(mConst.el_rawControl), 0.15);
+                    double output = 0.0;
+                    final double rightTrigger = applyDeadband(mController.get(Axis.AxisID.RIGHT_TRIGGER), 0.1);
+                    final double leftTrigger = -applyDeadband(mController.get(Axis.AxisID.LEFT_TRIGGER), 0.1);
+                    if (rightTrigger > 0) {
+                        output = rightTrigger;
+                    } else if (leftTrigger < 0) {
+                        output = leftTrigger;
+                    }
+
                     getDesiredPosition();
                     boolean updatePos = mCurrentPosition != desiredPosition;
 
@@ -221,19 +213,19 @@ public class Elevator extends Subsystem
                         desiredPosition = ElevatorPosition.PLAYER_STATION;
                     else
                         desiredPosition = null;
-                } else
-                {
-                    if (mController.get(mConst.el_low))
-                        desiredPosition = ElevatorPosition.LOW_CARGO;
-                    else if (mController.get(mConst.el_mid))
-                        desiredPosition = ElevatorPosition.MID_CARGO;
-                    else if (mController.get(mConst.el_high))
-                        desiredPosition = ElevatorPosition.HIGH_CARGO;
-                    else if (mController.get(mConst.el_playerStation))
-                        desiredPosition = ElevatorPosition.PLAYER_STATION;
-                    else
-                        desiredPosition = null;
-                }
+                } //else
+//                {
+//                    if (mController.get(mConst.el_low))
+//                        desiredPosition = ElevatorPosition.LOW_CARGO;
+//                    else if (mController.get(mConst.el_mid))
+//                        desiredPosition = ElevatorPosition.MID_CARGO;
+//                    else if (mController.get(mConst.el_high))
+//                        desiredPosition = ElevatorPosition.HIGH_CARGO;
+//                    else if (mController.get(mConst.el_playerStation))
+//                        desiredPosition = ElevatorPosition.PLAYER_STATION;
+//                    else
+//                        desiredPosition = null;
+//                }
             }
         };
     }
@@ -274,14 +266,12 @@ public class Elevator extends Subsystem
             @Override
             public boolean init()
             {
-                double p = (kTuning) ? mTunePrefs.getDouble("kP", 0) : mConst.el_pid.getP();
-                double i = (kTuning) ? mTunePrefs.getDouble("kI", 0) : mConst.el_pid.getI();
-                double d = (kTuning) ? mTunePrefs.getDouble("kD", 0) : mConst.el_pid.getD();
+                double p = mConst.el_pid.getP();
+                double i = mConst.el_pid.getI();
+                double d = mConst.el_pid.getD();
                 double f = mConst.el_pid.getF();
-                int maxV = (kTuning) ? mTunePrefs.getInt("maxV", 0) :
-                        ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxVelocityDown : mConst.el_maxVelocityUp);
-                int maxA = (kTuning) ? mTunePrefs.getInt("maxA", 0) :
-                        ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxAccelerationDown : mConst.el_maxAccelerationUp);
+                int maxV = ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxVelocityDown : mConst.el_maxVelocityUp);
+                int maxA = ((pos.getPos() < mTalon.getSelectedSensorPosition(0)) ? mConst.el_maxAccelerationDown : mConst.el_maxAccelerationUp);
 
                 PID pid = new PID(p, i, d, f);
                 log("MP_INFO[Name: " + pos.name() + ", PID: " + pid.toString() + ", MaxVel: " + maxV + ", MaxAcc: " + maxA + "]", Logger.LogLevel.DEBUG);
@@ -300,9 +290,8 @@ public class Elevator extends Subsystem
             @Override
             public void update()
             {
-                int position = mTalon.getSelectedSensorPosition(0);
+                int position = (int) mTalon.getSelectedSensorPosition(0);
                 hitLimit = pos.getPos() < position && !mLimitSwitch.get();
-                mTunePrefs.putInt("error", pos.getPos() - position);
 
                 mTalon.set(ControlMode.MotionMagic, pos.getPos());
             }

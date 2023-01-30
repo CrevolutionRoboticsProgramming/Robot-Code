@@ -56,14 +56,14 @@ public class Constants
     public final int pcm = 13;
 
     // Pneumatics
-    public final int in_solenoidForward = 6;
-    public final int in_solenoidReverse = 7;
+    public final int in_solenoidForward = 2;
+    public final int in_solenoidReverse = 3;
     public final int ht_extendForward = 0;
     public final int ht_extendReverse = 1;
-    public final int ht_actuateForward = 2;
-    public final int ht_actuateReverse = 3;
-    public final int dt_shifterForwardChannel = 4;
-    public final int dt_shifterReverseChannel = 5;
+    public final int ht_actuateForward = 4;
+    public final int ht_actuateReverse = 5;
+    public final int dt_shifterForwardChannel = 6;//4;
+    public final int dt_shifterReverseChannel = 7;//5;
 
     // DIO
     public final int rc_limitSwitch = 0; // Normally Open; Closed when ball in RC
@@ -131,7 +131,7 @@ public class Constants
     public final int dt_countsPerRotation = 23000;
 
     /************ DriveTrain ************/
-    public final double dt_peakOut = 0.5;
+    public final double dt_peakOut = 1;
     public final double dt_nominalOut = 0;
     public final NeutralMode dt_defaultNeutralMode = NeutralMode.Brake;
     public final double dt_turnMult = 0.9;

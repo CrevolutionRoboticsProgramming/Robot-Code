@@ -3,6 +3,7 @@ package org.frc2851.crevolib;
 import badlog.lib.BadLog;
 import badlog.lib.DataInferMode;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import org.frc2851.crevolib.auton.Auton;
 import org.frc2851.crevolib.auton.AutonExecutor;
@@ -17,7 +18,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@Deprecated
 public class CrevoBot extends TimedRobot
 {
     private static final String MOTION_PROFILE_DIR = "/home/lvuser/motion/";
@@ -70,8 +70,8 @@ public class CrevoBot extends TimedRobot
 
         Logger.start();
         Logger.println("Robot Init", Logger.LogLevel.DEBUG);
-        BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
-        BadLog.createTopicSubscriber("Time", "s", DataInferMode.DEFAULT, "hide", "delta", "xaxis");
+//        BadLog.createTopic("Match Time", "s", () -> DriverStation.getInstance().getMatchTime());
+//        BadLog.createTopicSubscriber("Time", "s", DataInferMode.DEFAULT, "hide", "delta", "xaxis");
 
         ArrayList<File> files = FileUtil.getFiles(MOTION_PROFILE_DIR, true);
         for (File f : files)

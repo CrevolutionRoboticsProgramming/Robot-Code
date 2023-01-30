@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Timer;
 import org.frc2851.crevolib.io.Axis;
 import org.frc2851.crevolib.io.Button;
@@ -16,7 +17,6 @@ import org.frc2851.crevolib.motion.MotionProfileExecutor;
 import org.frc2851.crevolib.motion.PID;
 import org.frc2851.crevolib.subsystem.Command;
 import org.frc2851.crevolib.subsystem.Subsystem;
-import org.frc2851.crevolib.utilities.CustomPreferences;
 import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.utilities.TalonCommunicationErrorException;
 import org.frc2851.crevolib.utilities.TalonSRXFactory;
@@ -24,6 +24,7 @@ import org.frc2851.robot.Constants;
 import org.frc2851.robot.Robot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 // Left and right encoders are flipped on purpose; electrical did it wrong.
 
@@ -40,8 +41,7 @@ public class DriveTrain extends Subsystem
     private PID mLeftMotionPID, mRightMotionPID, mAuxMotionPID, mLeftRawPID, mRightRawPID, mTurnGyroPID;
     private int mMotionSlotPrimary = 0, mMotionSlotAux = 1, mRawSlotDrive = 2, mRawSlotTurn = 3;
     // Members
-    private DriveControlMode mDriveControlMode = DriveControlMode.FPS;
-    private CustomPreferences mPrefs = new CustomPreferences("DriveTrain");
+    private DriveControlMode mDriveControlMode = DriveControlMode.TANK;
     private WPI_TalonSRX mLeftMaster, mLeftSlaveA, mLeftSlaveB, mRightMaster, mRightSlaveA, mRightSlaveB;
     private ArrayList<TalonSRX> leftMotors = new ArrayList<>(), rightMotors = new ArrayList<>();
     private PigeonIMU mPigeon;
@@ -110,53 +110,11 @@ public class DriveTrain extends Subsystem
         setNominalAndPeakOutputs(mConstants.dt_nominalOut, mConstants.dt_peakOut);
         setNeutralMode(NeutralMode.Brake);
 
-        mShifterSolenoid = new DoubleSolenoid(mConstants.pcm, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
-
-        // Pigeon Configuration
-        if (mConstants.dt_usePigeon)
-        {
-            mPigeon = new PigeonIMU(0); // TODO: Add to config file
-            mLeftMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalLeft, mConstants.talonTimeout);
-            mRightMaster.configRemoteFeedbackFilter(mPigeon.getDeviceID(), RemoteSensorSource.Pigeon_Yaw, mConstants.dt_pigeonRemoteOrdinalRight, mConstants.talonTimeout);
-        }
-
-        // Preferences
-        if (!mPrefs.containsKey("Encoder Left")) mPrefs.putInt("Encoder Left", 0);
-        if (!mPrefs.containsKey("Encoder Right")) mPrefs.putInt("Encoder Right", 0);
+        mShifterSolenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, mConstants.dt_shifterForwardChannel, mConstants.dt_shifterReverseChannel);
 
         return true;
     }
 
-    /**
-     * Initializes BadLogging
-     */
-    private void badLogInit()
-    {
-        BadLog.createTopic("Drivetrain/Left Percent", BadLog.UNITLESS, () -> mLeftMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
-        BadLog.createTopic("Drivetrain/Right Percent", BadLog.UNITLESS, () -> mRightMaster.getMotorOutputPercent(), "hide", "join:Drivetrain/Percent Outputs");
-
-        BadLog.createTopic("Drivetrain/Left Master Voltage", "V", () -> mLeftMaster.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave A Voltage", "V", () -> mLeftSlaveA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave B Voltage", "V", () -> mLeftSlaveB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Right Master Voltage", "V", () -> mRightMaster.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave A Voltage", "V", () -> mRightSlaveA.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave B Voltage", "V", () -> mRightSlaveB.getBusVoltage(), "hide", "join:Drivetrain/Voltage Outputs");
-
-        BadLog.createTopic("Drivetrain/Left Master Current", "A", () -> mLeftMaster.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave A Current", "A", () -> mLeftSlaveA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Left Slave B Current", "A", () -> mLeftSlaveB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Right Master Current", "A", () -> mRightMaster.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave A Current", "A", () -> mRightSlaveA.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-        BadLog.createTopic("Drivetrain/Right Slave B Current", "A", () -> mRightSlaveB.getOutputCurrent(), "hide", "join:Drivetrain/Current Outputs");
-
-        BadLog.createTopic("Drivetrain/Left Encoder", "counts", () -> (double) mLeftMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
-        BadLog.createTopic("Drivetrain/Right Encoder", "counts", () -> (double) mRightMaster.getSensorCollection().getQuadraturePosition(), "hide", "join:Drivetrain/Encoders (Pos)");
-        BadLog.createTopic("Drivetrain/Left Velocity", "f/s", () -> ctreVelToFPS(mLeftMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
-        BadLog.createTopic("Drivetrain/Right Velocity", "f/s", () -> ctreVelToFPS(mRightMaster.getSensorCollection().getQuadratureVelocity()), "hide", "join:Drivetrain/Encoders (Vel)");
-        if (mConstants.dt_usePigeon) BadLog.createTopic("Drivetrain/Angle", "deg", () -> mPigeon.getFusedHeading());
-
-        zeroSensors();
-    }
 
     /**
      * Resets the motor controllers and encoders
@@ -221,12 +179,6 @@ public class DriveTrain extends Subsystem
             {
                 if (Robot.isRunning())
                 {
-                    double horizontalAngleOfError = 0;
-                    if (!Constants.udpHandler.getMessage().equals(""))
-                    {
-                        horizontalAngleOfError = Double.parseDouble(Constants.udpHandler.getMessage());
-                    }
-
                     boolean gearToggle = mController.get(mConstants.dt_gearToggle);
                     double throttle = mController.get(Axis.AxisID.LEFT_Y);
                     double rotation = mController.get(Axis.AxisID.RIGHT_X);
@@ -236,16 +188,6 @@ public class DriveTrain extends Subsystem
                     {
                         mShifterSolenoid.set(requestedGear.val);
                         mCurrentGear = requestedGear;
-                    }
-
-                    /*
-                    If the operator enables vision tracking and we have identified a target, rotate to the target.
-                    The rotation of the robot is determined by multiplying the angle of error by an empirically determined constant ratio
-                        (the "magic number") which has been tuned to make the robot turn at an optimal (read: "arbitrary") speed
-                    */
-                    if (Constants.operator.get(mConstants.dt_enableVision) && horizontalAngleOfError != 0)
-                    {
-                        rotation = horizontalAngleOfError * mConstants.dt_turnMagicMultiplier;
                     }
 
                     arcadeDrive(throttle, rotation, mConstants.dt_turnMult);
@@ -471,7 +413,7 @@ public class DriveTrain extends Subsystem
             @Override
             public boolean init()
             {
-                targetPos = mRightMaster/*mLeftMaster*/.getSelectedSensorPosition(0) + counts;
+                targetPos = (int) mRightMaster/*mLeftMaster*/.getSelectedSensorPosition(0) + counts;
                 log("Target: " + targetPos, Logger.LogLevel.DEBUG);
                 TalonSRXFactory.configurePIDF(mRightMaster/*mLeftMaster*/, 0, mLeftRawPID);
                 TalonSRXFactory.configurePIDF(mLeftMaster/*mRightMaster*/, 0, mRightRawPID);
@@ -499,49 +441,6 @@ public class DriveTrain extends Subsystem
         };
     }
 
-    /**
-     * Returns a Command making the robot rotate to the specified angle using its encoders
-     *
-     * @param angle  The angle to turn to
-     * @param maxOut The maximum  output (0.0 to 1.0) of the motors
-     * @return A Command making the robot rotate to the specified angle using its encoders
-     */
-    // TODO: Implement turn to angle gyro
-    public Command turnToAngleGyro(double angle, double maxOut)
-    {
-        return new Command()
-        {
-            @Override
-            public String getName()
-            {
-                return "TurnToAngleGyro[Ang: " + angle + ", Max: " + maxOut + "]";
-            }
-
-            @Override
-            public boolean isFinished()
-            {
-                return false;
-            }
-
-            @Override
-            public boolean init()
-            {
-                return false;
-            }
-
-            @Override
-            public void update()
-            {
-
-            }
-
-            @Override
-            public void stop()
-            {
-
-            }
-        };
-    }
 
     /**
      * Returns a Command that runs the motion profile supplied to it
@@ -682,35 +581,14 @@ public class DriveTrain extends Subsystem
         final int maxRetries = 5;
         do
         {
-            setsSucceeded &= mLeftMaster.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftMaster.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
-
-            setsSucceeded &= mLeftSlaveA.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftSlaveA.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftSlaveA.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftSlaveA.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
-
-            setsSucceeded &= mLeftSlaveB.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftSlaveB.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftSlaveB.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mLeftSlaveB.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
-
-            setsSucceeded &= mRightMaster.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightMaster.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightMaster.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightMaster.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
-
-            setsSucceeded &= mRightSlaveA.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightSlaveA.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightSlaveA.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightSlaveA.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
-
-            setsSucceeded &= mRightSlaveB.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightSlaveB.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightSlaveB.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
-            setsSucceeded &= mRightSlaveB.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+            for (var motorGroup : Arrays.asList(leftMotors, rightMotors)) {
+                for (var motor : motorGroup) {
+                    setsSucceeded &= motor.configNominalOutputForward(nominal, mConstants.talonTimeout) == ErrorCode.OK;
+                    setsSucceeded &= motor.configPeakOutputForward(peak, mConstants.talonTimeout) == ErrorCode.OK;
+                    setsSucceeded &= motor.configNominalOutputReverse(-nominal, mConstants.talonTimeout) == ErrorCode.OK;
+                    setsSucceeded &= motor.configPeakOutputReverse(-peak, mConstants.talonTimeout) == ErrorCode.OK;
+                }
+            }
         } while (!setsSucceeded && tries++ < maxRetries);
         return setsSucceeded;
     }
@@ -720,10 +598,12 @@ public class DriveTrain extends Subsystem
      *
      * @param mode The mode to set the master Talons to
      */
-    public void setNeutralMode(NeutralMode mode)
-    {
-        for (TalonSRX talon : leftMotors) talon.setNeutralMode(mode);
-        for (TalonSRX talon : rightMotors) talon.setNeutralMode(mode);
+    public void setNeutralMode(NeutralMode mode) {
+        for (var motorGroup : Arrays.asList(leftMotors, rightMotors)) {
+            for (var motor : motorGroup) {
+                motor.setNeutralMode(mode);
+            }
+        }
     }
 
     /**
@@ -732,8 +612,7 @@ public class DriveTrain extends Subsystem
      * @param left  The percent output to supply to the left set of motors (-1.0 to 1.0)
      * @param right The percent output to supply to the right set of motors (-1.0 to 1.0)
      */
-    private void setLeftRightMotorOutputs(double left, double right)
-    {
+    private void setLeftRightMotorOutputs(double left, double right) {
         mLeftMaster.set(ControlMode.PercentOutput, left);
         mRightMaster.set(ControlMode.PercentOutput, right);
     }
@@ -745,11 +624,11 @@ public class DriveTrain extends Subsystem
      */
     private void configureController(Controller controller)
     {
-        controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(-x, 0.15)); // Throttle
-        controller.config(Axis.AxisID.LEFT_X, x -> applyDeadband(x, 0.15)); // Throttle
-        controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(-x, 0.15)); // Throttle
-        controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.15)); // Turn
-        controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
+        controller.config(Axis.AxisID.LEFT_Y, x -> applyDeadband(-x, 0.1)); // Throttle
+//        controller.config(Axis.AxisID.LEFT_X, x -> applyDeadband(x, 0.1)); // Throttle
+//        controller.config(Axis.AxisID.RIGHT_Y, x -> applyDeadband(-x, 0.1)); // Throttle
+        controller.config(Axis.AxisID.RIGHT_X, x -> applyDeadband(x, 0.1)); // Turn
+//        controller.config(mConstants.dt_curvatureToggle, Button.ButtonMode.TOGGLE); // Curvature
         controller.config(mConstants.dt_gearToggle, Button.ButtonMode.TOGGLE); // Shifter
         controller.config(Button.ButtonID.X, Button.ButtonMode.RAW);
     }
@@ -809,6 +688,4 @@ public class DriveTrain extends Subsystem
     {
         TANK, FPS, FPS_CURVE, ARCADE
     }
-
-
 }

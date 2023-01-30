@@ -1,6 +1,7 @@
 package org.frc2851.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import org.frc2851.crevolib.utilities.Logger;
 import org.frc2851.crevolib.io.Button;
 import org.frc2851.crevolib.io.Controller;
@@ -75,8 +76,8 @@ public class Hatcher extends Subsystem
     @Override
     public boolean init()
     {
-        mExtendSol = new DoubleSolenoid(mConstants.pcm, mConstants.ht_extendForward, mConstants.ht_extendReverse);
-        mActuateSol = new DoubleSolenoid(mConstants.pcm, mConstants.ht_actuateForward, mConstants.ht_actuateReverse);
+        mExtendSol = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, mConstants.ht_extendForward, mConstants.ht_extendReverse);
+        mActuateSol = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, mConstants.ht_actuateForward, mConstants.ht_actuateReverse);
 
         mController.config(mConstants.ht_extend, Button.ButtonMode.TOGGLE);
         mController.config(mConstants.ht_actuate, Button.ButtonMode.TOGGLE);

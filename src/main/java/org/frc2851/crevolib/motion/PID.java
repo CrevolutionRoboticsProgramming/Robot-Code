@@ -1,11 +1,12 @@
 package org.frc2851.crevolib.motion;
 
-import edu.wpi.first.wpilibj.SendableBase;
-import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
+
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class PID extends SendableBase
+public class PID implements Sendable
 {
     private double p, i, d, f;
     private ReentrantLock mMutex = new ReentrantLock();
@@ -121,6 +122,12 @@ public class PID extends SendableBase
     }
 
     @Override
+    public String toString()
+    {
+        return "PID[" + p + ", " + i + ", " + d + ", " + f + "]";
+    }
+
+    @Override
     public void initSendable(SendableBuilder builder) {
         builder.setSmartDashboardType("PID");
         builder.setSafeState(this::reset);
@@ -128,11 +135,5 @@ public class PID extends SendableBase
         builder.addDoubleProperty("i", this::getI, this::setI);
         builder.addDoubleProperty("d", this::getD, this::setD);
         builder.addDoubleProperty("f", this::getF, this::setF);
-    }
-
-    @Override
-    public String toString()
-    {
-        return "PID[" + p + ", " + i + ", " + d + ", " + f + "]";
     }
 }
